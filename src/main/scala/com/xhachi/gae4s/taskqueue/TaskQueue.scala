@@ -1,4 +1,4 @@
-package com.xhachi.gae4s
+package com.xhachi.gae4s.taskqueue
 
 import com.google.appengine.api.taskqueue.{TaskHandle, QueueFactory, TaskOptions, Queue}
 import com.google.appengine.api.datastore.Transaction

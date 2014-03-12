@@ -1,4 +1,4 @@
-package com.xhachi.gae4s
+package com.xhachi.gae4s.urlfetch
 
 import com.google.appengine.api.urlfetch._
 import java.net.{URLEncoder, URL}

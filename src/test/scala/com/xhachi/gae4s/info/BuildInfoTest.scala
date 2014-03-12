@@ -1,4 +1,4 @@
-package com.xhachi.gae4s
+package com.xhachi.gae4s.info
 
 import org.scalatest.FunSuite
 

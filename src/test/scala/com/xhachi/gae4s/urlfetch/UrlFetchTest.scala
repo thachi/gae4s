@@ -1,4 +1,4 @@
-package com.xhachi.gae4s
+package com.xhachi.gae4s.urlfetch
 
 import org.scalatest.FunSuite
 import com.google.appengine.tools.development.testing.LocalURLFetchServiceTestConfig

@@ -1,10 +1,13 @@
-package com.xhachi.gae4s
+package com.xhachi.gae4s.tests
 
-import com.google.appengine.tools.development.testing.{LocalServiceTestConfig, LocalServiceTestHelper}
-import com.google.appengine.api.datastore.DatastoreServiceFactory
 import org.scalatest.{Suite, BeforeAndAfterEach}
 import java.util.logging.{Level, StreamHandler, Logger}
+import com.google.appengine.tools.development.testing.{LocalServiceTestConfig, LocalServiceTestHelper}
+import com.google.appengine.api.datastore.DatastoreServiceFactory
 
+/**
+ * Created by takashi on 2014/02/20.
+ */
 trait AppEngineTestSuite extends BeforeAndAfterEach {
 
   this: Suite =>

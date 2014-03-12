@@ -1,4 +1,4 @@
-package com.xhachi.gae4s
+package com.xhachi.gae4s.memcache
 
 import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory}
 import java.util.Date
