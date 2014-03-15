@@ -21,7 +21,7 @@ object Gae4sBuild extends Build {
     base = file("."),
     settings = defaultSetting ++ Seq(
       name := "gae4s",
-      buildInfoPackage := "com.xhachi.gae4s",
+      buildInfoPackage := "com.xhachi.gae4s.buildinfo",
       libraryDependencies ++= defaultDependency
     )
   )
