@@ -29,7 +29,6 @@ object Gae4sBuild extends Build {
   val defaultDependency = {
     val appengineVersion = "1.8.9"
     Seq(
-      "org.scala-lang" % "scala-reflect" % "2.10.3",
       "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
       "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
       "com.google.appengine" % "appengine-testing" % appengineVersion % "test",

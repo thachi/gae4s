@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey}
+import com.google.appengine.api.datastore.{Entity => LLEntity}
 import com.google.appengine.api.datastore.Query.FilterOperator._
 import com.google.appengine.api.datastore.Query.SortDirection._
 
@@ -41,9 +42,13 @@ trait Property[T] {
 
   def desc = SortPredicate(name, DESCENDING)
 
-  def toStoreProperty(value: T): Any
+  def fromStore(implicit entity: LLEntity) = fromStoreProperty(entity.getProperty(name))
 
-  def fromStoreProperty(value: Any): T
+  def toStore(value : T)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
+
+  protected[datastore] def toStoreProperty(value: T): Any
+
+  protected[datastore] def fromStoreProperty(value: Any): T
 
   protected[datastore] def createFromConversionException = new PropertyConversionException(name + " can not convert from stored property")
 

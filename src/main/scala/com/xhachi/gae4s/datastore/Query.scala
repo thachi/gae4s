@@ -1,7 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-import scala.reflect.runtime.universe._
-
 
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore.Query.{Filter => LLFilter}
@@ -12,11 +10,11 @@ import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeF
 import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, SortDirection, FilterOperator}
 
 
-case class Query[E <: Entity[E] : TypeTag] private[datastore](
-                                                               val kind: String,
-                                                               val datastore: Datastore,
-                                                               val keysOnly: Boolean = false
-                                                               ) extends EntityConverter {
+case class Query[E <: Entity[E]] private[datastore](
+                                                     val meta: EntityMeta[E],
+                                                     val datastore: Datastore,
+                                                     val keysOnly: Boolean = false
+                                                     ) {
 
 
 }

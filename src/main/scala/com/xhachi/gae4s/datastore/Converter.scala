@@ -1,27 +1,23 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.{Key => LLKey, Entity => LLEntity, Query => LLQuery, _}
+import com.google.appengine.api.datastore.{Key => LLKey, Entity => LLEntity, Query => LLQuery}
 import com.google.appengine.api.datastore.Query.{FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection}
 import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter}
-
-import java.io.{ByteArrayInputStream, ObjectInputStream, ObjectOutputStream, ByteArrayOutputStream}
-
-import scala.collection.JavaConversions._
-
-import scala.reflect.ClassTag
-import scala.reflect.runtime.universe
-import scala.reflect.runtime.universe._
 
 
 trait KeyConverter {
 
-  private[datastore] def toLLKey[E <: Entity[E] : TypeTag](key: Key[E]): LLKey = key.key
+  implicit private[datastore] def toLLKey[E <: Entity[E]](key: Key[E]): LLKey = key.key
 
-  private[datastore] def toKey[E <: Entity[E] : TypeTag](key: LLKey): Key[E] = Key[E](key)
+  implicit private[datastore] def toKey[E <: Entity[E]](key: LLKey): Key[E] = Key[E](key)
 
 }
-
+/*
 trait EntityConverter {
+  import scala.reflect.runtime.universe
+  import scala.reflect.runtime.universe._
+
+
   private[datastore] def toLLEntity[E <: Entity[E] : TypeTag](entity: E): LLEntity = {
 
     val mirror = universe.typeTag[E].mirror
@@ -68,11 +64,11 @@ trait EntityConverter {
 
 
 }
-
+*/
 
 trait QueryConverter {
 
-  def toLLQuery[E <: Entity[E] : TypeTag](q: Query[E]): LLQuery = {
+  def toLLQuery[E <: Entity[E]](q: Query[E]): LLQuery = {
     val llq = new LLQuery("kind")
     if (q.keysOnly) llq.setKeysOnly() else llq.clearKeysOnly()
     llq
