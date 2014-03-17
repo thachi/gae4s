@@ -10,6 +10,16 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
+  def createTaroJiroSaburo = {
+    val tato = User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90, mobilePhone = Some("090-xxxx-xxxx"))
+    val jiro = User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
+    val saburo = User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, mobilePhone = Some("080-yyyy-yyyy"), deleted = true)
+    User.create(tato)
+    User.create(jiro)
+    User.create(saburo)
+    assert(User.query.count == 3)
+  }
+
   test("putしてcountとasSeqとasKeySeqの件数がすべて1であること") {
     val s = User(User.createKey("key_name"), "Hoge")
     User.create(s)
@@ -44,26 +54,14 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterを試す") {
-    val tato = User(User.createKey("key_name_1"), "Taro")
-    val jiro = User(User.createKey("key_name_2"), "Jiro")
-    User.create(tato)
-    User.create(jiro)
-
-    assert(User.query.count == 2)
+    createTaroJiroSaburo
 
     val seq = User.query.filter(_.name #== "Taro").asSeq
     assert(seq.size == 1)
   }
 
   test("filterでandを試す") {
-    val tato = User(User.createKey("key_name_1"), "Taro")
-    val jiro = User(User.createKey("key_name_2"), "Jiro", deleted = true)
-    val saburo = User(User.createKey("key_name_3"), "Saburo", deleted = true)
-    User.create(tato)
-    User.create(jiro)
-    User.create(saburo)
-
-    assert(User.query.count == 3)
+    createTaroJiroSaburo
 
     val seq1 = User.query.filter(m => (m.name #== "Jiro") && (m.deleted #== false)).asSeq
     assert(seq1.size == 0)
@@ -73,13 +71,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterでorを試す") {
-    val tato = User(User.createKey("key_name_1"), "Taro")
-    val jiro = User(User.createKey("key_name_2"), "Jiro", deleted = true)
-    val saburo = User(User.createKey("key_name_3"), "Saburo", deleted = true)
-    User.create(tato)
-    User.create(jiro)
-    User.create(saburo)
-    assert(User.query.count == 3)
+    createTaroJiroSaburo
 
     val seq1 = User.query.filter(m => (m.name #== "Jiro") || (m.name #== "Taro")).asSeq
     assert(seq1.size == 2)
@@ -89,13 +81,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterでinを試す") {
-    val tato = User(User.createKey("key_name_1"), "Taro")
-    val jiro = User(User.createKey("key_name_2"), "Jiro", deleted = true)
-    val saburo = User(User.createKey("key_name_3"), "Saburo", deleted = true)
-    User.create(tato)
-    User.create(jiro)
-    User.create(saburo)
-    assert(User.query.count == 3)
+    createTaroJiroSaburo
 
     val seq1 = User.query.filter(_.name in("Taro", "Jiro", "Saburo")).asSeq
     assert(seq1.size == 3)
@@ -108,13 +94,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterで大小比較を試す") {
-    val tato = User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90)
-    val jiro = User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 100, deleted = true)
-    val saburo = User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
-    User.create(tato)
-    User.create(jiro)
-    User.create(saburo)
-    assert(User.query.count == 3)
+    createTaroJiroSaburo
 
     val seq1 = User.query.filter(_.height #< 190).asSeq
     assert(seq1.size == 1)
@@ -130,13 +110,8 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("sortを試す") {
-    val tato = User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90)
-    val jiro = User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
-    val saburo = User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
-    User.create(tato)
-    User.create(jiro)
-    User.create(saburo)
-    assert(User.query.count == 3)
+    createTaroJiroSaburo
+
 
     val seq1 = User.query.sort(_.height.asc).asSeq
     assert(seq1.size == 3)
@@ -165,6 +140,7 @@ case class User(
                  name: String,
                  height: Int = 0,
                  weight: Int = 0,
+                 mobilePhone: Option[String] = None,
                  webInfo: WebInfo = WebInfo(),
                  createdAt: Date = new Date,
                  deleted: Boolean = false
@@ -181,6 +157,7 @@ class UserMeta private() extends EntityMeta[User] {
   val name = StringProperty("name")
   val height = IntProperty("height")
   val weight = IntProperty("weight")
+  val mobilePhone = OptionProperty(StringProperty("mobilePhone"))
   val webInfo = SerializableProperty[WebInfo]("webInfo")
   val createAt = DateProperty("createAt")
   val deleted = BooleanProperty("deleted")
@@ -192,6 +169,7 @@ class UserMeta private() extends EntityMeta[User] {
       name.getFromStore(entity),
       height.getFromStore(entity),
       weight.getFromStore(entity),
+      mobilePhone.getFromStore(entity),
       webInfo.getFromStore(entity),
       createAt.getFromStore(entity),
       deleted.getFromStore(entity)
