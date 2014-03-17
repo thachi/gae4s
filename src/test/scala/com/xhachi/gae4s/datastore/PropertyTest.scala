@@ -42,15 +42,17 @@ class EnumPropertyTest extends FunSuite {
 
 }
 
+case class SampleCaseClass(name: String)
+
 class SerializablePropertyTest extends FunSuite {
-  case class SampleCaseClass(name: String)
 
   test("Case ClassでfromStoreProperty->toStorePropertyが正しく動くこと") {
     val property: SerializableProperty[SampleCaseClass] = SerializableProperty[SampleCaseClass]("name")
-    val storedData = property.toStoreProperty(SampleCaseClass("hoge hoge"))
+    val cc = SampleCaseClass("hoge hoge")
+    val storedData = property.toStoreProperty(cc)
     val actual = property.fromStoreProperty(storedData)
 
-    assert(actual == SampleCaseClass("hoge hoge"))
+    assert(actual == cc)
   }
 }
 

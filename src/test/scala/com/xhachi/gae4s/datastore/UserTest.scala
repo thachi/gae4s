@@ -10,18 +10,20 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  test("putしてcountとasSeqの件数が等しいこと") {
-    val s = User(Datastore.createKey[User]("key_name"), "Hoge")
+  test("putしてcountとasSeqとasKeySeqの件数がすべて1であること") {
+    val s = User(User.createKey("key_name"), "Hoge")
     User.create(s)
 
-    val count = Datastore.count(User.query)
-    val seq = Datastore.asSeq(User.query)
-    assert(count == seq.size)
+    val count = User.query.count
+    val seq = User.query.asSeq
+    val keySeq = User.query.asKeySeq
     assert(count == 1)
+    assert(seq.size == 1)
+    assert(keySeq.size == 1)
   }
 
   test("putしてgetして等しいこと") {
-    val key: Key[User] = Datastore.createKey[User]("key_name")
+    val key: Key[User] = User.createKey("key_name")
     val expected = User(key, "Hoge")
     User.create(expected)
 
@@ -30,7 +32,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("queryを試す") {
-    val key: Key[User] = Datastore.createKey[User]("key_name")
+    val key: Key[User] = User.createKey("key_name")
     val expected = User(key, "Hoge")
     User.create(expected)
 
@@ -42,8 +44,8 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterを試す") {
-    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro")
-    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro")
+    val tato = User(User.createKey("key_name_1"), "Taro")
+    val jiro = User(User.createKey("key_name_2"), "Jiro")
     User.create(tato)
     User.create(jiro)
 
@@ -54,9 +56,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterでandを試す") {
-    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro")
-    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", deleted = true)
-    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", deleted = true)
+    val tato = User(User.createKey("key_name_1"), "Taro")
+    val jiro = User(User.createKey("key_name_2"), "Jiro", deleted = true)
+    val saburo = User(User.createKey("key_name_3"), "Saburo", deleted = true)
     User.create(tato)
     User.create(jiro)
     User.create(saburo)
@@ -71,9 +73,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterでorを試す") {
-    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro")
-    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", deleted = true)
-    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", deleted = true)
+    val tato = User(User.createKey("key_name_1"), "Taro")
+    val jiro = User(User.createKey("key_name_2"), "Jiro", deleted = true)
+    val saburo = User(User.createKey("key_name_3"), "Saburo", deleted = true)
     User.create(tato)
     User.create(jiro)
     User.create(saburo)
@@ -87,9 +89,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterでinを試す") {
-    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro")
-    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", deleted = true)
-    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", deleted = true)
+    val tato = User(User.createKey("key_name_1"), "Taro")
+    val jiro = User(User.createKey("key_name_2"), "Jiro", deleted = true)
+    val saburo = User(User.createKey("key_name_3"), "Saburo", deleted = true)
     User.create(tato)
     User.create(jiro)
     User.create(saburo)
@@ -106,9 +108,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("filterで大小比較を試す") {
-    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro", height = 190, weight = 90)
-    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", height = 200, weight = 100, deleted = true)
-    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
+    val tato = User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90)
+    val jiro = User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 100, deleted = true)
+    val saburo = User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
     User.create(tato)
     User.create(jiro)
     User.create(saburo)
@@ -128,9 +130,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("sortを試す") {
-    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro", height = 190, weight = 90)
-    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
-    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
+    val tato = User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90)
+    val jiro = User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
+    val saburo = User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
     User.create(tato)
     User.create(jiro)
     User.create(saburo)
@@ -174,6 +176,8 @@ object UserMeta extends UserMeta
 
 class UserMeta private() extends EntityMeta[User] {
 
+  val kind = "com.example.User"
+
   val name = StringProperty("name")
   val height = IntProperty("height")
   val weight = IntProperty("weight")
@@ -181,7 +185,6 @@ class UserMeta private() extends EntityMeta[User] {
   val createAt = DateProperty("createAt")
   val deleted = BooleanProperty("deleted")
 
-  override def properties: Seq[Property[_, _]] = createAt :: Nil
 
   override def fromLLEntity(entity: datastore.Entity): User = {
     User(
@@ -208,12 +211,13 @@ class UserMeta private() extends EntityMeta[User] {
 
 }
 
-object User extends Storable with Queryable with Mutable {
+object User extends Storable with Queryable with Mutable with NamedKey with IdentifiableKey with AutoAllocateKey {
   type E = User
   type M = UserMeta
   val datastore = Datastore
   implicit val meta = UserMeta
 }
+
 
 trait Storable {
   protected type E <: Entity[E]
@@ -226,6 +230,19 @@ trait Storable {
 
   def create(e: E) = datastore.create(e)
 }
+
+trait NamedKey extends Storable {
+  def createKey(name: String) = Datastore.createKey[E, M](name)
+}
+
+trait IdentifiableKey extends Storable {
+  def createKey(id: Long) = Datastore.createKey[E, M](id)
+}
+
+trait AutoAllocateKey extends Storable {
+  def allocateKey = Datastore.allocateKey[E, M]
+}
+
 
 trait Queryable extends Storable {
   def query: Query[E, M] = datastore.query[E, M]

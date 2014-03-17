@@ -1,27 +1,9 @@
 package com.xhachi.gae4s.datastore
 
 import scala.collection.JavaConversions._
-import com.google.appengine.api.datastore.{Key => LLKey, Entity => LLEntity, Query => LLQuery, _}
-
-final case class Key[E] private[datastore](private[datastore] val key: LLKey) {
-
-  def kind: String = key.getKind
-
-  def id: Option[Long] = key.getId match {
-    case i if 0 < i => Some(i)
-    case _ => None
-  }
-
-  def name: Option[String] = key.getName match {
-    case n: String => Some(n)
-    case _ => None
-  }
-
-}
+import com.google.appengine.api.datastore.{Entity => LLEntity, Query => LLQuery, _}
 
 trait Entity[E <: Entity[E]] {
-
-  def kind: String = this.getClass.getName
 
   final def keyOption: Option[Key[E]] = key match {
     case k: Key[E] => Some(k)
@@ -34,7 +16,7 @@ trait Entity[E <: Entity[E]] {
 
 trait EntityMeta[E <: Entity[E]] extends KeyConverter {
 
-  def properties: Seq[Property[_, _]]
+  def kind: String
 
   def toLLEntity(entity: E): LLEntity
 
@@ -69,12 +51,13 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
 
   def put[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]) = {
-    service.put(meta.toLLEntity(entity))
+    val e = meta.toLLEntity(entity)
+    service.put(e)
   }
 
   def create[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = {
     getOption(entity.key) match {
-      case Some(e) => throw new IllegalStateException()
+      case Some(e) => throw new IllegalStateException("entity was already stored")
       case None => Key[E](put(entity))
     }
   }
@@ -90,30 +73,33 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
   def query[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) = Query[E, M](this, meta)
 
   def count[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Int = {
-    val llQuery = toLLQuery(query, false)
+    val llQuery = toLLQuery(query, keysOnly = false)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
   }
 
   def asSeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[E] = {
-    val llQuery = toLLQuery(query, false)
+    val llQuery = toLLQuery(query, keysOnly = false)
     service.prepare(llQuery).asIterable.map(query.meta.fromLLEntity).toSeq
   }
 
   def asSingle[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): E = {
-    val llQuery: LLQuery = toLLQuery(query, false)
+    val llQuery: LLQuery = toLLQuery(query, keysOnly = false)
     query.meta.fromLLEntity(service.prepare(llQuery).asSingleEntity())
   }
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
-    val llQuery = toLLQuery(query, true)
+    val llQuery = toLLQuery(query, keysOnly = true)
     service.prepare(llQuery).asIterable.map(e => toKey[E](e.getKey)).toSeq
   }
 
-  def createKey[E <: Entity[E]](name: String): Key[E] = new Key[E](KeyFactory.createKey("kind", name))
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = Key[E](name)
 
-  def createKey[E <: Entity[E]](id: Long): Key[E] = new Key[E](KeyFactory.createKey("kind", id))
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](id: Long)(implicit meta: M): Key[E] = Key[E](id)
 
-  def allocateKey[E <: Entity[E]](): Key[E] = new Key[E](service.allocateIds("kind", 1).getStart)
+  def allocateKey[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M): Key[E] = {
+
+    Key[E](service.allocateIds(meta.kind, 1).getStart.getId)
+  }
 
 }
 
