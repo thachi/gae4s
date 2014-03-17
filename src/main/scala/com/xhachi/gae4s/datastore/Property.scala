@@ -18,39 +18,44 @@ object Property {
   val LongLimit = 1000000
 }
 
-trait Property[T] {
+/**
+ *
+ * @tparam V 値の型
+ * @tparam Q クエリの型
+ */
+trait Property[V, Q] {
 
   def name: String
 
   def indexed: Boolean = false
 
-  def ==(value: T): Filter = FilterPredicate(name, EQUAL, value)
+  def #==(value: Q): Filter = FilterPredicate(name, EQUAL, value)
 
-  def !=(value: T): Filter = FilterPredicate(name, NOT_EQUAL, value)
+  def #!=(value: Q): Filter = FilterPredicate(name, NOT_EQUAL, value)
 
-  def >(value: T): Filter = FilterPredicate(name, GREATER_THAN, value)
+  def #>(value: Q): Filter = FilterPredicate(name, GREATER_THAN, value)
 
-  def >=(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, value)
+  def #>=(value: Q): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, value)
 
-  def <(value: T): Filter = FilterPredicate(name, LESS_THAN, value)
+  def #<(value: Q): Filter = FilterPredicate(name, LESS_THAN, value)
 
-  def <=(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, value)
+  def #<=(value: Q): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, value)
 
-  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, value :: values ++: Nil)
+  def in(value: Q, values: Q*): Filter = FilterPredicate(name, IN, value :: values ++: Nil)
 
   def asc = SortPredicate(name, ASCENDING)
 
   def desc = SortPredicate(name, DESCENDING)
 
-  def fromStore(implicit entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
+  def getFromStore(implicit entity: LLEntity): V = fromStoreProperty(entity.getProperty(name))
 
-  def toStore(value: T)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
+  def setToStore(value: V)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
 
-  protected[datastore] def toStoreProperty(value: T): Any
+  protected[datastore] def toStoreProperty(value: V): Any
 
-  protected[datastore] def fromStoreProperty(value: Any): T
+  protected[datastore] def fromStoreProperty(value: Any): V
 
-  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \""+v+"\"(" + v.getClass.getName + ") can not convert from stored property")
+  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \"" + v + "\"(" + v.getClass.getName + ") can not convert from stored property")
 
   protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not convert to store property")
 }
@@ -58,14 +63,29 @@ trait Property[T] {
 class PropertyConversionException(message: String) extends Exception(message)
 
 
-trait SimpleProperty[T] extends Property[T] {
+trait SimpleProperty[T] extends Property[T, T] {
 
   override def toStoreProperty(value: T): Any = value
 
   override def fromStoreProperty(value: Any): T = value.asInstanceOf[T]
 }
 
-case class LongProperty(name: String) extends Property[Long] {
+case class OptionProperty[T](property: Property[T, T]) extends Property[Option[T], T] {
+
+  def name = property.name
+
+  override protected[datastore] def fromStoreProperty(value: Any): Option[T] = property.fromStoreProperty(value) match {
+    case v: T => Some(v)
+    case _ => None
+  }
+
+  override protected[datastore] def toStoreProperty(value: Option[T]): Any = value match {
+    case Some(v) => v
+    case _ => null
+  }
+}
+
+case class LongProperty(name: String) extends SimpleProperty[Long] {
   override def toStoreProperty(value: Long): Any = value
 
   override def fromStoreProperty(value: Any): Long = value match {
@@ -75,11 +95,11 @@ case class LongProperty(name: String) extends Property[Long] {
   }
 }
 
-case class IntProperty(name: String) extends Property[Int] {
+case class IntProperty(name: String) extends SimpleProperty[Int] {
   override def toStoreProperty(value: Int): Any = value
 
   override def fromStoreProperty(value: Any): Int = value match {
-    case v: Long=> v.toInt
+    case v: Long => v.toInt
     case v: Double => v.toInt
     case v => throw createFromConversionException(v)
   }
@@ -119,7 +139,7 @@ case class KeyProperty(name: String) extends SimpleProperty[LLKey]
 case class BlobKeyProperty(name: String) extends SimpleProperty[BlobKey]
 
 
-trait StringStoreProperty[P] extends Property[P] {
+trait StringStoreProperty[P] extends SimpleProperty[P] {
 
   def toString(value: P): String
 
@@ -180,7 +200,7 @@ class EnumProperty[E <: Enum[E] : ClassTag](val name: String) extends StringStor
 }
 
 
-trait ByteProperty[B] extends Property[B] {
+trait ByteProperty[B] extends SimpleProperty[B] {
 
   protected def toByte(value: B): Array[Byte]
 

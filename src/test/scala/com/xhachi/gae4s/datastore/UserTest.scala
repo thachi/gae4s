@@ -6,7 +6,6 @@ import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 
-
 class UserTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
@@ -50,7 +49,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
     assert(User.query.count == 2)
 
-    val seq = User.query.filter(_.name == "Taro").asSeq
+    val seq = User.query.filter(_.name #== "Taro").asSeq
     assert(seq.size == 1)
   }
 
@@ -64,10 +63,10 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
     assert(User.query.count == 3)
 
-    val seq1 = User.query.filter(m => (m.name == "Jiro") && (m.deleted == false)).asSeq
+    val seq1 = User.query.filter(m => (m.name #== "Jiro") && (m.deleted #== false)).asSeq
     assert(seq1.size == 0)
 
-    val seq2 = User.query.filter(m => (m.name == "Jiro") && (m.deleted == true)).asSeq
+    val seq2 = User.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true)).asSeq
     assert(seq2.size == 1)
   }
 
@@ -80,10 +79,10 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     User.create(saburo)
     assert(User.query.count == 3)
 
-    val seq1 = User.query.filter(m => (m.name == "Jiro") || (m.name == "Taro")).asSeq
+    val seq1 = User.query.filter(m => (m.name #== "Jiro") || (m.name #== "Taro")).asSeq
     assert(seq1.size == 2)
 
-    val seq2 = User.query.filter(m => (m.name == "Jiro") || (m.name == "Goro")).asSeq
+    val seq2 = User.query.filter(m => (m.name #== "Jiro") || (m.name #== "Goro")).asSeq
     assert(seq2.size == 1)
   }
 
@@ -104,6 +103,57 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
     val seq3 = User.query.filter(_.name in("Jiro", "Goro")).asSeq
     assert(seq3.size == 1)
+  }
+
+  test("filterで大小比較を試す") {
+    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro", height = 190, weight = 90)
+    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", height = 200, weight = 100, deleted = true)
+    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
+    User.create(tato)
+    User.create(jiro)
+    User.create(saburo)
+    assert(User.query.count == 3)
+
+    val seq1 = User.query.filter(_.height #< 190).asSeq
+    assert(seq1.size == 1)
+
+    val seq2 = User.query.filter(_.height #<= 190).asSeq
+    assert(seq2.size == 2)
+
+    val seq3 = User.query.filter(_.height #> 190).asSeq
+    assert(seq3.size == 1)
+
+    val seq4 = User.query.filter(_.height #>= 190).asSeq
+    assert(seq4.size == 2)
+  }
+
+  test("sortを試す") {
+    val tato = User(Datastore.createKey[User]("key_name_1"), "Taro", height = 190, weight = 90)
+    val jiro = User(Datastore.createKey[User]("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
+    val saburo = User(Datastore.createKey[User]("key_name_3"), "Saburo", height = 150, weight = 120, deleted = true)
+    User.create(tato)
+    User.create(jiro)
+    User.create(saburo)
+    assert(User.query.count == 3)
+
+    val seq1 = User.query.sort(_.height.asc).asSeq
+    assert(seq1.size == 3)
+    assert(seq1(0).name == "Saburo")
+    assert(seq1(1).name == "Taro")
+    assert(seq1(2).name == "Jiro")
+
+    val seq2 = User.query.sort(_.height.desc, _.weight.desc).asSeq
+    assert(seq2.size == 3)
+    assert(seq2(0).name == "Jiro")
+    assert(seq2(1).name == "Taro")
+    assert(seq2(2).name == "Saburo")
+
+    val seq3 = User.query.sort(_.weight.asc, _.height.desc).asSeq
+    assert(seq3.size == 3)
+    assert(seq3(0).name == "Jiro")
+    assert(seq3(1).name == "Taro")
+    assert(seq3(2).name == "Saburo")
+
   }
 
 }
@@ -131,28 +181,28 @@ class UserMeta private() extends EntityMeta[User] {
   val createAt = DateProperty("createAt")
   val deleted = BooleanProperty("deleted")
 
-  override def properties: Seq[Property[_]] = createAt :: Nil
+  override def properties: Seq[Property[_, _]] = createAt :: Nil
 
   override def fromLLEntity(entity: datastore.Entity): User = {
     User(
       entity.getKey,
-      name.fromStore(entity),
-      height.fromStore(entity),
-      weight.fromStore(entity),
-      webInfo.fromStore(entity),
-      createAt.fromStore(entity),
-      deleted.fromStore(entity)
+      name.getFromStore(entity),
+      height.getFromStore(entity),
+      weight.getFromStore(entity),
+      webInfo.getFromStore(entity),
+      createAt.getFromStore(entity),
+      deleted.getFromStore(entity)
     )
   }
 
   override def toLLEntity(entity: User): datastore.Entity = {
     implicit val e = createLLEntity(entity)
-    name.toStore(entity.name)
-    height.toStore(entity.height)
-    weight.toStore(entity.weight)
-    createAt.toStore(entity.createdAt)
-    webInfo.toStore(entity.webInfo)
-    deleted.toStore(entity.deleted)
+    name.setToStore(entity.name)
+    height.setToStore(entity.height)
+    weight.setToStore(entity.weight)
+    createAt.setToStore(entity.createdAt)
+    webInfo.setToStore(entity.webInfo)
+    deleted.setToStore(entity.deleted)
     e
   }
 

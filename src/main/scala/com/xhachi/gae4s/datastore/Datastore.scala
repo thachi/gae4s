@@ -34,7 +34,7 @@ trait Entity[E <: Entity[E]] {
 
 trait EntityMeta[E <: Entity[E]] extends KeyConverter {
 
-  def properties: Seq[Property[_]]
+  def properties: Seq[Property[_, _]]
 
   def toLLEntity(entity: E): LLEntity
 

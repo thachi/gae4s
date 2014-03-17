@@ -13,11 +13,17 @@ import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, SortDi
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
                                                                          val datastore: Datastore,
                                                                          val meta: M,
-                                                                         val filterOption: Option[Filter] = None
+                                                                         val filterOption: Option[Filter] = None,
+                                                                         val sorts: Seq[Sort] = Nil
                                                                          ) {
   def filter(filters: (M => Filter)): Query[E, M] = {
     val f: Option[Filter] = Some(filters(meta))
     copy(filterOption = f)
+  }
+
+  def sort(sort: (M => Sort), sorts: (M => Sort)*): Query[E, M] = {
+    val s: Seq[Sort] = sort(meta) :: sorts.map(_(meta)).toList
+    copy(sorts = s)
   }
 
   def count = datastore.count(this)
@@ -58,8 +64,17 @@ case class CompositeFilter(operator: CompositeFilterOperator, filters: Seq[Filte
   private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
 }
 
-case class SortPredicate(name: String, operator: SortDirection) {
 
-  private[datastore] def toLLSortDirection = new LLSortPredicate(name, operator)
+trait Sort {
+
+  private[datastore] def name: String
+
+  private[datastore] def direction: LLSortDirection
+
+}
+
+case class SortPredicate(name: String, direction: SortDirection) extends Sort {
+
+  private[datastore] def toLLSortDirection = new LLSortPredicate(name, direction)
 }
 
