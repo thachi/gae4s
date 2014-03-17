@@ -24,35 +24,35 @@ trait Property[T] {
 
   def indexed: Boolean = false
 
-  def ==(value: T) = FilterPredicate(name, EQUAL, value)
+  def ==(value: T): Filter = FilterPredicate(name, EQUAL, value)
 
-  def !=(value: T) = FilterPredicate(name, NOT_EQUAL, value)
+  def !=(value: T): Filter = FilterPredicate(name, NOT_EQUAL, value)
 
-  def >(value: T) = FilterPredicate(name, GREATER_THAN, value)
+  def >(value: T): Filter = FilterPredicate(name, GREATER_THAN, value)
 
-  def >=(value: T) = FilterPredicate(name, GREATER_THAN_OR_EQUAL, value)
+  def >=(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, value)
 
-  def <(value: T) = FilterPredicate(name, LESS_THAN, value)
+  def <(value: T): Filter = FilterPredicate(name, LESS_THAN, value)
 
-  def <=(value: T) = FilterPredicate(name, LESS_THAN_OR_EQUAL, value)
+  def <=(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, value)
 
-  def in(values: Seq[T]) = FilterPredicate(name, IN, values)
+  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, value :: values ++: Nil)
 
   def asc = SortPredicate(name, ASCENDING)
 
   def desc = SortPredicate(name, DESCENDING)
 
-  def fromStore(implicit entity: LLEntity) = fromStoreProperty(entity.getProperty(name))
+  def fromStore(implicit entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
 
-  def toStore(value : T)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
+  def toStore(value: T)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
 
   protected[datastore] def toStoreProperty(value: T): Any
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
-  protected[datastore] def createFromConversionException = new PropertyConversionException(name + " can not convert from stored property")
+  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \""+v+"\"(" + v.getClass.getName + ") can not convert from stored property")
 
-  protected[datastore] def createToConversionException = new PropertyConversionException(name + " can not convert to store property")
+  protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not convert to store property")
 }
 
 class PropertyConversionException(message: String) extends Exception(message)
@@ -69,19 +69,19 @@ case class LongProperty(name: String) extends Property[Long] {
   override def toStoreProperty(value: Long): Any = value
 
   override def fromStoreProperty(value: Any): Long = value match {
-    case v: java.lang.Long => v
-    case v: java.lang.Double => v.toLong
-    case _ => throw createFromConversionException
+    case v: Long => v
+    case v: Double => v.toLong
+    case v => throw createFromConversionException(v)
   }
 }
 
-case class IntProperty(name: String) extends Property[Long] {
-  override def toStoreProperty(value: Long): Any = value
+case class IntProperty(name: String) extends Property[Int] {
+  override def toStoreProperty(value: Int): Any = value
 
-  override def fromStoreProperty(value: Any): Long = value match {
-    case v: java.lang.Integer => v.toInt
-    case v: java.lang.Double => v.toInt
-    case _ => throw createFromConversionException
+  override def fromStoreProperty(value: Any): Int = value match {
+    case v: Long=> v.toInt
+    case v: Double => v.toInt
+    case v => throw createFromConversionException(v)
   }
 }
 
@@ -130,7 +130,7 @@ trait StringStoreProperty[P] extends Property[P] {
     val bytes = value.getBytes("UTF-8")
     if (bytes.length < Property.ShortLimit) value
     else if (bytes.length < Property.LongLimit) new Text(value)
-    else throw createToConversionException
+    else throw createToConversionException(value)
   }
 
   final override def fromStoreProperty(value: Any): P = {
@@ -190,14 +190,14 @@ trait ByteProperty[B] extends Property[B] {
     val value = toByte(b)
     if (value.length < Property.ShortLimit) new ShortBlob(value)
     else if (value.length < Property.LongLimit) new ShortBlob(value)
-    else throw createToConversionException
+    else throw createToConversionException(value)
   }
 
   override def fromStoreProperty(value: Any): B = {
     val b: Array[Byte] = value match {
       case value: ShortBlob => value.getBytes
       case value: Blob => value.getBytes
-      case value: Any => throw createFromConversionException
+      case value: Any => throw createFromConversionException(value)
       case _ => null
     }
     fromByte(b)

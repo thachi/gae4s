@@ -12,6 +12,7 @@ trait KeyConverter {
   implicit private[datastore] def toKey[E <: Entity[E]](key: LLKey): Key[E] = Key[E](key)
 
 }
+
 /*
 trait EntityConverter {
   import scala.reflect.runtime.universe
@@ -68,9 +69,10 @@ trait EntityConverter {
 
 trait QueryConverter {
 
-  def toLLQuery[E <: Entity[E]](q: Query[E]): LLQuery = {
+  def toLLQuery[E <: Entity[E], M <: EntityMeta[E]](q: Query[E, M], keysOnly: Boolean): LLQuery = {
     val llq = new LLQuery("kind")
-    if (q.keysOnly) llq.setKeysOnly() else llq.clearKeysOnly()
+    if (keysOnly) llq.setKeysOnly() else llq.clearKeysOnly()
+    if (q.filterOption.isDefined) llq.setFilter(q.filterOption.get.toLLFilter)
     llq
   }
 
