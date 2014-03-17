@@ -24,7 +24,10 @@ trait Property[T] {
 
   def getFromStore(implicit entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
 
-  def setToStore(value: T)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
+  def setToStore(value: T)(implicit entity: LLEntity) = this match {
+    case p: IndexedProperty[_] => entity.setProperty(name, toStoreProperty(value))
+    case _ => entity.setUnindexedProperty(name, toStoreProperty(value))
+  }
 
   protected[datastore] def toStoreProperty(value: T): Any
 
