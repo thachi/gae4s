@@ -6,6 +6,7 @@ import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 
+
 class UserTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
@@ -51,6 +52,11 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     val seq = User.query.asSeq
     assert(seq.size == 1)
     assert(seq.head == expected)
+  }
+
+  test("propertyが正しいか") {
+    val filter = UserMeta.name #< "a"
+    filter.toLLFilter
   }
 
   test("filterを試す") {
@@ -154,18 +160,19 @@ class UserMeta private() extends EntityMeta[User] {
 
   val kind = "com.example.User"
 
-  val name = StringProperty("name")
-  val height = IntProperty("height")
-  val weight = IntProperty("weight")
-  val mobilePhone = OptionProperty(StringProperty("mobilePhone"))
-  val webInfo = SerializableProperty[WebInfo]("webInfo")
-  val createAt = DateProperty("createAt")
-  val deleted = BooleanProperty("deleted")
+  val key = new KeyProperty("key", this)
+  val name = new StringProperty("name") with IndexedProperty[String]
+  val height = new IntProperty("height") with IndexedProperty[Int]
+  val weight = new IntProperty("weight") with IndexedProperty[Int]
+  val mobilePhone = new OptionProperty(new StringProperty("mobilePhone"))
+  val webInfo = new SerializableProperty[WebInfo]("webInfo")
+  val createAt = new DateProperty("createAt")
+  val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
 
 
   override def fromLLEntity(entity: datastore.Entity): User = {
     User(
-      entity.getKey,
+      Key(entity.getKey),
       name.getFromStore(entity),
       height.getFromStore(entity),
       weight.getFromStore(entity),

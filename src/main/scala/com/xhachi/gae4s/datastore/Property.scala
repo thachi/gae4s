@@ -18,20 +18,32 @@ object Property {
   val LongLimit = 1000000
 }
 
-/**
- *
- * @tparam V 値の型
- * @tparam Q クエリの型
- */
-trait Property[V, Q] {
+trait Property[T] {
 
-  def name: String
+  protected[datastore] def name: String
 
-  def indexed: Boolean = false
+  def getFromStore(implicit entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
+
+  def setToStore(value: T)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
+
+  protected[datastore] def toStoreProperty(value: T): Any
+
+  protected[datastore] def fromStoreProperty(value: Any): T
+
+  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \"" + v + "\"(" + v.getClass.getName + ") can not convert from stored property")
+
+  protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not convert to store property")
+}
+
+trait IndexedProperty[Q] {
+
+  protected[datastore] def name: String
 
   def #==(value: Q): Filter = FilterPredicate(name, EQUAL, value)
 
   def #!=(value: Q): Filter = FilterPredicate(name, NOT_EQUAL, value)
+
+  def in(value: Q, values: Q*): Filter = FilterPredicate(name, IN, value :: values ++: Nil)
 
   def #>(value: Q): Filter = FilterPredicate(name, GREATER_THAN, value)
 
@@ -41,42 +53,28 @@ trait Property[V, Q] {
 
   def #<=(value: Q): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, value)
 
-  def in(value: Q, values: Q*): Filter = FilterPredicate(name, IN, value :: values ++: Nil)
-
   def asc = SortPredicate(name, ASCENDING)
 
   def desc = SortPredicate(name, DESCENDING)
-
-  def getFromStore(implicit entity: LLEntity): V = fromStoreProperty(entity.getProperty(name))
-
-  def setToStore(value: V)(implicit entity: LLEntity) = entity.setProperty(name, toStoreProperty(value))
-
-  protected[datastore] def toStoreProperty(value: V): Any
-
-  protected[datastore] def fromStoreProperty(value: Any): V
-
-  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \"" + v + "\"(" + v.getClass.getName + ") can not convert from stored property")
-
-  protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not convert to store property")
 }
 
 class PropertyConversionException(message: String) extends Exception(message)
 
 
-trait SimpleProperty[T] extends Property[T, T] {
+trait SimpleProperty[T] extends Property[T] {
 
   override def toStoreProperty(value: T): Any = value
 
   override def fromStoreProperty(value: Any): T = value.asInstanceOf[T]
 }
 
-case class OptionProperty[T](property: Property[T, T]) extends Property[Option[T], T] {
+class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
 
-  def name = property.name
+  protected[datastore] def name = property.name
 
   override protected[datastore] def fromStoreProperty(value: Any): Option[T] = property.fromStoreProperty(value) match {
-    case v: T => Some(v)
-    case _ => None
+    case null => None
+    case v => Some(v)
   }
 
   override protected[datastore] def toStoreProperty(value: Option[T]): Any = value match {
@@ -85,7 +83,17 @@ case class OptionProperty[T](property: Property[T, T]) extends Property[Option[T
   }
 }
 
-case class LongProperty(name: String) extends SimpleProperty[Long] {
+class KeyProperty[E <: Entity[E]](protected[datastore] val name: String, meta: EntityMeta[E]) extends Property[Key[E]] {
+
+  override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
+    case k: LLKey => Key[E](k)
+    case _ => null
+  }
+
+  override protected[datastore] def toStoreProperty(value: Key[E]): Any = value.key
+}
+
+class LongProperty(protected[datastore] val name: String) extends SimpleProperty[Long] {
   override def toStoreProperty(value: Long): Any = value
 
   override def fromStoreProperty(value: Any): Long = value match {
@@ -95,7 +103,7 @@ case class LongProperty(name: String) extends SimpleProperty[Long] {
   }
 }
 
-case class IntProperty(name: String) extends SimpleProperty[Int] {
+class IntProperty(protected[datastore] val name: String) extends SimpleProperty[Int] {
   override def toStoreProperty(value: Int): Any = value
 
   override def fromStoreProperty(value: Any): Int = value match {
@@ -105,38 +113,36 @@ case class IntProperty(name: String) extends SimpleProperty[Int] {
   }
 }
 
-case class DoubleProperty(name: String) extends SimpleProperty[Double]
+class DoubleProperty(protected[datastore] val name: String) extends SimpleProperty[Double]
 
-case class BooleanProperty(name: String) extends SimpleProperty[Boolean]
+class BooleanProperty(protected[datastore] val name: String) extends SimpleProperty[Boolean]
 
-case class DateProperty(name: String) extends SimpleProperty[Date]
+class DateProperty(protected[datastore] val name: String) extends SimpleProperty[Date]
 
-case class GeoPtProperty(name: String) extends SimpleProperty[GeoPt]
+class GeoPtProperty(protected[datastore] val name: String) extends SimpleProperty[GeoPt]
 
-case class ShortBlobProperty(name: String) extends SimpleProperty[ShortBlob]
+class ShortBlobProperty(protected[datastore] val name: String) extends SimpleProperty[ShortBlob]
 
-case class BlobProperty(name: String) extends SimpleProperty[Blob]
+class BlobProperty(protected[datastore] val name: String) extends SimpleProperty[Blob]
 
-case class PostalAddressProperty(name: String) extends SimpleProperty[PostalAddress]
+class PostalAddressProperty(protected[datastore] val name: String) extends SimpleProperty[PostalAddress]
 
-case class PhoneNumberProperty(name: String) extends SimpleProperty[PhoneNumber]
+class PhoneNumberProperty(protected[datastore] val name: String) extends SimpleProperty[PhoneNumber]
 
-case class EmailProperty(name: String) extends SimpleProperty[Email]
+class EmailProperty(protected[datastore] val name: String) extends SimpleProperty[Email]
 
-case class UserProperty(name: String) extends SimpleProperty[User]
+class UserProperty(protected[datastore] val name: String) extends SimpleProperty[User]
 
-case class IMHandleProperty(name: String) extends SimpleProperty[IMHandle]
+class IMHandleProperty(protected[datastore] val name: String) extends SimpleProperty[IMHandle]
 
-case class LinkProperty(name: String) extends SimpleProperty[Link]
+class LinkProperty(protected[datastore] val name: String) extends SimpleProperty[Link]
 
-case class CategoryProperty(name: String) extends SimpleProperty[Category]
+class CategoryProperty(protected[datastore] val name: String) extends SimpleProperty[Category]
 
-case class RatingProperty(name: String) extends SimpleProperty[Rating]
+class RatingProperty(protected[datastore] val name: String) extends SimpleProperty[Rating]
 
-@deprecated
-case class KeyProperty(name: String) extends SimpleProperty[LLKey]
 
-case class BlobKeyProperty(name: String) extends SimpleProperty[BlobKey]
+class BlobKeyProperty(protected[datastore] val name: String) extends SimpleProperty[BlobKey]
 
 
 trait StringStoreProperty[P] extends SimpleProperty[P] {
@@ -164,21 +170,21 @@ trait StringStoreProperty[P] extends SimpleProperty[P] {
   }
 }
 
-case class StringProperty(name: String) extends StringStoreProperty[String] {
+class StringProperty(protected[datastore] val name: String) extends StringStoreProperty[String] {
 
   override def fromString(value: String): String = value
 
   override def toString(value: String): String = value
 }
 
-case class BigIntProperty(name: String) extends StringStoreProperty[BigInt] {
+class BigIntProperty(protected[datastore] val name: String) extends StringStoreProperty[BigInt] {
 
   override def fromString(value: String): BigInt = BigInt(value)
 
   override def toString(value: BigInt): String = value.toString()
 }
 
-case class BigDecimalProperty(name: String) extends StringStoreProperty[BigDecimal] {
+class BigDecimalProperty(protected[datastore] val name: String) extends StringStoreProperty[BigDecimal] {
 
   override def fromString(value: String): BigDecimal = BigDecimal(value)
 
@@ -225,14 +231,14 @@ trait ByteProperty[B] extends SimpleProperty[B] {
 }
 
 
-case class ByteArrayProperty(name: String) extends ByteProperty[Array[Byte]] {
+class ByteArrayProperty(protected[datastore] val name: String) extends ByteProperty[Array[Byte]] {
 
   override def fromByte(value: Array[Byte]): Array[Byte] = value
 
   override def toByte(value: Array[Byte]): Array[Byte] = value
 }
 
-case class SerializableProperty[E <: Serializable](name: String) extends ByteProperty[E] {
+class SerializableProperty[E <: Serializable](protected[datastore] val name: String) extends ByteProperty[E] {
 
   override def fromByte(value: Array[Byte]): E = {
     val bais = new ByteArrayInputStream(value)

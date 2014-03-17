@@ -8,13 +8,13 @@ import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeF
 /*
  * TODO: Key#keyを使うようにする
  */
-trait KeyConverter {
-
-  implicit private[datastore] def toLLKey[E <: Entity[E]](key: Key[E]): LLKey = key.key
-
-  implicit private[datastore] def toKey[E <: Entity[E]](key: LLKey): Key[E] = Key[E](key)
-
-}
+//trait KeyConverter {
+//
+//  implicit private[datastore] def toLLKey[E <: Entity[E]](key: Key[E]): LLKey = key.key
+//
+//  implicit private[datastore] def toKey[E <: Entity[E]](key: LLKey): Key[E] = Key[E](key)
+//
+//}
 
 /*
 trait EntityConverter {

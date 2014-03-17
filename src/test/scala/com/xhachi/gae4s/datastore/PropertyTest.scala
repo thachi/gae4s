@@ -6,7 +6,7 @@ class LongPropertyTest extends FunSuite {
 
 
   test("fromStorePropertyが正しいこと") {
-    val property: LongProperty = LongProperty("name")
+    val property: LongProperty = new LongProperty("name")
 
     assert(property.fromStoreProperty(1L) == 1L, "1Lが変換できる")
     assert(property.fromStoreProperty(1L) == 1, "1が変換できる")
@@ -22,7 +22,7 @@ class LongPropertyTest extends FunSuite {
   }
 
   test("toStorePropertyが正しいこと") {
-    val property: LongProperty = LongProperty("name")
+    val property: LongProperty = new LongProperty("name")
     assert(property.toStoreProperty(1L) == 1L, "1Lが変換できる")
     assert(property.toStoreProperty(1) == 1L, "1Lが変換できる")
   }
@@ -47,7 +47,7 @@ case class SampleCaseClass(name: String)
 class SerializablePropertyTest extends FunSuite {
 
   test("Case ClassでfromStoreProperty->toStorePropertyが正しく動くこと") {
-    val property: SerializableProperty[SampleCaseClass] = SerializableProperty[SampleCaseClass]("name")
+    val property: SerializableProperty[SampleCaseClass] = new SerializableProperty[SampleCaseClass]("name")
     val cc = SampleCaseClass("hoge hoge")
     val storedData = property.toStoreProperty(cc)
     val actual = property.fromStoreProperty(storedData)

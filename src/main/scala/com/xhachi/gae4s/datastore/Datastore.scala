@@ -14,7 +14,7 @@ trait Entity[E <: Entity[E]] {
 
 }
 
-trait EntityMeta[E <: Entity[E]] extends KeyConverter {
+trait EntityMeta[E <: Entity[E]]  {
 
   def kind: String
 
@@ -31,12 +31,11 @@ trait EntityMeta[E <: Entity[E]] extends KeyConverter {
 
 
 class Datastore private[datastore](private[datastore] val service: DatastoreService)
-  extends KeyConverter
-  with QueryConverter {
+  extends QueryConverter {
 
   def getOption[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Option[E] =
     try {
-      Some(meta.fromLLEntity(service.get(key)))
+      Some(meta.fromLLEntity(service.get(key.key)))
     } catch {
       case e: EntityNotFoundException => None
     }
@@ -89,7 +88,7 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
     val llQuery = toLLQuery(query, keysOnly = true)
-    service.prepare(llQuery).asIterable.map(e => toKey[E](e.getKey)).toSeq
+    service.prepare(llQuery).asIterable.map(e => Key[E](e.getKey)).toSeq
   }
 
   def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = Key[E](name)
