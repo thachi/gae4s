@@ -8,6 +8,7 @@ import com.google.appengine.api.datastore.Query.{SortDirection => LLSortDirectio
 import com.google.appengine.api.datastore.Query.{SortPredicate => LLSortPredicate}
 import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter}
 import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, SortDirection, FilterOperator}
+import com.google.appengine.api.datastore.{Query => LLQuery}
 
 
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
@@ -31,6 +32,15 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
   def asSeq = datastore.asSeq(this)
 
   def asKeySeq = datastore.asKeySeq(this)
+
+  private[datastore] def toLLQuery(keysOnly: Boolean): LLQuery = {
+    val query = new LLQuery(meta.kind)
+    if (keysOnly) query.setKeysOnly() else query.clearKeysOnly()
+    if (filterOption.isDefined) query.setFilter(filterOption.get.toLLFilter)
+    sorts.foreach(s => query.addSort(s.name, s.direction))
+    query
+  }
+
 }
 
 

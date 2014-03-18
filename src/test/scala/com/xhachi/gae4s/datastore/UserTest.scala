@@ -216,6 +216,11 @@ trait Storable {
   def create(e: E) = datastore.create(e)
 }
 
+trait Single extends Storable {
+  def createSingleKey: Key[E] = Datastore.createKey[E, M](1)
+  def getSingle: E = Datastore.get(createSingleKey)
+}
+
 trait NamedKey extends Storable {
   def createKey(name: String) = Datastore.createKey[E, M](name)
 }

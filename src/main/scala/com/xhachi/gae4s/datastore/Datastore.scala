@@ -30,8 +30,7 @@ trait EntityMeta[E <: Entity[E]]  {
 }
 
 
-class Datastore private[datastore](private[datastore] val service: DatastoreService)
-  extends QueryConverter {
+class Datastore private[datastore](private[datastore] val service: DatastoreService) {
 
   def getOption[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Option[E] =
     try {
@@ -72,22 +71,22 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
   def query[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) = Query[E, M](this, meta)
 
   def count[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Int = {
-    val llQuery = toLLQuery(query, keysOnly = false)
+    val llQuery = query.toLLQuery(keysOnly = false)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
   }
 
   def asSeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[E] = {
-    val llQuery = toLLQuery(query, keysOnly = false)
+    val llQuery = query.toLLQuery(keysOnly = false)
     service.prepare(llQuery).asIterable.map(query.meta.fromLLEntity).toSeq
   }
 
   def asSingle[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): E = {
-    val llQuery: LLQuery = toLLQuery(query, keysOnly = false)
+    val llQuery: LLQuery = query.toLLQuery(keysOnly = false)
     query.meta.fromLLEntity(service.prepare(llQuery).asSingleEntity())
   }
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
-    val llQuery = toLLQuery(query, keysOnly = true)
+    val llQuery = query.toLLQuery(keysOnly = true)
     service.prepare(llQuery).asIterable.map(e => Key[E](e.getKey)).toSeq
   }
 

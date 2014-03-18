@@ -73,15 +73,8 @@ trait EntityConverter {
 /*
  * TODO: Queryのメソッドにする
  */
-trait QueryConverter {
-
-  def toLLQuery[E <: Entity[E], M <: EntityMeta[E]](q: Query[E, M], keysOnly: Boolean): LLQuery = {
-    val query = new LLQuery(q.meta.kind)
-    if (keysOnly) query.setKeysOnly() else query.clearKeysOnly()
-    if (q.filterOption.isDefined) query.setFilter(q.filterOption.get.toLLFilter)
-    q.sorts.foreach(s => query.addSort(s.name, s.direction))
-    query
-  }
-
-}
+//trait QueryConverter {
+//
+//
+//}
 
