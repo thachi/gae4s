@@ -12,10 +12,10 @@ import com.google.appengine.api.datastore.{Query => LLQuery}
 
 
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
-                                                                         val datastore: Datastore,
-                                                                         val meta: M,
-                                                                         val filterOption: Option[Filter] = None,
-                                                                         val sorts: Seq[Sort] = Nil
+                                                                         datastore: Datastore,
+                                                                         meta: M,
+                                                                         filterOption: Option[Filter] = None,
+                                                                         sorts: Seq[Sort] = Nil
                                                                          ) {
   def filter(filters: (M => Filter)): Query[E, M] = {
     val f: Option[Filter] = Some(filters(meta))
