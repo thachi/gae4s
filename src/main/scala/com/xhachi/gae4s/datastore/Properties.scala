@@ -196,9 +196,11 @@ class BigDecimalProperty(protected[datastore] val name: String) extends StringSt
 
 
 class EnumProperty[E <: Enum[E] : ClassTag](val name: String) extends StringStoreProperty[E] {
+  private def enumValueOf[T <: Enum[T]](cls: Class[_], stringValue: String): Enum[_] =
+    Enum.valueOf(cls.asInstanceOf[Class[T]], stringValue).asInstanceOf[Enum[_]]
+
   override def fromString(value: String): E = {
-    def enumValueOf[T <: Enum[T]](cls: Class[_], stringValue: String): Enum[_] =
-      Enum.valueOf(cls.asInstanceOf[Class[T]], stringValue).asInstanceOf[Enum[_]]
+
     implicitly[ClassTag[E]].runtimeClass match {
       case clz if classOf[Enum[E]].isAssignableFrom(clz) => enumValueOf(clz, value).asInstanceOf[E]
       case _ => throw new RuntimeException("Enum type error.")
@@ -246,15 +248,20 @@ class SerializableProperty[E <: Serializable](protected[datastore] val name: Str
   override def fromByte(value: Array[Byte]): E = {
     val bais = new ByteArrayInputStream(value)
     val ois = new ObjectInputStream(bais)
-    ois.readObject().asInstanceOf[E]
+    val instance = ois.readObject().asInstanceOf[E]
+    ois.close()
+    bais.close()
+    instance
   }
 
   override def toByte(value: E): Array[Byte] = {
     val baos = new ByteArrayOutputStream
     val oos = new ObjectOutputStream(baos)
     oos.writeObject(value)
+    val bytes = baos.toByteArray
     oos.close()
-    baos.toByteArray
+    baos.close()
+    bytes
   }
 }
 

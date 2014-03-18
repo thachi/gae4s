@@ -3,7 +3,6 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 import KeyFactory._
-import scala.reflect.ClassTag
 
 class Key[E] private(private[datastore] val key: LLKey) {
 

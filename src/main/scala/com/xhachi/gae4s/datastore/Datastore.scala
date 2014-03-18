@@ -3,33 +3,6 @@ package com.xhachi.gae4s.datastore
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore.{Entity => LLEntity, Query => LLQuery, _}
 
-trait Entity[E <: Entity[E]] {
-
-  final def keyOption: Option[Key[E]] = key match {
-    case k: Key[E] => Some(k)
-    case _ => None
-  }
-
-  def key: Key[E]
-
-}
-
-trait EntityMeta[E <: Entity[E]]  {
-
-  def kind: String
-
-  def toLLEntity(entity: E): LLEntity
-
-  def fromLLEntity(entity: LLEntity): E
-
-  def createLLEntity(entity: E) = entity.keyOption match {
-    case Some(k) => new LLEntity(k.key)
-    case None => new LLEntity(entity.getClass.getName)
-  }
-
-}
-
-
 class Datastore private[datastore](private[datastore] val service: DatastoreService) {
 
   def getOption[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Option[E] =
@@ -106,3 +79,42 @@ object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) 
   def apply(service: DatastoreService) = new Datastore(service)
 }
 
+
+
+trait Storable {
+  protected type E <: Entity[E]
+  protected type M <: EntityMeta[E]
+  protected implicit val meta: M
+
+  protected def datastore: Datastore
+
+  def get(key: Key[E]) = datastore.get(key)
+
+  def create(e: E) = datastore.create(e)
+}
+
+trait Single extends Storable {
+  def createSingleKey: Key[E] = Datastore.createKey[E, M](1)
+  def getSingle: E = Datastore.get(createSingleKey)
+}
+
+trait NamedKey extends Storable {
+  def createKey(name: String) = Datastore.createKey[E, M](name)
+}
+
+trait IdentifiableKey extends Storable {
+  def createKey(id: Long) = Datastore.createKey[E, M](id)
+}
+
+trait AutoAllocateKey extends Storable {
+  def allocateKey = Datastore.allocateKey[E, M]
+}
+
+
+trait Queryable extends Storable {
+  def query: Query[E, M] = datastore.query[E, M]
+}
+
+trait Mutable extends Storable {
+  def update(e: E) = datastore.update(e)
+}

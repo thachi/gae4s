@@ -49,17 +49,15 @@ trait Filter {
   private[datastore] def toLLFilter: LLFilter
 
   def &&(f: Filter): Filter = {
-    CompositeFilter(CompositeFilterOperator.AND, this :: f :: Nil)
+    CompositeFilterPredicate(CompositeFilterOperator.AND, this :: f :: Nil)
   }
 
   def ||(f: Filter): Filter = {
-    CompositeFilter(CompositeFilterOperator.OR, this :: f :: Nil)
+    CompositeFilterPredicate(CompositeFilterOperator.OR, this :: f :: Nil)
   }
 }
 
 case class FilterPredicate(name: String, operator: FilterOperator, value: Any) extends Filter {
-
-  def iAmFilterPredicate = null
 
   private[datastore] def toLLFilter = (operator, value) match {
     case (FilterOperator.IN, value: Seq[_]) => new LLFilterPredicate(name, operator, seqAsJavaList(value))
@@ -67,9 +65,7 @@ case class FilterPredicate(name: String, operator: FilterOperator, value: Any) e
   }
 }
 
-case class CompositeFilter(operator: CompositeFilterOperator, filters: Seq[Filter]) extends Filter {
-
-  def iAmCompositeFilter = null
+case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: Seq[Filter]) extends Filter {
 
   private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
 }
