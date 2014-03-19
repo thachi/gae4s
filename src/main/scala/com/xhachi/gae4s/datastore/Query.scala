@@ -14,18 +14,16 @@ import com.google.appengine.api.datastore.{Query => LLQuery}
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
                                                                          datastore: Datastore,
                                                                          meta: M,
+                                                                         ancestorOption: Option[Key[_]] = None,
                                                                          filterOption: Option[Filter] = None,
                                                                          sorts: Seq[Sort] = Nil
                                                                          ) {
-  def filter(filters: (M => Filter)): Query[E, M] = {
-    val f: Option[Filter] = Some(filters(meta))
-    copy(filterOption = f)
-  }
 
-  def sort(sort: (M => Sort), sorts: (M => Sort)*): Query[E, M] = {
-    val s: Seq[Sort] = sort(meta) :: sorts.map(_(meta)).toList
-    copy(sorts = s)
-  }
+  def ancestor(ancestor: Key[_]): Query[E, M] = copy(ancestorOption = Some(ancestor))
+
+  def filter(filters: (M => Filter)): Query[E, M] = copy(filterOption = Some(filters(meta)))
+
+  def sort(sort: (M => Sort), sorts: (M => Sort)*): Query[E, M] = copy(sorts = sort(meta) :: sorts.map(_(meta)).toList)
 
   def count = datastore.count(this)
 
@@ -36,6 +34,7 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
   private[datastore] def toLLQuery(keysOnly: Boolean): LLQuery = {
     val query = new LLQuery(meta.kind)
     if (keysOnly) query.setKeysOnly() else query.clearKeysOnly()
+    if (ancestorOption.isDefined) query.setAncestor(ancestorOption.get.key)
     if (filterOption.isDefined) query.setFilter(filterOption.get.toLLFilter)
     sorts.foreach(s => query.addSort(s.name, s.direction))
     query

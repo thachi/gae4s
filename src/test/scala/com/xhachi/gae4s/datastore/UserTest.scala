@@ -1,10 +1,11 @@
 package com.xhachi.gae4s.datastore
 
 import java.util.Date
-import com.google.appengine.api.datastore
+import com.google.appengine.api.datastore.{Entity => LLEntity}
 import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.datastore.User.UserMeta
 
 
 class UserTest extends FunSuite with AppEngineTestSuite {
@@ -55,7 +56,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("propertyが正しいか") {
-    val filter = UserMeta.name #< "a"
+    val filter = new UserMeta().name #< "a"
     filter.toLLFilter
   }
 
@@ -154,51 +155,52 @@ case class User(
 
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
-object UserMeta extends UserMeta
-
-class UserMeta private() extends EntityMeta[User] {
-
-  val kind = "com.example.User"
-
-  val key = new KeyProperty("key", this)
-  val name = new StringProperty("name") with IndexedProperty[String]
-  val height = new IntProperty("height") with IndexedProperty[Int]
-  val weight = new IntProperty("weight") with IndexedProperty[Int]
-  val mobilePhone = new OptionProperty(new StringProperty("mobilePhone"))
-  val webInfo = new SerializableProperty[WebInfo]("webInfo")
-  val createAt = new DateProperty("createAt")
-  val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
-
-
-  override def fromLLEntity(entity: datastore.Entity): User = {
-    User(
-      Key(entity.getKey),
-      name.getFromStore(entity),
-      height.getFromStore(entity),
-      weight.getFromStore(entity),
-      mobilePhone.getFromStore(entity),
-      webInfo.getFromStore(entity),
-      createAt.getFromStore(entity),
-      deleted.getFromStore(entity)
-    )
-  }
-
-  override def toLLEntity(entity: User): datastore.Entity = {
-    implicit val e = createLLEntity(entity)
-    name.setToStore(entity.name)
-    height.setToStore(entity.height)
-    weight.setToStore(entity.weight)
-    createAt.setToStore(entity.createdAt)
-    webInfo.setToStore(entity.webInfo)
-    deleted.setToStore(entity.deleted)
-    e
-  }
-
-}
 
 object User extends Storable with Queryable with Mutable with NamedKey with IdentifiableKey with AutoAllocateKey {
   type E = User
   type M = UserMeta
   val datastore = Datastore
-  implicit val meta = UserMeta
+  implicit val meta = new UserMeta
+
+
+  class UserMeta extends EntityMeta[User] {
+
+    val kind = "com.example.User"
+
+    val key = new KeyProperty("key", this)
+    val name = new StringProperty("name") with IndexedProperty[String]
+    val height = new IntProperty("height") with IndexedProperty[Int]
+    val weight = new IntProperty("weight") with IndexedProperty[Int]
+    val mobilePhone = new OptionProperty(new StringProperty("mobilePhone"))
+    val webInfo = new SerializableProperty[WebInfo]("webInfo")
+    val createAt = new DateProperty("createAt")
+    val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
+
+
+    override def fromLLEntity(entity: LLEntity): User = {
+      User(
+        Key(entity.getKey),
+        name.getFromStore(entity),
+        height.getFromStore(entity),
+        weight.getFromStore(entity),
+        mobilePhone.getFromStore(entity),
+        webInfo.getFromStore(entity),
+        createAt.getFromStore(entity),
+        deleted.getFromStore(entity)
+      )
+    }
+
+    override def toLLEntity(entity: User): LLEntity = {
+      implicit val e = createLLEntity(entity)
+      name.setToStore(entity.name)
+      height.setToStore(entity.height)
+      weight.setToStore(entity.weight)
+      createAt.setToStore(entity.createdAt)
+      webInfo.setToStore(entity.webInfo)
+      deleted.setToStore(entity.deleted)
+      e
+    }
+
+  }
+
 }
