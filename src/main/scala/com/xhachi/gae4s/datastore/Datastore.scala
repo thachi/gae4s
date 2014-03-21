@@ -7,7 +7,7 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def getOption[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Option[E] =
     try {
-      Some(meta.fromLLEntity(service.get(key.key)))
+      Some(meta.toEntity(service.get(key.key)))
     } catch {
       case e: EntityNotFoundException => None
     }
@@ -50,12 +50,12 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def asSeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[E] = {
     val llQuery = query.toLLQuery(keysOnly = false)
-    service.prepare(llQuery).asIterable.map(query.meta.fromLLEntity).toSeq
+    service.prepare(llQuery).asIterable.map(query.meta.toEntity(_)).toSeq
   }
 
   def asSingle[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): E = {
     val llQuery: LLQuery = query.toLLQuery(keysOnly = false)
-    query.meta.fromLLEntity(service.prepare(llQuery).asSingleEntity())
+    query.meta.toEntity(service.prepare(llQuery).asSingleEntity())
   }
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {

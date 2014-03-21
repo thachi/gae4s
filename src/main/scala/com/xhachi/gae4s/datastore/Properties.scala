@@ -155,11 +155,12 @@ trait StringStoreProperty[P] extends SimpleProperty[P] {
   def fromString(value: String): P
 
   final override def toStoreProperty(p: P): Any = {
-    val value: String = toString(p)
-    val bytes = value.getBytes("UTF-8")
-    if (bytes.length < Property.ShortLimit) value
-    else if (bytes.length < Property.LongLimit) new Text(value)
-    else throw createToConversionException(value)
+    toString(p) match {
+      case value: String if (value.length < Property.ShortLimit) => value
+      case value: String if (value.length < Property.LongLimit) => new Text(value)
+      case value: String => throw new PropertyConversionException(name + " property is too long")
+      case _ => null
+    }
   }
 
   final override def fromStoreProperty(value: Any): P = {

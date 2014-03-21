@@ -1,6 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-import java.util.Date
 import com.google.appengine.api.datastore.{Entity => LLEntity}
 import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
@@ -13,9 +12,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
   def createTaroJiroSaburo = {
-    val tato = User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90, mobilePhone = Some("090-xxxx-xxxx"))
-    val jiro = User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
-    val saburo = User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, mobilePhone = Some("080-yyyy-yyyy"), deleted = true)
+    val tato = new User(User.createKey("key_name_1"), "Taro", height = 190, weight = 90, mobilePhone = Some("090-xxxx-xxxx"))
+    val jiro = new User(User.createKey("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
+    val saburo = new User(User.createKey("key_name_3"), "Saburo", height = 150, weight = 120, mobilePhone = Some("080-yyyy-yyyy"), deleted = true)
     User.create(tato)
     User.create(jiro)
     User.create(saburo)
@@ -23,7 +22,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putしてcountとasSeqとasKeySeqの件数がすべて1であること") {
-    val s = User(User.createKey("key_name"), "Hoge")
+    val s = new User(User.createKey("key_name"), "Hoge")
     User.create(s)
 
     val count = User.query.count
@@ -36,23 +35,70 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   test("putしてgetして等しいこと") {
     val key: Key[User] = User.createKey("key_name")
-    val expected = User(key, "Hoge")
+    val expected = new User(key, "Hoge")
     User.create(expected)
 
     val actual = User.get(key)
-    assert(actual == expected)
+    assert(actual.key == expected.key)
+    assert(actual.name == expected.name)
   }
+
+  test("createしてgetしてversionが1、updateして2であること") {
+    val key: Key[User] = User.createKey("key_name")
+    val u1 = new User(key, "Hoge")
+    assert(u1.version == 0L)
+
+    User.create(u1)
+    val u2 = User.get(key)
+    assert(u2.version == 1L)
+
+    User.update(u2)
+    val u3 = User.get(key)
+    assert(u3.version == 2L)
+  }
+
+  test("createしてgetしてcreatedAtと設定され、updateしてcreatedAtが変更されないこと") {
+    val key: Key[User] = User.createKey("key_name")
+    val u1 = new User(key, "Hoge")
+    assert(u1.createdAt.isEmpty)
+
+    User.create(u1)
+    val u2 = User.get(key)
+    assert(u2.createdAt.isDefined)
+
+    User.update(u2)
+    val u3 = User.get(key)
+    assert(u3.createdAt.isDefined)
+    assert(u3.createdAt.get == u2.createdAt.get)
+  }
+
+  test("createしてgetしてupdatedAtと設定され、updateしてupdatedAtが変更されること") {
+    val key: Key[User] = User.createKey("key_name")
+    val u1 = new User(key, "Hoge")
+    assert(u1.updatedAt.isEmpty)
+
+    User.create(u1)
+    val u2 = User.get(key)
+    assert(u2.updatedAt.isDefined)
+
+    Thread.sleep(1)
+    User.update(u2)
+    val u3 = User.get(key)
+    assert(u3.updatedAt.isDefined)
+    assert(u3.updatedAt.get != u2.updatedAt.get)
+  }
+
 
   test("queryを試す") {
     val key: Key[User] = User.createKey("key_name")
-    val expected = User(key, "Hoge")
+    val expected = new User(key, "Hoge")
     User.create(expected)
 
     assert(User.query.count == 1)
 
     val seq = User.query.asSeq
     assert(seq.size == 1)
-    assert(seq.head == expected)
+    assert(seq.head.key == expected.key)
   }
 
   test("propertyが正しいか") {
@@ -142,16 +188,15 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
 }
 
-case class User(
-                 key: Key[User],
-                 name: String,
-                 height: Int = 0,
-                 weight: Int = 0,
-                 mobilePhone: Option[String] = None,
-                 webInfo: WebInfo = WebInfo(),
-                 createdAt: Date = new Date,
-                 deleted: Boolean = false
-                 ) extends Entity[User]
+class User(
+            val key: Key[User],
+            var name: String = "",
+            var height: Int = 0,
+            var weight: Int = 0,
+            var mobilePhone: Option[String] = None,
+            var webInfo: WebInfo = WebInfo(),
+            var deleted: Boolean = false
+            ) extends RootEntity[User] with CreatedAt with Version with UpdatedAt
 
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
@@ -163,7 +208,7 @@ object User extends Storable with Queryable with Mutable with NamedKey with Iden
   implicit val meta = new UserMeta
 
 
-  class UserMeta extends EntityMeta[User] {
+  class UserMeta extends EntityMeta[User] with CreatedAtMeta with UpdatedAtMeta with VersionMeta {
 
     val kind = "com.example.User"
 
@@ -173,34 +218,28 @@ object User extends Storable with Queryable with Mutable with NamedKey with Iden
     val weight = new IntProperty("weight") with IndexedProperty[Int]
     val mobilePhone = new OptionProperty(new StringProperty("mobilePhone"))
     val webInfo = new SerializableProperty[WebInfo]("webInfo")
-    val createAt = new DateProperty("createAt")
     val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
 
+    override def createEntity(e: LLEntity) = new User(Key(e.getKey))
 
-    override def fromLLEntity(entity: LLEntity): User = {
-      User(
-        Key(entity.getKey),
-        name.getFromStore(entity),
-        height.getFromStore(entity),
-        weight.getFromStore(entity),
-        mobilePhone.getFromStore(entity),
-        webInfo.getFromStore(entity),
-        createAt.getFromStore(entity),
-        deleted.getFromStore(entity)
-      )
+    addApplyFromLLEntity {
+      (from: LLEntity, to: User) =>
+        to.name = name.getFromStore(from)
+        to.height = height.getFromStore(from)
+        to.weight = weight.getFromStore(from)
+        to.mobilePhone = mobilePhone.getFromStore(from)
+        to.webInfo = webInfo.getFromStore(from)
+        to.deleted = deleted.getFromStore(from)
     }
 
-    override def toLLEntity(entity: User): LLEntity = {
-      implicit val e = createLLEntity(entity)
-      name.setToStore(entity.name)
-      height.setToStore(entity.height)
-      weight.setToStore(entity.weight)
-      createAt.setToStore(entity.createdAt)
-      webInfo.setToStore(entity.webInfo)
-      deleted.setToStore(entity.deleted)
-      e
+    addApplyToLLEntity {
+      (entity: User, e: LLEntity) =>
+        name.setToStore(entity.name)(e)
+        height.setToStore(entity.height)(e)
+        weight.setToStore(entity.weight)(e)
+        webInfo.setToStore(entity.webInfo)(e)
+        deleted.setToStore(entity.deleted)(e)
     }
-
   }
 
 }

@@ -1,8 +1,10 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Entity => LLEntity}
+import java.util.Date
 
-trait Entity[E <: Entity[E]] {
+
+sealed trait Entity[E <: Entity[E]] {
 
   final def keyOption: Option[Key[E]] = key match {
     case k: Key[E] => Some(k)
@@ -13,17 +15,31 @@ trait Entity[E <: Entity[E]] {
 
 }
 
-trait EntityMeta[E <: Entity[E]]  {
+trait RootEntity[E <: Entity[E]] extends Entity[E]
+
+trait LeafEntity[E <: Entity[E]] extends Entity[E] {
+  type ParentEntity <: Entity[ParentEntity]
+}
+
+
+trait EntityMeta[E <: Entity[E]] extends ApplyProperty {
+  type Entity = E
 
   def kind: String
 
-  def toLLEntity(entity: E): LLEntity
+  protected def createEntity(entity: LLEntity): E
 
-  def fromLLEntity(entity: LLEntity): E
-
-  def createLLEntity(entity: E) = entity.keyOption match {
-    case Some(k) => new LLEntity(k.key)
-    case None => new LLEntity(entity.getClass.getName)
+  def toEntity(entity: LLEntity) : Entity = {
+    val e = createEntity(entity)
+    applyFromLLEntity(entity, e)
+    e
   }
+
+  def toLLEntity(entity: E): LLEntity = {
+    val e = new LLEntity(entity.key.key)
+    applyToLLEntity(entity, e)
+    e
+  }
+
 
 }

@@ -45,7 +45,7 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putできること") {
-    val s = User(User.createKey("key_name"), "Hoge")
+    val s = new User(User.createKey("key_name"), "Hoge")
     Datastore.put(s)
   }
 
@@ -58,7 +58,7 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
     val count1 = Datastore.count(Datastore.query[User, UserMeta])
     assert(count1 == 0)
 
-    val s = User(User.createKey("key_name"), "Hoge")
+    val s = new User(User.createKey("key_name"), "Hoge")
     Datastore.put(s)
 
     val count2 = Datastore.count(Datastore.query[User, UserMeta])
@@ -66,7 +66,7 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putしてcountとasSeqの件数が等しいこと") {
-    val s = User(User.createKey("key_name"), "Hoge")
+    val s = new User(User.createKey("key_name"), "Hoge")
     Datastore.put(s)
 
     val count = Datastore.count(Datastore.query[User, UserMeta])
@@ -76,11 +76,15 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
 
   test("putしてgetして等しいこと") {
     val key: Key[User] = User.createKey("key_name")
-    val expected = User(key, "Hoge")
+    val expected = new User(key, "Hoge")
     Datastore.put(expected)
 
     val actual = Datastore.get(key)
-    assert(actual == expected)
+    assert(actual.name == expected.name)
+    assert(actual.height == expected.height)
+    assert(actual.deleted == expected.deleted)
+    assert(actual.createdAt.isDefined)
+
   }
 
 }
