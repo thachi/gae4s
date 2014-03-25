@@ -11,7 +11,7 @@ object Gae4sBuild extends Build {
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       scalaVersion := "2.10.3",
       organization := "com.xhachi.appbase",
-      version := "0.2-SNAPSNOT",
+      version := "0.3-SNAPSNOT",
       scalaVersion := "2.10.3",
       parallelExecution in Test := false
     )
