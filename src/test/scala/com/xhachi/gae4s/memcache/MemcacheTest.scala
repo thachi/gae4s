@@ -31,6 +31,20 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     assert(actual.get == 123)
   }
 
+  test("MemcacheにputしたものがgetOrElseで正常に取得できること") {
+    Memcache.put("key", 123)
+    val actual = Memcache.getOrElse[Int]("key", 999)
+
+    assert(actual == 123)
+  }
+
+  test("MemcacheにputしてないものがgetOrElseで正常に取得できること") {
+    val actual = Memcache.getOrElse[Int]("key", 999)
+
+    assert(actual == 999)
+  }
+
+
   test("Memcacheにputしてgetすることができること（case class）") {
     Memcache.put("key", StoreSample("Takashi", 99))
     val actual = Memcache.get[StoreSample]("key")
