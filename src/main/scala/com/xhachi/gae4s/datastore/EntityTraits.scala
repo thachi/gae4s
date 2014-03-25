@@ -35,7 +35,7 @@ trait CreatedAt {
 
 }
 
-trait CreateAtMeta extends ApplyProperty {
+trait CreatedAtMeta extends ApplyProperty {
   type Entity <: CreatedAt
 
   final val createdAt = new OptionProperty(new DateProperty("createdAt"))
@@ -60,7 +60,7 @@ trait UpdatedAt {
 
 }
 
-trait UpdateAtMeta extends ApplyProperty {
+trait UpdatedAtMeta extends ApplyProperty {
   type Entity <: UpdatedAt
 
   final val updatedAt = new OptionProperty(new DateProperty("updatedAt"))

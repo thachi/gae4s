@@ -43,6 +43,8 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def query[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) = Query[E, M](this, meta)
 
+  def query[E <: Entity[E], M <: EntityMeta[E]](ancestor: Key[_])(implicit meta: M) = Query[E, M](this, meta, Some(ancestor))
+
   def count[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Int = {
     val llQuery = query.toLLQuery(keysOnly = false)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
@@ -65,11 +67,18 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = Key[E](name)
 
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], name: String)(implicit meta: M): Key[E] = Key[E](parent, name)
+
   def createKey[E <: Entity[E], M <: EntityMeta[E]](id: Long)(implicit meta: M): Key[E] = Key[E](id)
 
-  def allocateKey[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M): Key[E] = {
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], id: Long)(implicit meta: M): Key[E] = Key[E](parent, id)
 
+  def allocateKey[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M): Key[E] = {
     Key[E](service.allocateIds(meta.kind, 1).getStart.getId)
+  }
+
+  def allocateKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_])(implicit meta: M): Key[E] = {
+    Key[E](parent, service.allocateIds(meta.kind, 1).getStart.getId)
   }
 
 }
@@ -80,41 +89,66 @@ object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) 
 }
 
 
-
-trait Storable {
+sealed trait EntityStore {
   protected type E <: Entity[E]
   protected type M <: EntityMeta[E]
-  protected implicit val meta: M
+
+  protected implicit def meta: M
 
   protected def datastore: Datastore
-
-  def get(key: Key[E]) = datastore.get(key)
 
   def create(e: E) = datastore.create(e)
 }
 
-trait Single extends Storable {
-  def createSingleKey: Key[E] = Datastore.createKey[E, M](1)
-  def getSingle: E = Datastore.get(createSingleKey)
+trait RootEntityStore extends EntityStore {
+
 }
 
-trait NamedKey extends Storable {
-  def createKey(name: String) = Datastore.createKey[E, M](name)
+trait LeafEntityStore[P <: Entity[P]] extends EntityStore {
+  def parentKey: Key[P]
 }
 
-trait IdentifiableKey extends Storable {
-  def createKey(id: Long) = Datastore.createKey[E, M](id)
+trait KeyedStore extends EntityStore {
+  def get(key: Key[E]) = datastore.get(key)
 }
 
-trait AutoAllocateKey extends Storable {
-  def allocateKey = Datastore.allocateKey[E, M]
+trait SingleStore extends IdentifiableKeyStore {
+
+  def createSingleKey: Key[E] = createKey(1)
+
+  def getSingle: E = datastore.get(createSingleKey)
+}
+
+trait NamedStore extends KeyedStore {
+
+  def createKey(name: String) = this match {
+    case s: RootEntityStore => datastore.createKey[E, M](name)
+    case s: LeafEntityStore[_] => datastore.createKey[E, M](s.parentKey, name)
+  }
+}
+
+trait IdentifiableKeyStore extends KeyedStore {
+  def createKey(id: Long) = this match {
+    case s: RootEntityStore => datastore.createKey[E, M](id)
+    case s: LeafEntityStore[_] => datastore.createKey[E, M](s.parentKey, id)
+  }
+}
+
+trait AutoAllocateKeyStore extends KeyedStore {
+  def allocateKey = this match {
+    case s: RootEntityStore => datastore.allocateKey[E, M]
+    case s: LeafEntityStore[_] => datastore.allocateKey[E, M](s.parentKey)
+  }
 }
 
 
-trait Queryable extends Storable {
-  def query: Query[E, M] = datastore.query[E, M]
+trait QueryableStore extends EntityStore {
+  def query: Query[E, M] =  this match {
+    case s: LeafEntityStore[_] if s.parentKey != null => datastore.query[E, M](s.parentKey)
+    case _ => datastore.query[E, M]
+  }
 }
 
-trait Mutable extends Storable {
+trait UpdatableStore extends EntityStore {
   def update(e: E) = datastore.update(e)
 }

@@ -39,8 +39,7 @@ object Key {
   }
 
   def apply[E <: Entity[E]](id: Long)(implicit meta: EntityMeta[E]) = {
-    val key = createKey(meta.kind, id)
-    new Key[E](key)
+    new Key[E](createKey(meta.kind, id))
   }
 
   def apply[E <: Entity[E]](parent: Key[_], name: String)(implicit meta: EntityMeta[E]) = {
@@ -58,6 +57,7 @@ object Key {
   def toKeyStrong(key: Key[_]): String = keyToString(key.key)
 
 }
+
 
 /*
 sealed trait Key[E] {

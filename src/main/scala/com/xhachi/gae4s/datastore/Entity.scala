@@ -17,8 +17,8 @@ sealed trait Entity[E <: Entity[E]] {
 
 trait RootEntity[E <: Entity[E]] extends Entity[E]
 
-trait LeafEntity[E <: Entity[E]] extends Entity[E] {
-  type ParentEntity <: Entity[ParentEntity]
+trait LeafEntity[E <: Entity[E], P <: Entity[P]] extends Entity[E] {
+
 }
 
 
@@ -27,10 +27,10 @@ trait EntityMeta[E <: Entity[E]] extends ApplyProperty {
 
   def kind: String
 
-  protected def createEntity(entity: LLEntity): E
+  protected def createEntity(key: Key[E]): E
 
   def toEntity(entity: LLEntity) : Entity = {
-    val e = createEntity(entity)
+    val e = createEntity(Key(entity.getKey))
     applyFromLLEntity(entity, e)
     e
   }

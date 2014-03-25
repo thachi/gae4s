@@ -201,7 +201,7 @@ class User(
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
 
-object User extends Storable with Queryable with Mutable with NamedKey with IdentifiableKey with AutoAllocateKey {
+object User extends RootEntityStore with QueryableStore with UpdatableStore with NamedStore with IdentifiableKeyStore with AutoAllocateKeyStore {
   type E = User
   type M = UserMeta
   val datastore = Datastore
@@ -220,7 +220,7 @@ object User extends Storable with Queryable with Mutable with NamedKey with Iden
     val webInfo = new SerializableProperty[WebInfo]("webInfo")
     val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
 
-    override def createEntity(e: LLEntity) = new User(Key(e.getKey))
+    override def createEntity(key: Key[E]) = new User(key)
 
     addApplyFromLLEntity {
       (from: LLEntity, to: User) =>
