@@ -4,7 +4,7 @@ import com.google.appengine.api.datastore.{Entity => LLEntity}
 import java.util.Date
 
 
-sealed trait Entity[E <: Entity[E]] {
+trait Entity[E <: Entity[E]] {
 
   final def keyOption: Option[Key[E]] = key match {
     case k: Key[E] => Some(k)
@@ -15,9 +15,7 @@ sealed trait Entity[E <: Entity[E]] {
 
 }
 
-trait RootEntity[E <: Entity[E]] extends Entity[E]
-
-trait LeafEntity[E <: Entity[E], P <: Entity[P]] extends Entity[E] {
+trait DescendantEntity[E <: Entity[E], P <: Entity[P]] extends Entity[E] {
 
 }
 

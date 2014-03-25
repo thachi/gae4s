@@ -73,7 +73,7 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], id: Long)(implicit meta: M): Key[E] = Key[E](parent, id)
 
-  def allocateKey[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M): Key[E] = {
+  def allocateKey[E <: Entity[E], M <: EntityMeta[E]]()(implicit meta: M): Key[E] = {
     Key[E](service.allocateIds(meta.kind, 1).getStart.getId)
   }
 
@@ -89,66 +89,3 @@ object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) 
 }
 
 
-sealed trait EntityStore {
-  protected type E <: Entity[E]
-  protected type M <: EntityMeta[E]
-
-  protected implicit def meta: M
-
-  protected def datastore: Datastore
-
-  def create(e: E) = datastore.create(e)
-}
-
-trait RootEntityStore extends EntityStore {
-
-}
-
-trait LeafEntityStore[P <: Entity[P]] extends EntityStore {
-  def parentKey: Key[P]
-}
-
-trait KeyedStore extends EntityStore {
-  def get(key: Key[E]) = datastore.get(key)
-}
-
-trait SingleStore extends IdentifiableKeyStore {
-
-  def createSingleKey: Key[E] = createKey(1)
-
-  def getSingle: E = datastore.get(createSingleKey)
-}
-
-trait NamedStore extends KeyedStore {
-
-  def createKey(name: String) = this match {
-    case s: RootEntityStore => datastore.createKey[E, M](name)
-    case s: LeafEntityStore[_] => datastore.createKey[E, M](s.parentKey, name)
-  }
-}
-
-trait IdentifiableKeyStore extends KeyedStore {
-  def createKey(id: Long) = this match {
-    case s: RootEntityStore => datastore.createKey[E, M](id)
-    case s: LeafEntityStore[_] => datastore.createKey[E, M](s.parentKey, id)
-  }
-}
-
-trait AutoAllocateKeyStore extends KeyedStore {
-  def allocateKey = this match {
-    case s: RootEntityStore => datastore.allocateKey[E, M]
-    case s: LeafEntityStore[_] => datastore.allocateKey[E, M](s.parentKey)
-  }
-}
-
-
-trait QueryableStore extends EntityStore {
-  def query: Query[E, M] =  this match {
-    case s: LeafEntityStore[_] if s.parentKey != null => datastore.query[E, M](s.parentKey)
-    case _ => datastore.query[E, M]
-  }
-}
-
-trait UpdatableStore extends EntityStore {
-  def update(e: E) = datastore.update(e)
-}

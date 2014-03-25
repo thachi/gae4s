@@ -10,10 +10,10 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 
   test("ダイアリー") {
 
-    val user1 = new User(User.allocateKey)
-    User.create(user1)
-    val user2 = new User(User.allocateKey)
-    User.create(user2)
+    val user1 = new User(UserStore.allocateKey)
+    UserStore.create(user1)
+    val user2 = new User(UserStore.allocateKey)
+    UserStore.create(user2)
 
 
     val user1DiaryStore = new UserDiaryStore(user1.key)
@@ -64,15 +64,13 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
     assert(UserDiaryStore.query.count == 3)
 
 
-
   }
 }
 
 
 final class UserDiary(
                        val key: Key[UserDiary]
-
-                       ) extends LeafEntity[UserDiary, User] {
+                       ) extends Entity[UserDiary] {
 
 }
 
@@ -88,9 +86,14 @@ class UserDiaryMeta extends EntityMeta[UserDiary] {
 }
 
 
-class UserDiaryStore(val parentKey: Key[User]) extends LeafEntityStore[User] with QueryableStore with UpdatableStore with AutoAllocateKeyStore {
-  override type M = UserDiaryMeta
-  override type E = UserDiary
+class UserDiaryStore(val parentKey: Key[User])
+  extends DescendantEntityStore[UserDiary, User]
+  with QueryableStore
+  with UpdatableStore
+  with AutoAllocateKeyStore {
+
+  override type ENTITY = UserDiary
+  override type META = UserDiaryMeta
 
   override protected def datastore = Datastore
 
