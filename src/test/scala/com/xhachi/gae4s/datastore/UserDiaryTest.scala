@@ -16,8 +16,8 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
     UserStore.create(user2)
 
 
-    val user1DiaryStore = new UserDiaryStore(user1.key)
-    val user2DiaryStore = new UserDiaryStore(user2.key)
+    val user1DiaryStore = UserDiaryStore(user1.key)
+    val user2DiaryStore = UserDiaryStore(user2.key)
 
     {
       val diaryKey = user1DiaryStore.allocateKey
@@ -60,10 +60,7 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 
     assert(user1DiaryStore.query.count == 2)
     assert(user2DiaryStore.query.count == 1)
-
     assert(UserDiaryStore.query.count == 3)
-
-
   }
 }
 
@@ -86,7 +83,7 @@ class UserDiaryMeta extends EntityMeta[UserDiary] {
 }
 
 
-class UserDiaryStore(val parentKey: Key[User])
+class UserDiaryStore private(val parentKey: Key[User])
   extends DescendantEntityStore[UserDiary, User]
   with QueryableStore
   with UpdatableStore
@@ -102,9 +99,5 @@ class UserDiaryStore(val parentKey: Key[User])
 
 
 object UserDiaryStore extends UserDiaryStore(null) {
-
+  def apply(parentKey: Key[User]) = new UserDiaryStore(parentKey)
 }
-
-
-
-
