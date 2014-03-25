@@ -12,6 +12,7 @@ import com.google.appengine.api.users._
 import com.google.appengine.api.blobstore._
 import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
 import scala.reflect.ClassTag
+import scala.Some
 
 object Property {
   val ShortLimit = 500
@@ -264,5 +265,20 @@ class SerializableProperty[E <: Serializable](protected[datastore] val name: Str
     baos.close()
     bytes
   }
+}
+
+class JsonProperty[E <: AnyRef : Manifest](protected[datastore] val name: String) extends StringStoreProperty[E] {
+
+  import org.json4s._
+  import org.json4s.native.Serialization
+  import org.json4s.native.Serialization.write
+  import org.json4s.native.JsonMethods._
+
+  implicit val formats = Serialization.formats(NoTypeHints)
+
+  override def fromString(value: String): E = parse(value).extract[E]
+
+  override def toString(value: E): String = write[E](value)
+
 }
 

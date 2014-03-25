@@ -56,3 +56,18 @@ class SerializablePropertyTest extends FunSuite {
   }
 }
 
+
+class JsonPropertyTest extends FunSuite {
+
+  test("Case ClassでfromStoreProperty->toStorePropertyが正しく動くこと") {
+    val property: JsonProperty[SampleCaseClass] = new JsonProperty[SampleCaseClass]("name")
+    val cc = SampleCaseClass("hoge hoge")
+    val storedData = property.toStoreProperty(cc)
+
+    assert(storedData == """{"name":"hoge hoge"}""")
+
+    val actual = property.fromStoreProperty(storedData)
+
+    assert(actual == cc)
+  }
+}
