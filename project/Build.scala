@@ -10,8 +10,8 @@ object Gae4sBuild extends Build {
       sourceGenerators in Compile <+= buildInfo,
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       scalaVersion := "2.10.3",
-      organization := "com.xhachi.appbase",
-      version := "0.2",
+      organization := "com.xhachi",
+      version := "0.3",
       scalaVersion := "2.10.3",
       parallelExecution in Test := false
     )
