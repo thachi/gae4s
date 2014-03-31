@@ -11,7 +11,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
   test("データを保存し取得できること") {
 
-    val store = new DataEntityStore[SampleData] with UpdatableStore
+    val store = new DataEntityStore[SampleData] with NamedStore with UpdatableStore
     val key: Key[DataEntity[SampleData]] = store.createKey("hoge")
     val before = new DataEntity[SampleData](key)
     before.data = Some(SampleData("Takashi", 5))
