@@ -11,7 +11,7 @@ object Gae4sBuild extends Build {
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       scalaVersion := "2.10.3",
       organization := "com.xhachi",
-      version := "0.3-SNAPSNOT",
+      version := "0.5-SNAPSNOT",
       publishTo := Some(Resolver.file("gae4s",file("/Users/takashi/Documents/xhachi/maven/maven"))(Patterns(true, Resolver.mavenStyleBasePattern))),
       parallelExecution in Test := false
     )
