@@ -145,7 +145,6 @@ class CategoryProperty(protected[datastore] val name: String) extends SimpleProp
 
 class RatingProperty(protected[datastore] val name: String) extends SimpleProperty[Rating]
 
-
 class BlobKeyProperty(protected[datastore] val name: String) extends SimpleProperty[BlobKey]
 
 

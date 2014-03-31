@@ -26,7 +26,9 @@ class Key[E] private(private[datastore] val key: LLKey) {
   override def equals(o: Any) = o match {
     case o: Key[E] => key.equals(o.key)
   }
+
   override def hashCode = key.hashCode
+
   override def toString = key.toString
 }
 

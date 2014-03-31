@@ -1,6 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore.Query.{Filter => LLFilter}
 import com.google.appengine.api.datastore.Query.{FilterPredicate => LLFilterPredicate}
@@ -9,7 +8,6 @@ import com.google.appengine.api.datastore.Query.{SortPredicate => LLSortPredicat
 import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter}
 import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, SortDirection, FilterOperator}
 import com.google.appengine.api.datastore.{Query => LLQuery}
-
 
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
                                                                          datastore: Datastore,
@@ -39,7 +37,6 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
     sorts.foreach(s => query.addSort(s.name, s.direction))
     query
   }
-
 }
 
 
@@ -67,6 +64,7 @@ case class FilterPredicate(name: String, operator: FilterOperator, value: Any) e
 case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: Seq[Filter]) extends Filter {
 
   private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
+
 }
 
 
@@ -75,7 +73,6 @@ trait Sort {
   private[datastore] def name: String
 
   private[datastore] def direction: LLSortDirection
-
 }
 
 case class SortPredicate(name: String, direction: SortDirection) extends Sort {
