@@ -12,7 +12,7 @@ object Gae4sBuild extends Build {
       scalaVersion := "2.10.3",
       organization := "com.xhachi",
       version := "0.3-SNAPSNOT",
-      scalaVersion := "2.10.3",
+      publishTo := Some(Resolver.file("gae4s",file("/Users/takashi/Documents/xhachi/maven/maven"))(Patterns(true, Resolver.mavenStyleBasePattern))),
       parallelExecution in Test := false
     )
 
