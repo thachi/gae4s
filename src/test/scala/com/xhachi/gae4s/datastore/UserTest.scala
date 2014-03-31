@@ -215,12 +215,10 @@ class UserStore
   implicit val meta = new UserMeta
 }
 
-object UserStore extends UserStore()
+object UserStore extends UserStore
 
 
 class UserMeta extends EntityMeta[User] with CreatedAtMeta with UpdatedAtMeta with VersionMeta {
-
-  val kind = "com.example.User"
 
   val key = new KeyProperty("key")
   val name = new StringProperty("name") with IndexedProperty[String]

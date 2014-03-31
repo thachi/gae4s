@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Entity => LLEntity}
+import scala.reflect.ClassTag
 
 
 trait Entity[E <: Entity[E]] {
@@ -14,10 +15,10 @@ trait Entity[E <: Entity[E]] {
 
 }
 
-trait EntityMeta[E <: Entity[E]] extends ApplyProperty {
+abstract class EntityMeta[E <: Entity[E]: ClassTag] extends ApplyProperty {
   type Entity = E
 
-  def kind: String
+  def kind: String = implicitly[ClassTag[E]].runtimeClass.getName
 
   protected def createEntity(key: Key[E]): E
 
