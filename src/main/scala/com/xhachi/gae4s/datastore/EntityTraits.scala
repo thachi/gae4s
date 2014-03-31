@@ -53,7 +53,6 @@ trait CreatedAtMeta extends ApplyProperty {
 
 
 trait UpdatedAt {
-  type E <: UpdatedAt
 
   final var updatedAt: Option[Date] = None
 
