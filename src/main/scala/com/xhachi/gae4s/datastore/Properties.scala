@@ -157,8 +157,8 @@ trait StringStoreProperty[P] extends SimpleProperty[P] {
 
   final override def toStoreProperty(p: P): Any = {
     toString(p) match {
-      case value: String if (value.length < Property.ShortLimit) => value
-      case value: String if (value.length < Property.LongLimit) => new Text(value)
+      case value: String if value.length < Property.ShortLimit => value
+      case value: String if value.length < Property.LongLimit => new Text(value)
       case value: String => throw new PropertyConversionException(name + " property is too long")
       case _ => null
     }
