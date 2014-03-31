@@ -4,16 +4,20 @@ package com.xhachi.gae4s.datastore
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 import KeyFactory._
 
-class Key[E] private(private[datastore] val key: LLKey) {
+final class Key[E] private(private[datastore] val key: LLKey) {
 
   val kind: String = key.getKind
 
-  val name = key.getName match {
+  val name = key.getName
+
+  val nameOption = name match {
     case n: String => Some(n)
     case _ => None
   }
 
-  val id = key.getId match {
+  val id: Long = key.getId
+
+  val idOption = id match {
     case 0 => None
     case i => Some(i)
   }
@@ -23,10 +27,13 @@ class Key[E] private(private[datastore] val key: LLKey) {
     case _ => None
   }
 
-  override def equals(o: Any) = o match {
+  override def equals(other: Any) = other match {
     case o: Key[E] => key.equals(o.key)
+    case _ => false
   }
+
   override def hashCode = key.hashCode
+
   override def toString = key.toString
 }
 
@@ -57,60 +64,3 @@ object Key {
   def toKeyStrong(key: Key[_]): String = keyToString(key.key)
 
 }
-
-
-/*
-sealed trait Key[E] {
-
-  def toLLKey: LLKey
-
-  def parentKey: Option[Key[_]]
-
-}
-
-object Key {
-
-  def fromLLKey[E](key: LLKey) = key
-
-  def toKey[E](key: LLKey): Key[E] = key match {
-    case k if k.getName != null => toNamedKey(key)
-    case _ => toIdentifiedKey(key)
-  }
-
-  def toNamedKey[E](key: LLKey): NamedKey[E] = {
-    if (key.getName == null) throw new IllegalArgumentException("key has no name")
-    key.getParent match {
-      case p: LLKey => {
-        val parentKey = Some(Key[_](p))
-        NamedKey[E](key.getKind, key.getName, parentKey)
-      }
-      case _ => NamedKey[E](key.getKind, key.getName)
-    }
-  }
-
-  def toIdentifiedKey[E](key: LLKey): IdentifiedKey[E] = {
-    if (key.getId == 0) throw new IllegalArgumentException("key has no id")
-    key.getParent match {
-      case p: LLKey => IdentifiedKey[E](key.getKind, key.getId, Some(Key[_](p)))
-      case _ => IdentifiedKey[E](key.getKind, key.getId)
-    }
-  }
-}
-
-case class NamedKey[E](kind: String, name: String, parentKey: Option[Key[_]] = None) extends Key[E] {
-
-  def toLLKey: LLKey = parentKey match {
-    case Some(p) => new LLKey(kind, name, p.toLLKey)
-    case None => new LLKey(kind, name)
-  }
-}
-
-case class IdentifiedKey[E](kind: String, id: Long, parentKey: Option[Key[_]] = None) extends Key[E] {
-
-  def toLLKey: LLKey = parentKey match {
-    case Some(p) => new LLKey(kind, id, p.toLLKey)
-    case None => new LLKey(kind, id)
-  }
-}
-
-*/

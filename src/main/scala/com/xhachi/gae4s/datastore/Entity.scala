@@ -1,7 +1,6 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Entity => LLEntity}
-import java.util.Date
 
 
 trait Entity[E <: Entity[E]] {
@@ -15,11 +14,6 @@ trait Entity[E <: Entity[E]] {
 
 }
 
-trait DescendantEntity[E <: Entity[E], P <: Entity[P]] extends Entity[E] {
-
-}
-
-
 trait EntityMeta[E <: Entity[E]] extends ApplyProperty {
   type Entity = E
 
@@ -27,7 +21,7 @@ trait EntityMeta[E <: Entity[E]] extends ApplyProperty {
 
   protected def createEntity(key: Key[E]): E
 
-  def toEntity(entity: LLEntity) : Entity = {
+  def toEntity(entity: LLEntity): Entity = {
     val e = createEntity(Key(entity.getKey))
     applyFromLLEntity(entity, e)
     e
@@ -38,6 +32,5 @@ trait EntityMeta[E <: Entity[E]] extends ApplyProperty {
     applyToLLEntity(entity, e)
     e
   }
-
 
 }

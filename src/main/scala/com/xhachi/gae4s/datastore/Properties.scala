@@ -1,18 +1,17 @@
 package com.xhachi.gae4s.datastore
 
+import java.util.Date
+
+import scala.reflect.ClassTag
+import scala.Some
+
 import com.google.appengine.api.datastore.{Key => LLKey}
 import com.google.appengine.api.datastore.{Entity => LLEntity}
 import com.google.appengine.api.datastore.Query.FilterOperator._
 import com.google.appengine.api.datastore.Query.SortDirection._
-
-import java.util.Date
-
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users._
 import com.google.appengine.api.blobstore._
-import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
-import scala.reflect.ClassTag
-import scala.Some
 
 object Property {
   val ShortLimit = 500
@@ -82,7 +81,7 @@ class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
   }
 
   override protected[datastore] def toStoreProperty(value: Option[T]): Any = value match {
-    case Some(v) => v
+    case Some(v) => property.toStoreProperty(v)
     case _ => null
   }
 }
@@ -145,7 +144,6 @@ class CategoryProperty(protected[datastore] val name: String) extends SimpleProp
 
 class RatingProperty(protected[datastore] val name: String) extends SimpleProperty[Rating]
 
-
 class BlobKeyProperty(protected[datastore] val name: String) extends SimpleProperty[BlobKey]
 
 
@@ -157,8 +155,8 @@ trait StringStoreProperty[P] extends SimpleProperty[P] {
 
   final override def toStoreProperty(p: P): Any = {
     toString(p) match {
-      case value: String if (value.length < Property.ShortLimit) => value
-      case value: String if (value.length < Property.LongLimit) => new Text(value)
+      case value: String if value.length < Property.ShortLimit => value
+      case value: String if value.length < Property.LongLimit => new Text(value)
       case value: String => throw new PropertyConversionException(name + " property is too long")
       case _ => null
     }
@@ -246,6 +244,8 @@ class ByteArrayProperty(protected[datastore] val name: String) extends BytePrope
 }
 
 class SerializableProperty[E <: Serializable](protected[datastore] val name: String) extends ByteProperty[E] {
+
+  import java.io._
 
   override def fromByte(value: Array[Byte]): E = {
     val bais = new ByteArrayInputStream(value)

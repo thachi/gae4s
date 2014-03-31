@@ -1,7 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import scala.collection.JavaConversions._
-import com.google.appengine.api.datastore.{Entity => LLEntity, Query => LLQuery, _}
+import com.google.appengine.api.datastore.{Query => LLQuery, _}
 
 class Datastore private[datastore](private[datastore] val service: DatastoreService) {
 
@@ -52,7 +52,9 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def asSeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[E] = {
     val llQuery = query.toLLQuery(keysOnly = false)
-    service.prepare(llQuery).asIterable.map(query.meta.toEntity(_)).toSeq
+    service.prepare(llQuery).asIterable.map {
+      e => query.meta.toEntity(e)
+    }.toSeq
   }
 
   def asSingle[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): E = {
@@ -62,7 +64,9 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
     val llQuery = query.toLLQuery(keysOnly = true)
-    service.prepare(llQuery).asIterable.map(e => Key[E](e.getKey)).toSeq
+    service.prepare(llQuery).asIterable.map {
+      e => Key[E](e.getKey)
+    }.toSeq
   }
 
   def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = Key[E](name)

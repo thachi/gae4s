@@ -207,7 +207,7 @@ class UserStore
   with UpdatableStore
   with NamedStore
   with IdentifiableKeyStore
-  with AutoAllocateKeyStore {
+  with AllocatableKeyStore {
 
   override val parentKey = null
   override type ENTITY = User
