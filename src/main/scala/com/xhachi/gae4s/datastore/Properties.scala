@@ -1,18 +1,17 @@
 package com.xhachi.gae4s.datastore
 
+import java.util.Date
+
+import scala.reflect.ClassTag
+import scala.Some
+
 import com.google.appengine.api.datastore.{Key => LLKey}
 import com.google.appengine.api.datastore.{Entity => LLEntity}
 import com.google.appengine.api.datastore.Query.FilterOperator._
 import com.google.appengine.api.datastore.Query.SortDirection._
-
-import java.util.Date
-
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users._
 import com.google.appengine.api.blobstore._
-import java.io.{ObjectInputStream, ByteArrayInputStream, ObjectOutputStream, ByteArrayOutputStream}
-import scala.reflect.ClassTag
-import scala.Some
 
 object Property {
   val ShortLimit = 500
@@ -245,6 +244,8 @@ class ByteArrayProperty(protected[datastore] val name: String) extends BytePrope
 }
 
 class SerializableProperty[E <: Serializable](protected[datastore] val name: String) extends ByteProperty[E] {
+
+  import java.io._
 
   override def fromByte(value: Array[Byte]): E = {
     val bais = new ByteArrayInputStream(value)
