@@ -82,7 +82,7 @@ class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
   }
 
   override protected[datastore] def toStoreProperty(value: Option[T]): Any = value match {
-    case Some(v) => v
+    case Some(v) => property.toStoreProperty(v)
     case _ => null
   }
 }
