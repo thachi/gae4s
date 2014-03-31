@@ -13,29 +13,29 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
 
   test("allocateしたKeyが取得できること") {
     val key = UserStore.allocateKey
-    assert(key.name.isEmpty)
-    assert(key.id.isDefined)
-    assert(key.id.get > 0)
+    assert(key.nameOption.isEmpty)
+    assert(key.idOption.isDefined)
+    assert(key.idOption.get > 0)
   }
 
   test("allocateしたKeyが取得できidが異なること") {
     val key1 = UserStore.allocateKey
     val key2 = UserStore.allocateKey
-    assert(key1.id.get != key2.id.get)
+    assert(key1.idOption.get != key2.idOption.get)
   }
 
   test("IDを指定したKeyが取得できること") {
     val key = UserStore.createKey(1)
-    assert(key.name.isEmpty)
-    assert(key.id.isDefined)
-    assert(key.id.get == 1)
+    assert(key.nameOption.isEmpty)
+    assert(key.idOption.isDefined)
+    assert(key.idOption.get == 1)
   }
 
   test("Nameを指定したKeyが取得できること") {
     val key = UserStore.createKey("key_name")
-    assert(key.id.isEmpty)
-    assert(key.name.isDefined)
-    assert(key.name.get == "key_name")
+    assert(key.idOption.isEmpty)
+    assert(key.nameOption.isDefined)
+    assert(key.nameOption.get == "key_name")
   }
 
 

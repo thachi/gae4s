@@ -4,16 +4,20 @@ package com.xhachi.gae4s.datastore
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 import KeyFactory._
 
-class Key[E] private(private[datastore] val key: LLKey) {
+final class Key[E] private(private[datastore] val key: LLKey) {
 
   val kind: String = key.getKind
 
-  val name = key.getName match {
+  val name = key.getName
+
+  val nameOption = name match {
     case n: String => Some(n)
     case _ => None
   }
 
-  val id = key.getId match {
+  val id: Long = key.getId
+
+  val idOption = id match {
     case 0 => None
     case i => Some(i)
   }
@@ -23,8 +27,9 @@ class Key[E] private(private[datastore] val key: LLKey) {
     case _ => None
   }
 
-  override def equals(o: Any) = o match {
+  override def equals(other: Any) = other match {
     case o: Key[E] => key.equals(o.key)
+    case _ => false
   }
 
   override def hashCode = key.hashCode

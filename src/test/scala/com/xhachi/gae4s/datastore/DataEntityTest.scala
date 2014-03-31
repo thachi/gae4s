@@ -18,9 +18,9 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
     store.create(before)
     assert(key.kind == "com.xhachi.gae4s.datastore.SampleData")
-    assert(key.id.isEmpty)
-    assert(key.name.isDefined)
-    assert(key.name.get == "hoge")
+    assert(key.idOption.isEmpty)
+    assert(key.nameOption.isDefined)
+    assert(key.nameOption.get == "hoge")
 
     val after = store.get(key)
     assert(after.key == before.key)
