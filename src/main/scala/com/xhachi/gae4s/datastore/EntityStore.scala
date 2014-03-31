@@ -6,11 +6,11 @@ trait EntityStoreBase {
 
   protected implicit def meta: META
 
-  protected def datastore: Datastore
+  protected def datastore: Datastore = Datastore
 
-  val parentKey: Key[_]
+  def parentKey: Key[_] = null
 
-  lazy val parentKeyOption: Option[Key[_]] = parentKey match {
+  def parentKeyOption: Option[Key[_]] = parentKey match {
     case k: Key[_] => Some(k)
     case _ => None
   }

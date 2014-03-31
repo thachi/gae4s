@@ -209,11 +209,9 @@ class UserStore
   with IdentifiableKeyStore
   with AllocatableKeyStore {
 
-  override val parentKey = null
   override type ENTITY = User
   override type META = UserMeta
 
-  val datastore = Datastore
   implicit val meta = new UserMeta
 }
 
@@ -224,7 +222,7 @@ class UserMeta extends EntityMeta[User] with CreatedAtMeta with UpdatedAtMeta wi
 
   val kind = "com.example.User"
 
-  val key = new KeyProperty("key", this)
+  val key = new KeyProperty("key")
   val name = new StringProperty("name") with IndexedProperty[String]
   val height = new IntProperty("height") with IndexedProperty[Int]
   val weight = new IntProperty("weight") with IndexedProperty[Int]

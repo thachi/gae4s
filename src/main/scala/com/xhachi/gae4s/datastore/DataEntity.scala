@@ -16,10 +16,6 @@ class DataEntityStore[D <: AnyRef : ClassTag : Manifest] extends EntityStore[Dat
   override type ENTITY = DataEntity[D]
   override type META = DataEntityMeta[D]
 
-  override val parentKey: Key[_] = null
-
-  override protected def datastore: Datastore = Datastore
-
   override protected implicit def meta: META = new DataEntityMeta[D]
 
   class DataEntityMeta[ENTITY: Manifest] extends EntityMeta[DataEntity[D]] with ApplyProperty {

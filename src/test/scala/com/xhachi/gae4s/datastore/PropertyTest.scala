@@ -1,6 +1,9 @@
 package com.xhachi.gae4s.datastore
 
 import org.scalatest.FunSuite
+import com.xhachi.gae4s.datastore.Key
+import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 
 class LongPropertyTest extends FunSuite {
 
@@ -26,6 +29,24 @@ class LongPropertyTest extends FunSuite {
     assert(property.toStoreProperty(1L) == 1L, "1Lが変換できる")
     assert(property.toStoreProperty(1) == 1L, "1Lが変換できる")
   }
+}
+
+
+class KeyPropertyTest extends FunSuite with AppEngineTestSuite {
+
+  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+
+  test("toStorePropertyとfromStorePropertyが正しいこと") {
+    val m = new UserMeta
+    val expected = Key[User]("hoge")(m)
+    val store = new KeyProperty("name").toStoreProperty(expected)
+
+    assert(store == expected.key)
+
+    val actual= new KeyProperty[User]("name").fromStoreProperty(store)
+    assert(actual == expected)
+  }
+
 }
 
 class EnumPropertyTest extends FunSuite {

@@ -83,7 +83,7 @@ class UserDiaryMeta extends EntityMeta[UserDiary] {
 }
 
 
-class UserDiaryStore private(val parentKey: Key[User])
+class UserDiaryStore private(override val parentKey: Key[User])
   extends EntityStore[UserDiary]
   with QueryableStore
   with UpdatableStore
@@ -91,8 +91,6 @@ class UserDiaryStore private(val parentKey: Key[User])
 
   override type ENTITY = UserDiary
   override type META = UserDiaryMeta
-
-  override protected def datastore = Datastore
 
   override protected implicit val meta = new UserDiaryMeta
 }

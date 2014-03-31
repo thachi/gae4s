@@ -86,7 +86,7 @@ class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
   }
 }
 
-class KeyProperty[E <: Entity[E]](protected[datastore] val name: String, meta: EntityMeta[E]) extends Property[Key[E]] {
+class KeyProperty[E <: Entity[E]](protected[datastore] val name: String) extends Property[Key[E]] {
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
     case k: LLKey => Key[E](k)
