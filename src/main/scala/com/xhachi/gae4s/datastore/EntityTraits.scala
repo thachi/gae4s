@@ -3,7 +3,6 @@ package com.xhachi.gae4s.datastore
 import java.util.Date
 import com.google.appengine.api.datastore.{Entity => LLEntity}
 import scala.collection.mutable.ListBuffer
-import com.xhachi.gae4s.datastore
 
 trait ApplyProperty {
   type Entity

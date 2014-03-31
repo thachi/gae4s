@@ -84,10 +84,10 @@ class UserDiaryMeta extends EntityMeta[UserDiary] {
 
 
 class UserDiaryStore private(val parentKey: Key[User])
-  extends DescendantEntityStore[UserDiary, User]
+  extends EntityStore[UserDiary]
   with QueryableStore
   with UpdatableStore
-  with AutoAllocateKeyStore {
+  with AllocatableKeyStore {
 
   override type ENTITY = UserDiary
   override type META = UserDiaryMeta

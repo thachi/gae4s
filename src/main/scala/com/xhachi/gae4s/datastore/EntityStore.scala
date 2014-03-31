@@ -16,20 +16,12 @@ trait EntityStoreBase {
   }
 
   def create(e: ENTITY) = datastore.create(e)
+
+  def get(key: Key[ENTITY]) = datastore.get(key)
 }
 
 trait EntityStore[E <: Entity[E]] extends EntityStoreBase {
   protected type ENTITY = E
-
-}
-
-trait DescendantEntityStore[E <: Entity[E], P <: Entity[P]]
-  extends EntityStoreBase {
-
-}
-
-trait KeyedStore extends EntityStoreBase {
-  def get(key: Key[ENTITY]) = datastore.get(key)
 }
 
 trait SingleStore extends IdentifiableKeyStore {
@@ -39,21 +31,27 @@ trait SingleStore extends IdentifiableKeyStore {
   def getSingle: ENTITY = datastore.get(createSingleKey)
 }
 
-trait NamedStore extends KeyedStore {
+trait NamedStore extends EntityStoreBase {
+
   def createKey(name: String) = parentKeyOption match {
     case Some(p) => datastore.createKey[ENTITY, META](p, name)
     case _ => datastore.createKey[ENTITY, META](name)
   }
+
+  def get(name: String) = datastore.get(createKey(name))
 }
 
-trait IdentifiableKeyStore extends KeyedStore {
+trait IdentifiableKeyStore extends EntityStoreBase {
+
   def createKey(id: Long) = parentKeyOption match {
     case Some(p) => datastore.createKey[ENTITY, META](p, id)
     case None => datastore.createKey[ENTITY, META](id)
   }
+
+  def get(id: Long) = datastore.get(createKey(id))
 }
 
-trait AutoAllocateKeyStore extends KeyedStore {
+trait AllocatableKeyStore extends IdentifiableKeyStore {
   def allocateKey = parentKeyOption match {
     case Some(p) => datastore.allocateKey[ENTITY, META](p)
     case None => datastore.allocateKey[ENTITY, META]()
@@ -66,7 +64,6 @@ trait QueryableStore extends EntityStoreBase {
     case Some(p) => datastore.query[ENTITY, META](p)
     case None => datastore.query[ENTITY, META]
   }
-
 }
 
 trait UpdatableStore extends EntityStoreBase {
