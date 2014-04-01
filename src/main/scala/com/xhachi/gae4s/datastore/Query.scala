@@ -7,11 +7,12 @@ import com.google.appengine.api.datastore.Query.{SortDirection => LLSortDirectio
 import com.google.appengine.api.datastore.Query.{SortPredicate => LLSortPredicate}
 import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter}
 import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, SortDirection, FilterOperator}
-import com.google.appengine.api.datastore.{Query => LLQuery}
+import com.google.appengine.api.datastore.{Query => LLQuery, Transaction}
 
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
-                                                                         datastore: Datastore,
+                                                                         datastore: DatastoreQueryMethods,
                                                                          meta: M,
+                                                                         tx: Option[Transaction],
                                                                          ancestorOption: Option[Key[_]] = None,
                                                                          filterOption: Option[Filter] = None,
                                                                          sorts: Seq[Sort] = Nil

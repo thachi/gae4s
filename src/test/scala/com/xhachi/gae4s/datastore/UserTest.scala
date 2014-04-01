@@ -200,7 +200,6 @@ class User(
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
 
-
 class UserStore
   extends EntityStore[User]
   with QueryableStore

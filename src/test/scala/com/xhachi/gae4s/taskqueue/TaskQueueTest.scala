@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import com.google.appengine.tools.development.testing.{LocalTaskQueueTestConfig, LocalDatastoreServiceTestConfig}
 import com.google.appengine.api.taskqueue.{TaskHandle, TransactionalTaskException, TaskOptions}
 import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.datastore.Datastore
 
 class TaskQueueTest extends FunSuite with AppEngineTestSuite {
 
@@ -30,7 +31,7 @@ class TaskQueueTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("TaskQueueにトランザクション内でaddしてdeleteできないこと") {
-    transaction {
+    Datastore.tx {
       val handle = TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
       val actual = TaskQueue.delete(handle)
       assert(!actual)
@@ -38,7 +39,7 @@ class TaskQueueTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("TaskQueueにトランザクション内でaddしてトランザクション外でdeleteできること") {
-    val handle: TaskHandle = transaction {
+    val handle: TaskHandle = Datastore.tx {
       TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
     }
     val actual = TaskQueue.delete(handle)
@@ -52,7 +53,7 @@ class TaskQueueTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("TaskQueueにトランザクション内で5回addできること") {
-    transaction {
+    Datastore.tx {
       1 to 5 foreach {
         _ => TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
       }
@@ -60,7 +61,7 @@ class TaskQueueTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("TaskQueueにトランザクション内で6回addしたらエラーになること") {
-    transaction {
+    Datastore.tx {
       1 to 5 foreach {
         _ => TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
       }
@@ -71,7 +72,7 @@ class TaskQueueTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("TaskQueue#addWithoutTxがトランザクションから除外されていること") {
-    transaction {
+    Datastore.tx {
       TaskQueue.addWithoutTx(TaskOptions.Builder.withUrl("/task/null"))
       1 to 5 foreach {
         _ => TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))

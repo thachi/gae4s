@@ -28,16 +28,5 @@ trait AppEngineTestSuite extends BeforeAndAfterEach {
 
   override def afterEach() = helper.tearDown()
 
-  def transaction[T](block: => T): T = {
-    val service = DatastoreServiceFactory.getDatastoreService
-    val tx = service.beginTransaction()
-    val ret = try {
-      val ret = block
-      tx.commit()
-      ret
-    } finally {
-      if (tx.isActive) tx.rollback()
-    }
-    ret
-  }
+
 }
