@@ -1,6 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.{Entity => LLEntity}
 import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig

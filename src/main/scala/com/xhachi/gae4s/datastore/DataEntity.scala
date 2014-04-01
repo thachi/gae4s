@@ -1,6 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.{Entity => LLEntity}
 import scala.reflect.ClassTag
 
 

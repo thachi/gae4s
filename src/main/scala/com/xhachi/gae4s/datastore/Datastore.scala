@@ -2,7 +2,6 @@ package com.xhachi.gae4s.datastore
 
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore._
-import com.google.appengine.api.datastore.{Query => LLQuery}
 
 
 class Datastore private[datastore](private[datastore] val service: DatastoreService)

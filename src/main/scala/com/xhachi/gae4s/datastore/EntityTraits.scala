@@ -1,10 +1,10 @@
 package com.xhachi.gae4s.datastore
 
 import java.util.Date
-import com.google.appengine.api.datastore.{Entity => LLEntity}
 import scala.collection.mutable.ListBuffer
 
 trait ApplyProperty {
+  type LLEntity = com.google.appengine.api.datastore.Entity
   type Entity
   type ApplyPropertyFrom = (LLEntity, Entity) => Unit
   type ApplyPropertyTo = (Entity, LLEntity) => Unit
