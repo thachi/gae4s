@@ -100,7 +100,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("propertyが正しいか") {
-    val filter = new UserMeta().name #< "a"
+    val filter = new UserStore.Meta().name #< "a"
     filter.toLLFilter
   }
 
@@ -186,15 +186,17 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
 }
 
-class User(
-            val key: Key[User],
-            var name: String = "",
-            var height: Int = 0,
-            var weight: Int = 0,
-            var mobilePhone: Option[String] = None,
-            var webInfo: WebInfo = WebInfo(),
-            var deleted: Boolean = false
-            ) extends Entity[User] with CreatedAt with Version with UpdatedAt
+class User(val key: Key[User],
+           var name: String = "",
+           var height: Int = 0,
+           var weight: Int = 0,
+           var mobilePhone: Option[String] = None,
+           var webInfo: WebInfo = WebInfo(),
+           var deleted: Boolean = false)
+  extends Entity[User]
+  with CreatedAt
+  with Version
+  with UpdatedAt
 
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
@@ -207,43 +209,41 @@ class UserStore
   with IdentifiableKeyStore
   with AllocatableKeyStore {
 
-  override type ENTITY = User
-  override type META = UserMeta
+  override type META = Meta
 
-  implicit val meta = new UserMeta
+  implicit val meta = new Meta
+
+  class Meta extends EntityMeta[User] with CreatedAtMeta with UpdatedAtMeta with VersionMeta {
+
+    val name = new StringProperty("name") with IndexedProperty[String]
+    val height = new IntProperty("height") with IndexedProperty[Int]
+    val weight = new IntProperty("weight") with IndexedProperty[Int]
+    val mobilePhone = new OptionProperty(new StringProperty("mobilePhone"))
+    val webInfo = new SerializableProperty[WebInfo]("webInfo")
+    val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
+
+    override def createEntity(key: Key[User]) = new User(key)
+
+    addApplyFromLLEntity {
+      (from: LLEntity, to: User) =>
+        to.name = name.getFromStore(from)
+        to.height = height.getFromStore(from)
+        to.weight = weight.getFromStore(from)
+        to.mobilePhone = mobilePhone.getFromStore(from)
+        to.webInfo = webInfo.getFromStore(from)
+        to.deleted = deleted.getFromStore(from)
+    }
+
+    addApplyToLLEntity {
+      (entity: User, e: LLEntity) =>
+        name.setToStore(entity.name)(e)
+        height.setToStore(entity.height)(e)
+        weight.setToStore(entity.weight)(e)
+        webInfo.setToStore(entity.webInfo)(e)
+        deleted.setToStore(entity.deleted)(e)
+    }
+  }
+
 }
 
 object UserStore extends UserStore
-
-
-class UserMeta extends EntityMeta[User] with CreatedAtMeta with UpdatedAtMeta with VersionMeta {
-
-  val key = new KeyProperty("key")
-  val name = new StringProperty("name") with IndexedProperty[String]
-  val height = new IntProperty("height") with IndexedProperty[Int]
-  val weight = new IntProperty("weight") with IndexedProperty[Int]
-  val mobilePhone = new OptionProperty(new StringProperty("mobilePhone"))
-  val webInfo = new SerializableProperty[WebInfo]("webInfo")
-  val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
-
-  override def createEntity(key: Key[User]) = new User(key)
-
-  addApplyFromLLEntity {
-    (from: LLEntity, to: User) =>
-      to.name = name.getFromStore(from)
-      to.height = height.getFromStore(from)
-      to.weight = weight.getFromStore(from)
-      to.mobilePhone = mobilePhone.getFromStore(from)
-      to.webInfo = webInfo.getFromStore(from)
-      to.deleted = deleted.getFromStore(from)
-  }
-
-  addApplyToLLEntity {
-    (entity: User, e: LLEntity) =>
-      name.setToStore(entity.name)(e)
-      height.setToStore(entity.height)(e)
-      weight.setToStore(entity.weight)(e)
-      webInfo.setToStore(entity.webInfo)(e)
-      deleted.setToStore(entity.deleted)(e)
-  }
-}

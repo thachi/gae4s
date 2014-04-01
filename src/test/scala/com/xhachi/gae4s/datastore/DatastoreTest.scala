@@ -2,14 +2,14 @@ package com.xhachi.gae4s.datastore
 
 import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
-import com.google.appengine.tools.development.testing.{LocalDatastoreServiceTestConfig, LocalMemcacheServiceTestConfig}
+import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 
 
 class DatastoreTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  implicit val meta = new UserMeta
+  implicit val meta = new UserStore.Meta
 
   test("allocateしたKeyが取得できること") {
     val key = UserStore.allocateKey
@@ -51,18 +51,18 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("countできること") {
-    val count = Datastore.count(Datastore.query[User, UserMeta])
+    val count = Datastore.count(Datastore.query[User, UserStore.Meta])
     assert(count == 0)
   }
 
   test("putしてcountが増えること") {
-    val count1 = Datastore.count(Datastore.query[User, UserMeta])
+    val count1 = Datastore.count(Datastore.query[User, UserStore.Meta])
     assert(count1 == 0)
 
     val s = new User(UserStore.createKey("key_name"), "Hoge")
     Datastore.put(s)
 
-    val count2 = Datastore.count(Datastore.query[User, UserMeta])
+    val count2 = Datastore.count(Datastore.query[User, UserStore.Meta])
     assert(count2 == 1)
   }
 
@@ -70,8 +70,8 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
     val s = new User(UserStore.createKey("key_name"), "Hoge")
     Datastore.put(s)
 
-    val count = Datastore.count(Datastore.query[User, UserMeta])
-    val seq = Datastore.asSeq(Datastore.query[User, UserMeta])
+    val count = Datastore.count(Datastore.query[User, UserStore.Meta])
+    val seq = Datastore.asSeq(Datastore.query[User, UserStore.Meta])
     assert(count == seq.size)
   }
 
