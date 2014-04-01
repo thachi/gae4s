@@ -132,6 +132,20 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
   }
 }
 
+trait UUIDKeyStore extends NamedStore {
+
+  import java.util.UUID
+
+  def generateKey = {
+    var key: Key[ENTITY] = null
+    while (key == null) {
+      val created = createKey(UUID.randomUUID().toString)
+      if (getOptionWithoutTx(created).isEmpty) key = created
+    }
+    key
+  }
+}
+
 trait QueryableStore extends EntityStoreBase {
 
   def query: Query[ENTITY, META] = parentKeyOption match {
