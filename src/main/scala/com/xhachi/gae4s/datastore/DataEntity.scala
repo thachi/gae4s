@@ -33,7 +33,7 @@ class DataEntityStore[D <: AnyRef : ClassTag : Manifest] extends EntityStore[Dat
 
     override def kind: String = implicitly[ClassTag[D]].runtimeClass.getName
 
-    override protected def createEntity(key: Key[DataEntity[D]]): DataEntity[D] = new DataEntity[D](key)
+    override private[datastore] def createEntity(key: Key[DataEntity[D]]): DataEntity[D] = new DataEntity[D](key)
   }
 
 }
