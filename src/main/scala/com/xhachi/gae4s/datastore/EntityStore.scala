@@ -19,6 +19,10 @@ trait EntityStoreBase {
 
   def create(e: ENTITY) = datastore.create(e)
 
+  def createWithoutTx(e: ENTITY) = datastore.createWithoutTx(e)
+
+  def createWithTx(tx: Transaction, e: ENTITY) = datastore.createWithTx(tx, e)
+
   def get(key: Key[ENTITY]) = datastore.get(key)
 
   def getOption(key: Key[ENTITY]): Option[ENTITY] = datastore.getOption(key)
@@ -54,6 +58,12 @@ trait EntityStore[E <: Entity[E]] extends EntityStoreBase {
 trait SingleStore extends IdentifiableKeyStore {
 
   def createSingleKey: Key[ENTITY] = createKey(1)
+
+  def createSingleIfNotExists() = if (getOptionSingle.isEmpty) meta.createEntity(createSingleKey)
+
+  def createSingleIfNotExistsWithoutTx() = if (getOptionSingle.isEmpty) create(meta.createEntity(createSingleKey))
+
+  def createSingleIfNotExistsWithTx(tx: Transaction) = if (getOptionSingle.isEmpty) createWithTx(tx, meta.createEntity(createSingleKey))
 
   def getSingle: ENTITY = get(createSingleKey)
 

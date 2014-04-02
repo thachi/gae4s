@@ -129,7 +129,7 @@ sealed trait DatastorePutListMethods extends DatastoreBase {
 
 sealed trait DatastoreCreateMethods extends DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods {
 
-  def createWithoutTx[E <: Entity[E]](tx: Transaction, entity: E)(implicit meta: EntityMeta[E]): Key[E] = createWithTx(null, entity)
+  def createWithoutTx[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = createWithTx(null, entity)
 
   def createWithTx[E <: Entity[E]](tx: Transaction, entity: E)(implicit meta: EntityMeta[E]): Key[E] = entity.keyOption match {
     case Some(k) => getOption(k) match {
@@ -150,7 +150,7 @@ sealed trait DatastoreCreateMethods extends DatastoreBase with DatastorePutMetho
 
 sealed trait DatastoreCreateListMethods extends DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods {
 
-  def createWithoutTx[E <: Entity[E]](tx: Transaction, entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = createWithTx(null, entities)
+  def createWithoutTx[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = createWithTx(null, entities)
 
   def createWithTx[E <: Entity[E]](tx: Transaction, entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val keys = entities.map(_.key)
