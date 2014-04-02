@@ -23,6 +23,31 @@ trait EntityStoreBase {
 
   def createWithTx(tx: Transaction, e: ENTITY) = datastore.createWithTx(tx, e)
 
+  def createIfNotExists(key: Key[ENTITY], init: ENTITY => Unit = (e) => Unit) = {
+    if (getOption(key).isEmpty) {
+      val e = meta.createEntity(key)
+      init(e)
+      create(e)
+    }
+  }
+
+  def createIfNotExistsWithoutTx(key: Key[ENTITY], init: ENTITY => Unit = (e) => Unit) = {
+    if (getOptionWithoutTx(key).isEmpty) {
+      val e = meta.createEntity(key)
+      init(e)
+      createWithoutTx(e)
+    }
+  }
+
+  def createIfNotExistsWithTx(tx: Transaction, key: Key[ENTITY], init: ENTITY => Unit = (e) => Unit) = {
+    if (getOptionWithTx(tx, key).isEmpty) {
+      val e = meta.createEntity(key)
+      init(e)
+      createWithTx(tx, e)
+    }
+  }
+
+
   def get(key: Key[ENTITY]) = datastore.get(key)
 
   def getOption(key: Key[ENTITY]): Option[ENTITY] = datastore.getOption(key)
@@ -59,11 +84,11 @@ trait SingleStore extends IdentifiableKeyStore {
 
   def createSingleKey: Key[ENTITY] = createKey(1)
 
-  def createSingleIfNotExists() = if (getOptionSingle.isEmpty) meta.createEntity(createSingleKey)
+  def createSingleIfNotExists(init: ENTITY => Unit = (e) => Unit) = createIfNotExists(createSingleKey, init)
 
-  def createSingleIfNotExistsWithoutTx() = if (getOptionSingle.isEmpty) create(meta.createEntity(createSingleKey))
+  def createSingleIfNotExistsWithoutTx(init: ENTITY => Unit = (e) => Unit) = createIfNotExistsWithoutTx(createSingleKey, init)
 
-  def createSingleIfNotExistsWithTx(tx: Transaction) = if (getOptionSingle.isEmpty) createWithTx(tx, meta.createEntity(createSingleKey))
+  def createSingleIfNotExistsWithTx(tx: Transaction,init: ENTITY => Unit = (e) => Unit) = createIfNotExistsWithTx(tx, createSingleKey, init)
 
   def getSingle: ENTITY = get(createSingleKey)
 
