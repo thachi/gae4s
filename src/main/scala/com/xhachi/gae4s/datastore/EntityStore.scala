@@ -60,6 +60,12 @@ trait SingleStore extends IdentifiableKeyStore {
   def getSingleWithoutTx: ENTITY = getWithoutTx(createSingleKey)
 
   def getSingleWithTx(tx: Transaction): ENTITY = getWithTx(tx, createSingleKey)
+
+  def getOptionSingle: Option[ENTITY] = getOption(createSingleKey)
+
+  def getOptionSingleWithoutTx: Option[ENTITY] = getOptionWithoutTx(createSingleKey)
+
+  def getOptionSingleWithTx(tx: Transaction): Option[ENTITY] = getOptionWithTx(tx, createSingleKey)
 }
 
 trait NamedStore extends EntityStoreBase {
