@@ -27,12 +27,12 @@ object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) 
 }
 
 
-sealed trait DatastoreBase {
+sealed private[datastore] trait DatastoreBase {
 
   private[datastore] def service: DatastoreService
 }
 
-sealed trait DatastoreGetMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreGetMethods extends DatastoreBase {
 
   def getWithoutTx[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): E = getWithTx(null, key)
 
@@ -41,7 +41,7 @@ sealed trait DatastoreGetMethods extends DatastoreBase {
   def get[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): E = meta.toEntity(service.get(key.key))
 }
 
-sealed trait DatastoreGetOptionMethods extends DatastoreBase with DatastoreGetMethods {
+sealed private[datastore] trait DatastoreGetOptionMethods extends DatastoreBase with DatastoreGetMethods {
 
   def getOptionWithoutTx[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Option[E] = {
     getOptionWithTx(null, key)
@@ -60,7 +60,7 @@ sealed trait DatastoreGetOptionMethods extends DatastoreBase with DatastoreGetMe
   }
 }
 
-sealed trait DatastoreGetListMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreGetListMethods extends DatastoreBase {
 
   def getWithoutTx[E <: Entity[E]](keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Map[Key[E], E] = getWithTx(null, keys)
 
@@ -79,7 +79,7 @@ sealed trait DatastoreGetListMethods extends DatastoreBase {
   }
 }
 
-sealed trait DatastoreDeleteMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreDeleteMethods extends DatastoreBase {
 
   def deleteWithoutTx[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Unit = deleteWithTx(null, key)
 
@@ -88,7 +88,7 @@ sealed trait DatastoreDeleteMethods extends DatastoreBase {
   def delete[E <: Entity[E]](key: Key[E])(implicit meta: EntityMeta[E]): Unit = service.delete(key.key)
 }
 
-sealed trait DatastoreDeleteListMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreDeleteListMethods extends DatastoreBase {
 
   def deleteWithoutTx[E <: Entity[E]](keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Unit = deleteWithTx(null, keys)
 
@@ -97,7 +97,7 @@ sealed trait DatastoreDeleteListMethods extends DatastoreBase {
   def delete[E <: Entity[E]](keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Unit = service.delete(keys.map(_.key))
 }
 
-sealed trait DatastorePutMethods extends DatastoreBase {
+sealed private[datastore] trait DatastorePutMethods extends DatastoreBase {
 
   def putWithoutTx[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = putWithTx(null, entity)
 
@@ -112,7 +112,7 @@ sealed trait DatastorePutMethods extends DatastoreBase {
   }
 }
 
-sealed trait DatastorePutListMethods extends DatastoreBase {
+sealed private[datastore] trait DatastorePutListMethods extends DatastoreBase {
 
   def putWithoutTx[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = putWithTx(null, entities)
 
@@ -127,7 +127,7 @@ sealed trait DatastorePutListMethods extends DatastoreBase {
   }
 }
 
-sealed trait DatastoreCreateMethods extends DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods {
+sealed private[datastore] trait DatastoreCreateMethods extends DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods {
 
   def createWithoutTx[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = createWithTx(null, entity)
 
@@ -148,7 +148,7 @@ sealed trait DatastoreCreateMethods extends DatastoreBase with DatastorePutMetho
   }
 }
 
-sealed trait DatastoreCreateListMethods extends DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods {
+sealed private[datastore] trait DatastoreCreateListMethods extends DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods {
 
   def createWithoutTx[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = createWithTx(null, entities)
 
@@ -165,7 +165,7 @@ sealed trait DatastoreCreateListMethods extends DatastoreBase with DatastorePutL
   }
 }
 
-sealed trait DatastoreUpdateMethods extends DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods {
+sealed private[datastore] trait DatastoreUpdateMethods extends DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods {
 
   def updateWithoutTx[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = updateWithTx(null, entity)
 
@@ -186,7 +186,7 @@ sealed trait DatastoreUpdateMethods extends DatastoreBase with DatastorePutMetho
   }
 }
 
-sealed trait DatastoreUpdateListMethods extends DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods {
+sealed private[datastore] trait DatastoreUpdateListMethods extends DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods {
 
   def updateWithoutTx[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = updateWithTx(null, entities)
 
@@ -211,7 +211,7 @@ sealed trait DatastoreUpdateListMethods extends DatastoreBase with DatastorePutL
   }
 }
 
-sealed trait DatastoreCreateKeyMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreCreateKeyMethods extends DatastoreBase {
 
   def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = Key[E](name)
 
@@ -238,7 +238,7 @@ sealed trait DatastoreCreateKeyMethods extends DatastoreBase {
   }
 }
 
-sealed trait DatastoreQueryMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreQueryMethods extends DatastoreBase {
 
   def query[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) =
     Query[E, M](this, meta, None)
@@ -293,7 +293,7 @@ sealed trait DatastoreQueryMethods extends DatastoreBase {
 }
 
 
-sealed trait DatastoreTxMethods extends DatastoreBase {
+sealed private[datastore] trait DatastoreTxMethods extends DatastoreBase {
 
   def beginTx: Transaction = service.beginTransaction()
 
