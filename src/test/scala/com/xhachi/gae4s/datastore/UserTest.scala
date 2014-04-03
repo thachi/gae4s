@@ -206,11 +206,12 @@ case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
 class UserStore
   extends EntityStore[User]
-  with QueryableStore
-  with UpdatableStore
   with NamedStore
   with IdentifiableKeyStore
-  with AllocatableKeyStore {
+  with AllocatableKeyStore
+  with CreatableStore
+  with UpdatableStore
+  with QueryableStore {
 
   override type META = Meta
 

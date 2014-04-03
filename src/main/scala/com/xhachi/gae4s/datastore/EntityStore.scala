@@ -16,12 +16,87 @@ trait EntityStoreBase {
     case k: Key[_] => Some(k)
     case _ => None
   }
+}
+
+trait EntityStore[E <: Entity[E]] extends EntityStoreBase with GettableStore {
+  type ENTITY = E
+}
+
+trait GettableStore extends EntityStoreBase {
+  def get(key: Key[ENTITY]) = datastore.get(key)
+
+  def getWithoutTx(key: Key[ENTITY]) = datastore.getWithoutTx(key)
+
+  def getWithTx(tx: Transaction, key: Key[ENTITY]) = datastore.getWithTx(tx, key)
+
+  def get(keys: Seq[Key[ENTITY]]) = datastore.get(keys)
+
+  def getWithoutTx(keys: Seq[Key[ENTITY]]) = datastore.getWithoutTx(keys)
+
+  def getWithTx(tx: Transaction, keys: Seq[Key[ENTITY]]) = datastore.getWithTx(tx, keys)
+
+  def getOption(key: Key[ENTITY]): Option[ENTITY] = datastore.getOption(key)
+
+  def getOptionWithoutTx(key: Key[ENTITY]): Option[ENTITY] = datastore.getOptionWithoutTx(key)
+
+  def getOptionWithTx(tx: Transaction, key: Key[ENTITY]): Option[ENTITY] = datastore.getOptionWithTx(tx, key)
+
+  def exists(key: Key[ENTITY]) = getOption(key).isDefined
+
+  def existsWithoutTx(key: Key[ENTITY]) = getOptionWithoutTx(key).isDefined
+
+  def existsWithTx(tx: Transaction, key: Key[ENTITY]) = getOptionWithTx(tx, key).isDefined
+
+  implicit def toKeyedEntityStore(key: Key[ENTITY]): EntityStoreForKey = new EntityStoreForKey(key)
+
+  implicit def toKeyedEntityStore(keys: Seq[Key[ENTITY]]): EntityStoreForKeys = new EntityStoreForKeys(keys)
+
+  protected class EntityStoreForKey private[GettableStore](val key: Key[ENTITY]) {
+
+    def get = GettableStore.this.get(key)
+
+    def getWithoutTx = GettableStore.this.getWithoutTx(key)
+
+    def getWithTx(tx: Transaction) = GettableStore.this.getWithTx(tx, key)
+
+    def getOption = GettableStore.this.getOption(key)
+
+    def getOptionWithoutTx = GettableStore.this.getOptionWithoutTx(key)
+
+    def getOptionWithTx(tx: Transaction) = GettableStore.this.getOptionWithTx(tx, key)
+
+    def exists = GettableStore.this.getOption(key).isDefined
+
+    def existsWithoutTx = GettableStore.this.getOptionWithoutTx(key).isDefined
+
+    def existsWithTx(tx: Transaction) = GettableStore.this.getOptionWithTx(tx, key).isDefined
+  }
+
+  protected class EntityStoreForKeys private[GettableStore](val keys: Seq[Key[ENTITY]]) {
+
+    def get = GettableStore.this.get(keys)
+
+    def getWithoutTx = GettableStore.this.getWithoutTx(keys)
+
+    def getWithTx(tx: Transaction) = GettableStore.this.getWithTx(tx, keys)
+  }
+
+}
+
+
+trait CreatableStore extends EntityStoreBase with GettableStore {
 
   def create(e: ENTITY) = datastore.create(e)
 
   def createWithoutTx(e: ENTITY) = datastore.createWithoutTx(e)
 
   def createWithTx(tx: Transaction, e: ENTITY) = datastore.createWithTx(tx, e)
+
+  def create(e: Seq[ENTITY]) = datastore.create(e)
+
+  def createWithoutTx(e: Seq[ENTITY]) = datastore.createWithoutTx(e)
+
+  def createWithTx(tx: Transaction, e: Seq[ENTITY]) = datastore.createWithTx(tx, e)
 
   def createIfNotExists(key: Key[ENTITY], init: ENTITY => Unit = (e) => Unit) = {
     if (getOption(key).isEmpty) {
@@ -47,71 +122,102 @@ trait EntityStoreBase {
     }
   }
 
-  def get(key: Key[ENTITY]) = datastore.get(key)
+  implicit def toCreatableStoreFromEntity(entity: ENTITY): CreatableStoreForEntity = new CreatableStoreForEntity(entity)
 
-  def getWithoutTx(key: Key[ENTITY]) = datastore.getWithoutTx(key)
+  implicit def toCreatableStoreFromEntitySeq(entities: Seq[ENTITY]): CreatableStoreForEntities = new CreatableStoreForEntities(entities)
 
-  def getWithTx(tx: Transaction, key: Key[ENTITY]) = datastore.getWithTx(tx, key)
+  protected class CreatableStoreForEntity private[CreatableStore](val entities: ENTITY) {
 
-  def get(keys: Seq[Key[ENTITY]]) = datastore.get(keys)
+    def create() = CreatableStore.this.create(entities)
 
-  def getWithoutTx(keys: Seq[Key[ENTITY]]) = datastore.getWithoutTx(keys)
+    def createWithoutTx() = CreatableStore.this.createWithoutTx(entities)
 
-  def getWithTx(tx: Transaction, keys: Seq[Key[ENTITY]]) = datastore.getWithTx(tx, keys)
-
-  def getOption(key: Key[ENTITY]): Option[ENTITY] = datastore.getOption(key)
-
-  def getOptionWithoutTx(key: Key[ENTITY]): Option[ENTITY] = datastore.getOptionWithoutTx(key)
-
-  def getOptionWithTx(tx: Transaction, key: Key[ENTITY]): Option[ENTITY] = datastore.getOptionWithTx(tx, key)
-
-  def exists(key: Key[ENTITY]) = getOption(key).isDefined
-
-  def existsWithoutTx(key: Key[ENTITY]) = getOptionWithoutTx(key).isDefined
-
-  def existsWithTx(tx: Transaction, key: Key[ENTITY]) = getOptionWithTx(tx, key).isDefined
-}
-
-trait EntityStore[E <: Entity[E]] extends EntityStoreBase {
-  type ENTITY = E
-
-  // TODO: KeyのSeqにも対応したい
-  implicit def toKeyedEntityStore(key: Key[ENTITY]): EntityStoreForKey = new EntityStoreForKey(key)
-
-  protected class EntityStoreForKey private[EntityStore](val key: Key[ENTITY]) {
-
-    def get = EntityStore.this.get(key)
-
-    def getWithoutTx = EntityStore.this.getWithoutTx(key)
-
-    def getWithTx(tx: Transaction) = EntityStore.this.getWithTx(tx, key)
-
-    def getOption = EntityStore.this.getOption(key)
-
-    def getOptionWithoutTx = EntityStore.this.getOptionWithoutTx(key)
-
-    def getOptionWithTx(tx: Transaction) = EntityStore.this.getOptionWithTx(tx, key)
-
-    def exists = EntityStore.this.getOption(key).isDefined
-
-    def existsWithoutTx = EntityStore.this.getOptionWithoutTx(key).isDefined
-
-    def existsWithTx(tx: Transaction) = EntityStore.this.getOptionWithTx(tx, key).isDefined
+    def createWithTx(tx: Transaction) = CreatableStore.this.createWithTx(tx, entities)
   }
 
-  protected class EntityStoreForKeys private[EntityStore](val keys: Seq[Key[ENTITY]]) {
+  protected class CreatableStoreForEntities private[CreatableStore](val entities: Seq[ENTITY]) {
 
-    def get = EntityStore.this.get(keys)
+    def create() = CreatableStore.this.create(entities)
 
-    def getWithoutTx = EntityStore.this.getWithoutTx(keys)
+    def createWithoutTx() = CreatableStore.this.createWithoutTx(entities)
 
-    def getWithTx(tx: Transaction) = EntityStore.this.getWithTx(tx, keys)
-
+    def createWithTx(tx: Transaction) = CreatableStore.this.createWithTx(tx, entities)
   }
+
 }
 
+trait UpdatableStore extends EntityStoreBase {
 
-trait SingleStore extends IdentifiableKeyStore {
+  def update(e: ENTITY) = datastore.update(e)
+
+  def updateWithoutTx(e: ENTITY) = datastore.updateWithoutTx(e)
+
+  def updateWithTx(tx: Transaction, e: ENTITY) = datastore.updateWithTx(tx, e)
+
+  def update(e: Seq[ENTITY]) = datastore.update(e)
+
+  def updateWithoutTx(e: Seq[ENTITY]) = datastore.updateWithoutTx(e)
+
+  def updateWithTx(tx: Transaction, e: Seq[ENTITY]) = datastore.updateWithTx(tx, e)
+
+  implicit def toUpdatableStoreFromEntity(entity: ENTITY): UpdatableStoreForEntity = new UpdatableStoreForEntity(entity)
+
+  implicit def toUpdatableStoreFromEntitySeq(entities: Seq[ENTITY]): UpdatableStoreForEntities = new UpdatableStoreForEntities(entities)
+
+  protected class UpdatableStoreForEntity private[UpdatableStore](val entities: ENTITY) {
+
+    def update() = UpdatableStore.this.update(entities)
+
+    def updateWithoutTx() = UpdatableStore.this.updateWithoutTx(entities)
+
+    def updateWithTx(tx: Transaction) = UpdatableStore.this.updateWithTx(tx, entities)
+  }
+
+  protected class UpdatableStoreForEntities private[UpdatableStore](val entities: Seq[ENTITY]) {
+
+    def update() = UpdatableStore.this.update(entities)
+
+    def updateWithoutTx() = UpdatableStore.this.updateWithoutTx(entities)
+
+    def updateWithTx(tx: Transaction) = UpdatableStore.this.updateWithTx(tx, entities)
+  }
+
+}
+
+trait DeletableStore extends EntityStoreBase {
+
+  def delete(key: Key[ENTITY]) = datastore.delete(key)
+
+  def deleteWithoutTx(key: Key[ENTITY]) = datastore.deleteWithoutTx(key)
+
+  def deleteWithTx(tx: Transaction, key: Key[ENTITY]) = datastore.deleteWithTx(tx, key)
+
+  def delete(keys: Seq[Key[ENTITY]]) = datastore.delete(keys)
+
+  def deleteWithoutTx(keys: Seq[Key[ENTITY]]) = datastore.deleteWithoutTx(keys)
+
+  def deleteWithTx(tx: Transaction, keys: Seq[Key[ENTITY]]) = datastore.deleteWithTx(tx, keys)
+
+  implicit def toKeyedDeletableStoreFromEntity(entity: ENTITY): DeletableStoreForKey = new DeletableStoreForKey(entity.key :: Nil)
+
+  implicit def toKeyedDeletableStoreFromEntitySeq(entities: Seq[ENTITY]): DeletableStoreForKey = new DeletableStoreForKey(entities.map(_.key))
+
+  implicit def toKeyedDeletableStoreFromKey(key: Key[ENTITY]): DeletableStoreForKey = new DeletableStoreForKey(key :: Nil)
+
+  implicit def toKeyedDeletableStoreFromKeySeq(keys: Seq[Key[ENTITY]]): DeletableStoreForKey = new DeletableStoreForKey(keys)
+
+  protected class DeletableStoreForKey private[DeletableStore](val key: Seq[Key[ENTITY]]) {
+
+    def delete() = DeletableStore.this.delete(key)
+
+    def deleteWithoutTx() = DeletableStore.this.deleteWithoutTx(key)
+
+    def deleteWithTx(tx: Transaction) = DeletableStore.this.deleteWithTx(tx, key)
+  }
+
+}
+
+trait SingleStore extends IdentifiableKeyStore with CreatableStore {
 
   def createSingleKey: Key[ENTITY] = createKey(1)
 
@@ -134,7 +240,7 @@ trait SingleStore extends IdentifiableKeyStore {
   def getOptionSingleWithTx(tx: Transaction): Option[ENTITY] = getOptionWithTx(tx, createSingleKey)
 }
 
-trait NamedStore extends EntityStoreBase {
+trait NamedStore extends EntityStoreBase with GettableStore {
 
   def createKey(name: String) = parentKeyOption match {
     case Some(p) => datastore.createKey[ENTITY, META](p, name)
@@ -241,75 +347,4 @@ trait QueryableStore extends EntityStoreBase {
     case Some(p) => datastore.queryWithTx[ENTITY, META](tx, p)
     case None => datastore.queryWithTx[ENTITY, META](tx)
   }
-}
-
-trait UpdatableStore extends EntityStoreBase {
-
-  def update(e: ENTITY) = datastore.update(e)
-
-  def updateWithoutTx(e: ENTITY) = datastore.updateWithoutTx(e)
-
-  def updateWithTx(tx: Transaction, e: ENTITY) = datastore.updateWithTx(tx, e)
-
-  def update(e: Seq[ENTITY]) = datastore.update(e)
-
-  def updateWithoutTx(e: Seq[ENTITY]) = datastore.updateWithoutTx(e)
-
-  def updateWithTx(tx: Transaction, e: Seq[ENTITY]) = datastore.updateWithTx(tx, e)
-
-  implicit def toUpdatableStoreFromEntity(entity: ENTITY): UpdatableStoreForEntity = new UpdatableStoreForEntity(entity)
-
-  implicit def toUpdatableStoreFromEntitySeq(entities: Seq[ENTITY]): UpdatableStoreForEntities = new UpdatableStoreForEntities(entities)
-
-  protected class UpdatableStoreForEntity private[UpdatableStore](val entities: ENTITY) {
-
-    def update() = UpdatableStore.this.update(entities)
-
-    def updateWithoutTx() = UpdatableStore.this.updateWithoutTx(entities)
-
-    def updateWithTx(tx: Transaction) = UpdatableStore.this.updateWithTx(tx, entities)
-  }
-
-  protected class UpdatableStoreForEntities private[UpdatableStore](val entities: Seq[ENTITY]) {
-
-    def update() = UpdatableStore.this.update(entities)
-
-    def updateWithoutTx() = UpdatableStore.this.updateWithoutTx(entities)
-
-    def updateWithTx(tx: Transaction) = UpdatableStore.this.updateWithTx(tx, entities)
-  }
-
-}
-
-trait DeletableStore extends EntityStoreBase {
-
-  def delete(key: Key[ENTITY]) = datastore.delete(key)
-
-  def deleteWithoutTx(key: Key[ENTITY]) = datastore.deleteWithoutTx(key)
-
-  def deleteWithTx(tx: Transaction, key: Key[ENTITY]) = datastore.deleteWithTx(tx, key)
-
-  def delete(keys: Seq[Key[ENTITY]]) = datastore.delete(keys)
-
-  def deleteWithoutTx(keys: Seq[Key[ENTITY]]) = datastore.deleteWithoutTx(keys)
-
-  def deleteWithTx(tx: Transaction, keys: Seq[Key[ENTITY]]) = datastore.deleteWithTx(tx, keys)
-
-  implicit def toKeyedDeletableStoreFromEntity(entity: ENTITY): DeletableStoreForKey = new DeletableStoreForKey(entity.key :: Nil)
-
-  implicit def toKeyedDeletableStoreFromEntitySeq(entities: Seq[ENTITY]): DeletableStoreForKey = new DeletableStoreForKey(entities.map(_.key))
-
-  implicit def toKeyedDeletableStoreFromKey(key: Key[ENTITY]): DeletableStoreForKey = new DeletableStoreForKey(key :: Nil)
-
-  implicit def toKeyedDeletableStoreFromKeySeq(keys: Seq[Key[ENTITY]]): DeletableStoreForKey = new DeletableStoreForKey(keys)
-
-  protected class DeletableStoreForKey private[DeletableStore](val key: Seq[Key[ENTITY]]) {
-
-    def delete() = DeletableStore.this.delete(key)
-
-    def deleteWithoutTx() = DeletableStore.this.deleteWithoutTx(key)
-
-    def deleteWithTx(tx: Transaction) = DeletableStore.this.deleteWithTx(tx, key)
-  }
-
 }

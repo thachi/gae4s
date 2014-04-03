@@ -11,21 +11,32 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
   test("データを保存し取得できること") {
 
-    val store = new DataEntityStore[SampleData] with NamedStore with UpdatableStore
+    val store = new DataEntityStore[SampleData] with NamedStore with UpdatableStore with CreatableStore
+    import store._
+
     val key: Key[DataEntity[SampleData]] = store.createKey("hoge")
     val before = new DataEntity[SampleData](key)
-    before.data = Some(SampleData("Takashi", 5))
+    before.data = SampleData("Takashi", 5)
 
-    store.create(before)
+    before.create()
     assert(key.kind == "com.xhachi.gae4s.datastore.SampleData")
     assert(key.idOption.isEmpty)
     assert(key.nameOption.isDefined)
     assert(key.nameOption.get == "hoge")
 
-    val after = store.get(key)
+    val after = key.get
     assert(after.key == before.key)
     assert(after.data == before.data)
-    assert(after.data.get.name == before.data.get.name)
+
+    after.data = after.data.copy(age = after.data.age + 1)
+    after.update()
+
+    val after2 = key.get
+    assert(after2.key == before.key)
+    assert(after2.data.name == before.data.name)
+    assert(after2.data.age == before.data.age + 1)
+
+
   }
 }
 

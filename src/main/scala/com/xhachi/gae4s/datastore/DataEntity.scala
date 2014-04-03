@@ -4,7 +4,7 @@ import scala.reflect.ClassTag
 
 
 trait Data[D <: AnyRef] {
-  final var data: Option[D] = None
+  final var data: D = null.asInstanceOf[D]
 }
 
 class DataEntity[D <: AnyRef : ClassTag](val key: Key[DataEntity[D]])
@@ -20,7 +20,7 @@ class DataEntityStore[D <: AnyRef : ClassTag : Manifest] extends EntityStore[Dat
   class DataEntityMeta[ENTITY: Manifest] extends EntityMeta[DataEntity[D]] with ApplyProperty {
     override type Entity = DataEntity[D]
 
-    final val data = new OptionProperty(new JsonProperty[D]("data"))
+    final val data = new JsonProperty[D]("data")
 
     addApplyToLLEntity {
       (from: Entity, to: LLEntity) =>
