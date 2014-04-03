@@ -3,7 +3,12 @@ package com.xhachi.gae4s.datastore
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore._
 
-
+/**
+ * Class to access Datastore service.
+ *
+ * @author Takashi Hachinohe
+ * @param service the DatastoreService instance
+ */
 class Datastore private[datastore](private[datastore] val service: DatastoreService)
   extends DatastoreBase
   with DatastoreGetMethods
@@ -21,7 +26,11 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
   with DatastoreCreateKeyMethods
   with DatastoreTxMethods
 
-
+/**
+ * Object to access default Datastore service.
+ *
+ * @author Takashi Hachinohe
+ */
 object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) {
   def apply(service: DatastoreService) = new Datastore(service)
 }
@@ -66,14 +75,14 @@ sealed private[datastore] trait DatastoreGetListMethods extends DatastoreBase {
 
   def getWithTx[E <: Entity[E]](tx: Transaction, keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Map[Key[E], E] = {
     val entities = service.get(tx, keys.map(_.key)).map {
-      case (k, v) => Key[E](k) -> meta.toEntity(v)
+      case (k, v) => meta.createKey(k) -> meta.toEntity(v)
     }
     entities.asInstanceOf[Map[Key[E], E]]
   }
 
   def get[E <: Entity[E]](keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Map[Key[E], E] = {
     val entities = service.get(keys.map(_.key)).map {
-      case (k, v) => Key[E](k) -> meta.toEntity(v)
+      case (k, v) => meta.createKey(k) -> meta.toEntity(v)
     }
     entities.asInstanceOf[Map[Key[E], E]]
   }
@@ -103,12 +112,12 @@ sealed private[datastore] trait DatastorePutMethods extends DatastoreBase {
 
   def putWithTx[E <: Entity[E]](tx: Transaction, entity: E)(implicit meta: EntityMeta[E]): Key[E] = {
     val e = meta.toLLEntity(entity)
-    Key(service.put(tx, e))
+    meta.createKey(service.put(tx, e))
   }
 
   def put[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = {
     val e = meta.toLLEntity(entity)
-    Key(service.put(e))
+    meta.createKey(service.put(e))
   }
 }
 
@@ -118,12 +127,12 @@ sealed private[datastore] trait DatastorePutListMethods extends DatastoreBase {
 
   def putWithTx[E <: Entity[E]](tx: Transaction, entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val e = entities.map(meta.toLLEntity)
-    service.put(tx, e).map(Key[E]).toSeq
+    service.put(tx, e).map(k => meta.createKey(k)).toSeq
   }
 
   def put[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val e = entities.map(meta.toLLEntity)
-    service.put(e).map(Key[E]).toSeq
+    service.put(e).map(k => meta.createKey(k)).toSeq
   }
 }
 
@@ -213,28 +222,28 @@ sealed private[datastore] trait DatastoreUpdateListMethods extends DatastoreBase
 
 sealed private[datastore] trait DatastoreCreateKeyMethods extends DatastoreBase {
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = Key[E](name)
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = meta.createKeyWithName(name)
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], name: String)(implicit meta: M): Key[E] = Key[E](parent, name)
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], name: String)(implicit meta: M): Key[E] = meta.createKeyWithName(parent, name)
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](id: Long)(implicit meta: M): Key[E] = Key[E](id)
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](id: Long)(implicit meta: M): Key[E] = meta.createKeyWithId(id)
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], id: Long)(implicit meta: M): Key[E] = Key[E](parent, id)
+  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], id: Long)(implicit meta: M): Key[E] = meta.createKeyWithId(parent, id)
 
   def allocateKey[E <: Entity[E], M <: EntityMeta[E]]()(implicit meta: M): Key[E] = {
-    Key[E](service.allocateIds(meta.kind, 1).getStart.getId)
+    meta.createKeyWithId(service.allocateIds(meta.kind, 1).getStart.getId)
   }
 
   def allocateKeys[E <: Entity[E], M <: EntityMeta[E]](count: Long)(implicit meta: M): Seq[Key[E]] = {
-    service.allocateIds(meta.kind, count).map(Key[E]).toSeq
+    service.allocateIds(meta.kind, count).map(k => meta.createKey(k)).toSeq
   }
 
   def allocateKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_])(implicit meta: M): Key[E] = {
-    Key[E](service.allocateIds(parent.key, meta.kind, 1).getStart)
+    meta.createKey(service.allocateIds(parent.key, meta.kind, 1).getStart)
   }
 
   def allocateKeys[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], count: Long)(implicit meta: M): Seq[Key[E]] = {
-    service.allocateIds(parent.key, meta.kind, count).map(Key[E]).toSeq
+    service.allocateIds(parent.key, meta.kind, count).map(k => meta.createKey(k)).toSeq
   }
 }
 
@@ -287,7 +296,7 @@ sealed private[datastore] trait DatastoreQueryMethods extends DatastoreBase {
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
     prepare(query, keysOnly = true).asIterable.map {
-      e => Key[E](e.getKey)
+      e => query.meta.createKey(e.getKey)
     }.toSeq
   }
 }

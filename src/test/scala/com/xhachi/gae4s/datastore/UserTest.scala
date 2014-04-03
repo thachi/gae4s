@@ -36,9 +36,12 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     val expected = new User(key, "Hoge")
     UserStore.create(expected)
 
-    val actual = UserStore.get(key)
+    import UserStore._
+
+    val actual = key.get
     assert(actual.key == expected.key)
     assert(actual.name == expected.name)
+    assert(actual.mobilePhone == expected.mobilePhone)
   }
 
   test("createしてgetしてversionが1、updateして2であること") {

@@ -1,6 +1,8 @@
 package com.xhachi.gae4s.datastore
 
 import scala.reflect.ClassTag
+import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
+import scala.Some
 
 
 trait Entity[E <: Entity[E]] {
@@ -14,7 +16,10 @@ trait Entity[E <: Entity[E]] {
 
 }
 
-abstract class EntityMeta[E <: Entity[E]: ClassTag] extends ApplyProperty {
+abstract class EntityMeta[E <: Entity[E] : ClassTag]
+  extends ApplyProperty
+  with EntityMetaCreateKeyMethods {
+
   type Entity = E
 
   def kind: String = implicitly[ClassTag[E]].runtimeClass.getName
@@ -24,7 +29,7 @@ abstract class EntityMeta[E <: Entity[E]: ClassTag] extends ApplyProperty {
   private[datastore] def createEntity(key: Key[E]): E
 
   def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity = {
-    val e = createEntity(Key(entity.getKey))
+    val e = createEntity(createKey(entity.getKey))
     applyFromLLEntity(entity, e)
     e
   }
@@ -34,5 +39,42 @@ abstract class EntityMeta[E <: Entity[E]: ClassTag] extends ApplyProperty {
     applyToLLEntity(entity, e)
     e
   }
+}
+
+
+sealed private[datastore] trait EntityMetaCreateKeyMethods {
+  type Entity
+
+  def kind: String
+
+  def createKey(key: LLKey) = new Key[Entity](key)
+
+  def createKeyWithName(name: String) = {
+    val key = KeyFactory.createKey(kind, name)
+    new Key[Entity](key)
+  }
+
+  def createKeyWithId(id: Long) = {
+    new Key[Entity](KeyFactory.createKey(kind, id))
+  }
+
+  def createKeyWithName(parent: Key[_], name: String) = {
+    val key = KeyFactory.createKey(parent.key, kind, name)
+    new Key[Entity](key)
+  }
+
+  def createKeyWithId(parent: Key[_], id: Long) = {
+    val key = KeyFactory.createKey(parent.key, kind, id)
+    new Key[Entity](key)
+  }
+
+  def fromKeyStrong(keyString: String): Key[Entity] = {
+    //TODO: newを取る
+    val key = new Key[Entity](KeyFactory.stringToKey(keyString))
+    assert(key.kind == kind)
+    key
+  }
+
+  def toKeyStrong(key: Key[_]): String = KeyFactory.keyToString(key.key)
 
 }

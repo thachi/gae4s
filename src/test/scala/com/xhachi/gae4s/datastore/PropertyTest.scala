@@ -37,12 +37,12 @@ class KeyPropertyTest extends FunSuite with AppEngineTestSuite {
 
   test("toStorePropertyとfromStorePropertyが正しいこと") {
     val m = new UserStore.Meta
-    val expected = Key[User]("hoge")(m)
+    val expected = m.createKeyWithName("hoge")
     val store = new KeyProperty("name").toStoreProperty(expected)
 
     assert(store == expected.key)
 
-    val actual= new KeyProperty[User]("name").fromStoreProperty(store)
+    val actual = new KeyProperty[User]("name").fromStoreProperty(store)
     assert(actual == expected)
   }
 
