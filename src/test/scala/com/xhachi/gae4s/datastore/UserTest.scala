@@ -10,9 +10,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
   def createTaroJiroSaburo = {
-    val tato = new User(UserStore.createKey("key_name_1"), "Taro", height = 190, weight = 90, mobilePhone = Some("090-xxxx-xxxx"))
-    val jiro = new User(UserStore.createKey("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
-    val saburo = new User(UserStore.createKey("key_name_3"), "Saburo", height = 150, weight = 120, mobilePhone = Some("080-yyyy-yyyy"), deleted = true)
+    val tato = new User(UserStore.createKeyWithName("key_name_1"), "Taro", height = 190, weight = 90, mobilePhone = Some("090-xxxx-xxxx"))
+    val jiro = new User(UserStore.createKeyWithName("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)
+    val saburo = new User(UserStore.createKeyWithName("key_name_3"), "Saburo", height = 150, weight = 120, mobilePhone = Some("080-yyyy-yyyy"), deleted = true)
     UserStore.create(tato)
     UserStore.create(jiro)
     UserStore.create(saburo)
@@ -20,7 +20,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putしてcountとasSeqとasKeySeqの件数がすべて1であること") {
-    val s = new User(UserStore.createKey("key_name"), "Hoge")
+    val s = new User(UserStore.createKeyWithName("key_name"), "Hoge")
     UserStore.create(s)
 
     val count = UserStore.query.count
@@ -32,7 +32,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putしてgetして等しいこと") {
-    val key: Key[User] = UserStore.createKey("key_name")
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
     val expected = new User(key, "Hoge")
     UserStore.create(expected)
 
@@ -45,7 +45,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("createしてgetしてversionが1、updateして2であること") {
-    val key: Key[User] = UserStore.createKey("key_name")
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
     val u1 = new User(key, "Hoge")
     assert(u1.version == 0L)
 
@@ -59,7 +59,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("createしてgetしてcreatedAtと設定され、updateしてcreatedAtが変更されないこと") {
-    val key: Key[User] = UserStore.createKey("key_name")
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
     val u1 = new User(key, "Hoge")
     assert(u1.createdAt.isEmpty)
 
@@ -74,7 +74,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("createしてgetしてupdatedAtと設定され、updateしてupdatedAtが変更されること") {
-    val key: Key[User] = UserStore.createKey("key_name")
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
     val u1 = new User(key, "Hoge")
     assert(u1.updatedAt.isEmpty)
 
@@ -91,7 +91,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
 
   test("queryを試す") {
-    val key: Key[User] = UserStore.createKey("key_name")
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
     val expected = new User(key, "Hoge")
     UserStore.create(expected)
 

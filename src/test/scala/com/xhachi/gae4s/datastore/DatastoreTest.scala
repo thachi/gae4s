@@ -25,14 +25,14 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("IDを指定したKeyが取得できること") {
-    val key = UserStore.createKey(1)
+    val key = UserStore.createKeyWithId(1)
     assert(key.nameOption.isEmpty)
     assert(key.idOption.isDefined)
     assert(key.idOption.get == 1)
   }
 
   test("Nameを指定したKeyが取得できること") {
-    val key = UserStore.createKey("key_name")
+    val key = UserStore.createKeyWithName("key_name")
     assert(key.idOption.isEmpty)
     assert(key.nameOption.isDefined)
     assert(key.nameOption.get == "key_name")
@@ -40,13 +40,13 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
 
 
   test("getOptionできること") {
-    val key = UserStore.createKey("key_name")
+    val key = UserStore.createKeyWithName("key_name")
     val created = Datastore.getOption(key)
     assert(created.isEmpty)
   }
 
   test("putできること") {
-    val s = new User(UserStore.createKey("key_name"), "Hoge")
+    val s = new User(UserStore.createKeyWithName("key_name"), "Hoge")
     Datastore.put(s)
   }
 
@@ -59,7 +59,7 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
     val count1 = Datastore.count(Datastore.query[User, UserStore.Meta])
     assert(count1 == 0)
 
-    val s = new User(UserStore.createKey("key_name"), "Hoge")
+    val s = new User(UserStore.createKeyWithName("key_name"), "Hoge")
     Datastore.put(s)
 
     val count2 = Datastore.count(Datastore.query[User, UserStore.Meta])
@@ -67,7 +67,7 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putしてcountとasSeqの件数が等しいこと") {
-    val s = new User(UserStore.createKey("key_name"), "Hoge")
+    val s = new User(UserStore.createKeyWithName("key_name"), "Hoge")
     Datastore.put(s)
 
     val count = Datastore.count(Datastore.query[User, UserStore.Meta])
@@ -76,7 +76,7 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("putしてgetして等しいこと") {
-    val key: Key[User] = UserStore.createKey("key_name")
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
     val expected = new User(key, "Hoge")
     Datastore.put(expected)
 

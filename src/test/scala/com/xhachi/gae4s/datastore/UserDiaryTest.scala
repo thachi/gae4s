@@ -16,51 +16,49 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
     UserStore.create(user2)
 
 
-    val user1DiaryStore = UserDiaryStore(user1.key)
-    val user2DiaryStore = UserDiaryStore(user2.key)
 
     {
-      val diaryKey = user1DiaryStore.allocateKey
+      val diaryKey = UserDiary.allocateKey(user1.key)
       assert(diaryKey.parent.isDefined)
       assert(diaryKey.parent.get == user1.key)
 
       val d = new UserDiary(diaryKey)
-      user1DiaryStore.create(d)
+      d.create()
 
-      val d2 = user1DiaryStore.get(d.key)
+      val d2 = UserDiary.get(d.key)
       assert(d2.key.parent.isDefined)
       assert(d2.key.parent.get == user1.key)
     }
 
     {
-      val diaryKey = user1DiaryStore.allocateKey
+      val diaryKey = UserDiary.allocateKey(user1.key)
       assert(diaryKey.parent.isDefined)
       assert(diaryKey.parent.get == user1.key)
 
       val d = new UserDiary(diaryKey)
-      user1DiaryStore.create(d)
+      d.create()
 
-      val d2 = user1DiaryStore.get(d.key)
+      val d2 = UserDiary.get(d.key)
       assert(d2.key.parent.isDefined)
       assert(d2.key.parent.get == user1.key)
     }
 
     {
-      val diaryKey = user2DiaryStore.allocateKey
+      val diaryKey = UserDiary.allocateKey(user2.key)
       assert(diaryKey.parent.isDefined)
       assert(diaryKey.parent.get == user2.key)
 
       val d = new UserDiary(diaryKey)
-      user2DiaryStore.create(d)
+      d.create()
 
-      val d2 = user2DiaryStore.get(d.key)
+      val d2 = UserDiary.get(d.key)
       assert(d2.key.parent.isDefined)
       assert(d2.key.parent.get == user2.key)
     }
 
-    assert(user1DiaryStore.query.count == 2)
-    assert(user2DiaryStore.query.count == 1)
-    assert(UserDiaryStore.query.count == 3)
+    assert(UserDiary.query(user1.key).count == 2)
+    assert(UserDiary.query(user2.key).count == 1)
+    assert(UserDiary.query.count == 3)
   }
 }
 
@@ -83,7 +81,7 @@ class UserDiaryMeta extends EntityMeta[UserDiary] {
 }
 
 
-class UserDiaryStore private(override val parentKey: Key[User])
+class UserDiaryStore
   extends EntityStore[UserDiary]
   with CreatableStore
   with UpdatableStore
@@ -97,6 +95,4 @@ class UserDiaryStore private(override val parentKey: Key[User])
 }
 
 
-object UserDiaryStore extends UserDiaryStore(null) {
-  def apply(parentKey: Key[User]) = new UserDiaryStore(parentKey)
-}
+object UserDiary extends UserDiaryStore

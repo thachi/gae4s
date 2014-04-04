@@ -11,7 +11,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
   test("typeにEntityでデータを保存し取得できること") {
 
-    val key: Key[SampleDataEntity] = SampleDataEntity.createKey("hoge")
+    val key: Key[SampleDataEntity] = SampleDataEntity.createKeyWithName("hoge")
     val before = new SampleDataEntity(key)
     before.data = SampleData("Takashi", 5)
 
@@ -38,7 +38,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SampleDataEntity(val key: Key[SampleDataEntity])
-  extends MutableDataEntity[SampleDataEntity, SampleData]{
+  extends MutableDataEntity[SampleDataEntity, SampleData] {
   override var data: SampleData = SampleData("unknown", 0)
 }
 
@@ -52,8 +52,8 @@ object SampleDataEntity
   val meta = new Meta
 
   class Meta extends MutableDataEntityMeta[SampleDataEntity, SampleData] {
-
     def createEntity(key: Key[SampleDataEntity]): SampleDataEntity = new SampleDataEntity(key)
+
   }
 
 }
