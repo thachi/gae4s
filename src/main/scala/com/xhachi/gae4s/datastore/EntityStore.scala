@@ -85,6 +85,7 @@ trait GettableStore extends EntityStoreBase {
 
 
 trait CreatableStore extends EntityStoreBase with GettableStore {
+  type ENTITY <: Entity[ENTITY]
 
   def create(e: ENTITY) = datastore.create(e)
 
@@ -147,6 +148,7 @@ trait CreatableStore extends EntityStoreBase with GettableStore {
 }
 
 trait UpdatableStore extends EntityStoreBase {
+  type ENTITY <: Entity[ENTITY]
 
   def update(e: ENTITY) = datastore.update(e)
 
@@ -218,6 +220,7 @@ trait DeletableStore extends EntityStoreBase {
 }
 
 trait SingleStore extends IdentifiableKeyStore with CreatableStore {
+  type ENTITY <: Entity[ENTITY]
 
   def createSingleKey: Key[ENTITY] = createKey(1)
 
@@ -241,6 +244,7 @@ trait SingleStore extends IdentifiableKeyStore with CreatableStore {
 }
 
 trait NamedStore extends EntityStoreBase with GettableStore {
+  type ENTITY <: Entity[ENTITY]
 
   def createKey(name: String) = parentKeyOption match {
     case Some(p) => datastore.createKey[ENTITY, META](p, name)
