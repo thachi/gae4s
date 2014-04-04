@@ -26,7 +26,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   val key = new KeyProperty("key")
 
-  private[datastore] def createEntity(key: Key[E]): E
+  def createEntity(key: Key[E]): E
 
   def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity = {
     val e = createEntity(createKey(entity.getKey))

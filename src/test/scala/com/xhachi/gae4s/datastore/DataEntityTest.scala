@@ -53,7 +53,7 @@ object SampleDataEntity
 
   class Meta extends MutableDataEntityMeta[SampleDataEntity, SampleData] {
 
-    override private[datastore] def createEntity(key: Key[SampleDataEntity]): SampleDataEntity = new SampleDataEntity(key)
+    def createEntity(key: Key[SampleDataEntity]): SampleDataEntity = new SampleDataEntity(key)
   }
 
 }

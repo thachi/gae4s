@@ -73,7 +73,7 @@ final class UserDiary(
 
 class UserDiaryMeta extends EntityMeta[UserDiary] {
 
-  override private[datastore] def createEntity(key: Key[UserDiary]): UserDiary = new UserDiary(key)
+  def createEntity(key: Key[UserDiary]): UserDiary = new UserDiary(key)
 
   override def kind: String = "com.example.UserDiary"
 
