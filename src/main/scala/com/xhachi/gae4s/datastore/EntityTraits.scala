@@ -93,3 +93,15 @@ trait VersionMeta extends ApplyProperty {
       to.version = version.getFromStore(from)
   }
 }
+
+trait Mutable extends CreatedAt with UpdatedAt with Version
+
+trait MutableMeta extends CreatedAtMeta with UpdatedAtMeta with VersionMeta {
+  type Entity <: Mutable
+}
+
+trait Immutable extends CreatedAt
+
+trait ImmutableMeta extends CreatedAtMeta {
+  type Entity <: Immutable
+}

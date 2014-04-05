@@ -103,6 +103,7 @@ trait CreatableStore extends EntityStoreBase with GettableStore {
   def createIfNotExists(key: Key[ENTITY], init: ENTITY => Unit = (e) => Unit) = {
     if (getOption(key).isEmpty) {
       val e = meta.createEntity(key)
+      assert(key == e.key)
       init(e)
       create(e)
     }
@@ -252,6 +253,8 @@ trait NamedStore extends EntityStoreBase with GettableStore {
     case _ => datastore.createKey[ENTITY, META](name)
   }
 
+  def createEntityWithName(name: String)(implicit parentKey: Key[_] = null) = meta.createEntity(createKeyWithName(name))
+
   def getByName(name: String)(implicit parentKey: Key[_] = null) = get(createKeyWithName(name))
 
   def getByNameWithoutTx(name: String)(implicit parentKey: Key[_] = null) = datastore.getWithoutTx(createKeyWithName(name))
@@ -278,11 +281,14 @@ trait NamedStore extends EntityStoreBase with GettableStore {
 }
 
 trait IdentifiableKeyStore extends EntityStoreBase {
+  type ENTITY <: Entity[ENTITY]
 
   def createKeyWithId(id: Long)(implicit parentKey: Key[_] = null) = parentKey match {
     case p: Key[_] => datastore.createKey[ENTITY, META](p, id)
     case _ => datastore.createKey[ENTITY, META](id)
   }
+
+  def createEntityWithId(id: Long)(implicit parentKey: Key[_] = null) = meta.createEntity(createKeyWithId(id))
 
   def getById(id: Long)(implicit parentKey: Key[_] = null) = datastore.get(createKeyWithId(id))
 
@@ -310,11 +316,14 @@ trait IdentifiableKeyStore extends EntityStoreBase {
 }
 
 trait AllocatableKeyStore extends IdentifiableKeyStore {
+  type ENTITY <: Entity[ENTITY]
 
   def allocateKey(implicit parentKey: Key[_] = null) = parentKey match {
     case p: Key[_] => datastore.allocateKey[ENTITY, META](p)
     case _ => datastore.allocateKey[ENTITY, META]()
   }
+
+  def createEntityWithAllocatedKey(implicit parentKey: Key[_] = null) = meta.createEntity(allocateKey)
 
   def allocateKeys(count: Long)(implicit parentKey: Key[_] = null) = parentKey match {
     case p: Key[_] => datastore.allocateKeys[ENTITY, META](p, count)
@@ -323,6 +332,7 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
 }
 
 trait UUIDKeyStore extends NamedStore {
+  type ENTITY <: Entity[ENTITY]
 
   import java.util.UUID
 
@@ -334,6 +344,9 @@ trait UUIDKeyStore extends NamedStore {
     }
     key
   }
+
+  def createEntityWithGeneratedKey(implicit parentKey: Key[_] = null) = meta.createEntity(generateKey)
+
 }
 
 trait QueryableStore extends EntityStoreBase {

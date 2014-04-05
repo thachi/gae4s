@@ -38,7 +38,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SampleDataEntity(val key: Key[SampleDataEntity])
-  extends MutableDataEntity[SampleDataEntity, SampleData] {
+  extends DataEntity[SampleDataEntity, SampleData] with Mutable {
   override var data: SampleData = SampleData("unknown", 0)
 }
 
@@ -51,7 +51,7 @@ object SampleDataEntity
   type META = Meta
   val meta = new Meta
 
-  class Meta extends MutableDataEntityMeta[SampleDataEntity, SampleData] {
+  class Meta extends DataEntityMeta[SampleDataEntity, SampleData] with Mutable {
     def createEntity(key: Key[SampleDataEntity]): SampleDataEntity = new SampleDataEntity(key)
 
   }
@@ -61,3 +61,4 @@ object SampleDataEntity
 case class SampleData(name: String, age: Int) {
   def addAge(a: Int) = copy(age = age + a)
 }
+
