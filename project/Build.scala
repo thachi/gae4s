@@ -30,7 +30,7 @@ object Gae4sBuild extends Build {
   val defaultDependency = {
     val appengineVersion = "1.9.1"
     Seq(
-      "org.json4s" %% "json4s-native" % "3.2.7",
+      "org.json4s" %% "json4s-native" % "3.2.8",
       "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
       "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
       "com.google.appengine" % "appengine-testing" % appengineVersion % "test",
