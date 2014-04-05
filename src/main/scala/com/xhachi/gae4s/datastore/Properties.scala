@@ -271,15 +271,24 @@ class SerializableProperty[E <: Serializable](protected[datastore] val name: Str
 class JsonProperty[E <: AnyRef : Manifest](protected[datastore] val name: String) extends StringStoreProperty[E] {
 
   import org.json4s._
-  import org.json4s.native.Serialization
   import org.json4s.native.Serialization.write
   import org.json4s.native.JsonMethods._
 
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit var formats = JsonProperty.formats
 
   override def fromString(value: String): E = parse(value).extract[E]
 
   override def toString(value: E): String = write[E](value)
-
 }
 
+object JsonProperty {
+
+  import org.json4s._
+
+  private var formats: Formats = DefaultFormats
+
+  def :=(serializer: Serializer[_]): Unit = {
+    formats = formats + serializer
+  }
+
+}
