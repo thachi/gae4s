@@ -38,9 +38,12 @@ class Key[E](val key: LLKey) {
 
   override def toString = key.toString
 
+  def toWebSafeString = KeyFactory.keyToString(key)
 }
 
-//object Key {
+object Key {
+  def fromWebSafeString[E](string: String) = new Key[E](KeyFactory.stringToKey(string))
+}
 //  def apply[E <: Entity[E]](key: LLKey) = new Key[E](key)
 //
 //  def apply[E <: Entity[E]](name: String)(implicit meta: EntityMeta[E]) = {
