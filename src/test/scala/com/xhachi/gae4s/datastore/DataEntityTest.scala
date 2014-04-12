@@ -9,6 +9,8 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
+  implicit val context = NoAncestorEntityStoreContext
+
   test("typeにEntityでデータを保存し取得できること") {
 
     val key: Key[SampleDataEntity] = SampleDataEntity.createKeyWithName("hoge")

@@ -9,6 +9,8 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
+  implicit val context = NoAncestorEntityStoreContext
+
   def createTaroJiroSaburo = {
     val tato = new User(UserStore.createKeyWithName("key_name_1"), "Taro", height = 190, weight = 90, mobilePhone = Some("090-xxxx-xxxx"))
     val jiro = new User(UserStore.createKeyWithName("key_name_2"), "Jiro", height = 200, weight = 90, deleted = true)

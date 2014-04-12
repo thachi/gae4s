@@ -3,18 +3,31 @@ package com.xhachi.gae4s.datastore
 import org.scalatest.FunSuite
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.google.appengine.api.datastore.KeyFactory
 
 class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  test("ダイアリー") {
+  implicit val context = NoAncestorEntityStoreContext
+
+  test("ancestorが指定されていないUserをcreateしようとするとエラーになること") {
+
+    val key = KeyFactory.createKey(classOf[UserDiary].getName, 1)
+
+    intercept[AssertionError] {
+      val user1 = new UserDiary(new Key[UserDiary](key))
+      user1.create()
+    }
+
+  }
+
+  test("ダイアリーを２人分登録して別々に追加されること") {
 
     val user1 = new User(UserStore.allocateKey)
     UserStore.create(user1)
     val user2 = new User(UserStore.allocateKey)
     UserStore.create(user2)
-
 
 
     {
@@ -65,7 +78,7 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 
 final class UserDiary(
                        val key: Key[UserDiary]
-                       ) extends Entity[UserDiary] {
+                       ) extends Entity[UserDiary] with Ancestor[User] {
 
 }
 

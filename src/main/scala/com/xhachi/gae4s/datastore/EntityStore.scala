@@ -2,20 +2,22 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.Transaction
 
+trait EntityStoreContext {
+  def ancestor: Option[Key[_]]
+}
+
+object NoAncestorEntityStoreContext extends EntityStoreContext {
+  override def ancestor: Option[Key[_]] = None
+}
+
 trait EntityStoreBase {
   type ENTITY <: Entity[ENTITY]
   type META <: EntityMeta[ENTITY]
+  type Context = EntityStoreContext
 
   protected implicit def meta: META
 
   protected def datastore: Datastore = Datastore
-
-  //  def parentKey: Key[_] = null
-  //
-  //  def parentKey: Option[Key[_]] = parentKey match {
-  //    case k: Key[_] => Some(k)
-  //    case _ => None
-  //  }
 }
 
 trait EntityStore[E <: Entity[E]] extends EntityStoreBase with GettableStore {
@@ -224,58 +226,58 @@ trait DeletableStore extends EntityStoreBase {
 trait SingleStore extends IdentifiableKeyStore with CreatableStore {
   type ENTITY <: Entity[ENTITY]
 
-  def createSingleKey(implicit parentKey: Key[_] = null): Key[ENTITY] = createKeyWithId(1)
+  def createSingleKey(implicit context: Context): Key[ENTITY] = createKeyWithId(1)
 
-  def createSingleIfNotExists(init: ENTITY => Unit = (e) => Unit)(implicit parentKey: Key[_] = null) = createIfNotExists(createSingleKey, init)
+  def createSingleIfNotExists(init: ENTITY => Unit = (e) => Unit)(implicit context: Context) = createIfNotExists(createSingleKey, init)
 
-  def createSingleIfNotExistsWithoutTx(init: ENTITY => Unit = (e) => Unit)(implicit parentKey: Key[_] = null) = createIfNotExistsWithoutTx(createSingleKey, init)
+  def createSingleIfNotExistsWithoutTx(init: ENTITY => Unit = (e) => Unit)(implicit context: Context) = createIfNotExistsWithoutTx(createSingleKey, init)
 
-  def createSingleIfNotExistsWithTx(tx: Transaction, init: ENTITY => Unit = (e) => Unit)(implicit parentKey: Key[_] = null) = createIfNotExistsWithTx(tx, createSingleKey, init)
+  def createSingleIfNotExistsWithTx(tx: Transaction, init: ENTITY => Unit = (e) => Unit)(implicit context: Context) = createIfNotExistsWithTx(tx, createSingleKey, init)
 
-  def getSingle(implicit parentKey: Key[_] = null): ENTITY = get(createSingleKey)
+  def getSingle(implicit context: Context): ENTITY = get(createSingleKey)
 
-  def getSingleWithoutTx(implicit parentKey: Key[_] = null): ENTITY = getWithoutTx(createSingleKey)
+  def getSingleWithoutTx(implicit context: Context): ENTITY = getWithoutTx(createSingleKey)
 
-  def getSingleWithTx(tx: Transaction)(implicit parentKey: Key[_] = null): ENTITY = getWithTx(tx, createSingleKey)
+  def getSingleWithTx(tx: Transaction)(implicit context: Context): ENTITY = getWithTx(tx, createSingleKey)
 
-  def getOptionSingle(implicit parentKey: Key[_] = null): Option[ENTITY] = getOption(createSingleKey)
+  def getOptionSingle(implicit context: Context): Option[ENTITY] = getOption(createSingleKey)
 
-  def getOptionSingleWithoutTx(implicit parentKey: Key[_] = null): Option[ENTITY] = getOptionWithoutTx(createSingleKey)
+  def getOptionSingleWithoutTx(implicit context: Context): Option[ENTITY] = getOptionWithoutTx(createSingleKey)
 
-  def getOptionSingleWithTx(tx: Transaction)(implicit parentKey: Key[_] = null): Option[ENTITY] = getOptionWithTx(tx, createSingleKey)
+  def getOptionSingleWithTx(tx: Transaction)(implicit context: Context): Option[ENTITY] = getOptionWithTx(tx, createSingleKey)
 }
 
 trait NamedStore extends EntityStoreBase with GettableStore {
   type ENTITY <: Entity[ENTITY]
 
-  def createKeyWithName(name: String)(implicit parentKey: Key[_] = null) = parentKey match {
-    case p: Key[_] => datastore.createKey[ENTITY, META](p, name)
-    case _ => datastore.createKey[ENTITY, META](name)
+  def createKeyWithName(name: String)(implicit context: Context) = context.ancestor match {
+    case Some(p) => datastore.createKey[ENTITY, META](p, name)
+    case None => datastore.createKey[ENTITY, META](name)
   }
 
-  def createEntityWithName(name: String)(implicit parentKey: Key[_] = null) = meta.createEntity(createKeyWithName(name))
+  def createEntityWithName(name: String)(implicit context: Context) = meta.createEntity(createKeyWithName(name))
 
-  def getByName(name: String)(implicit parentKey: Key[_] = null) = get(createKeyWithName(name))
+  def getByName(name: String)(implicit context: Context) = get(createKeyWithName(name))
 
-  def getByNameWithoutTx(name: String)(implicit parentKey: Key[_] = null) = datastore.getWithoutTx(createKeyWithName(name))
+  def getByNameWithoutTx(name: String)(implicit context: Context) = datastore.getWithoutTx(createKeyWithName(name))
 
-  def getByNameWithTx(tx: Transaction, name: String)(implicit parentKey: Key[_] = null) = datastore.getWithTx(tx, createKeyWithName(name))
+  def getByNameWithTx(tx: Transaction, name: String)(implicit context: Context) = datastore.getWithTx(tx, createKeyWithName(name))
 
-  def getOptionByName(name: String)(implicit parentKey: Key[_] = null) = getOption(createKeyWithName(name))
+  def getOptionByName(name: String)(implicit context: Context) = getOption(createKeyWithName(name))
 
-  def getOptionByNameWithoutTx(name: String)(implicit parentKey: Key[_] = null) = getOptionWithoutTx(createKeyWithName(name))
+  def getOptionByNameWithoutTx(name: String)(implicit context: Context) = getOptionWithoutTx(createKeyWithName(name))
 
-  def getOptionByNameWithTx(tx: Transaction, name: String)(implicit parentKey: Key[_] = null) = getOptionWithTx(tx, createKeyWithName(name))
+  def getOptionByNameWithTx(tx: Transaction, name: String)(implicit context: Context) = getOptionWithTx(tx, createKeyWithName(name))
 
-  def getByNames(names: Seq[String])(implicit parentKey: Key[_] = null): Map[String, ENTITY] = datastore.get(names.map(createKeyWithName)).map {
+  def getByNames(names: Seq[String])(implicit context: Context): Map[String, ENTITY] = datastore.get(names.map(createKeyWithName)).map {
     case (k, v) => k.name -> v
   }
 
-  def getByNamesWithoutTx(names: Seq[String])(implicit parentKey: Key[_] = null): Map[String, ENTITY] = datastore.getWithoutTx(names.map(createKeyWithName)).map {
+  def getByNamesWithoutTx(names: Seq[String])(implicit context: Context): Map[String, ENTITY] = datastore.getWithoutTx(names.map(createKeyWithName)).map {
     case (k, v) => k.name -> v
   }
 
-  def getByNamesWithTx(tx: Transaction, names: Seq[String])(implicit parentKey: Key[_] = null): Map[String, ENTITY] = datastore.getWithTx(tx, names.map(createKeyWithName)).map {
+  def getByNamesWithTx(tx: Transaction, names: Seq[String])(implicit context: Context): Map[String, ENTITY] = datastore.getWithTx(tx, names.map(createKeyWithName)).map {
     case (k, v) => k.name -> v
   }
 }
@@ -283,34 +285,34 @@ trait NamedStore extends EntityStoreBase with GettableStore {
 trait IdentifiableKeyStore extends EntityStoreBase {
   type ENTITY <: Entity[ENTITY]
 
-  def createKeyWithId(id: Long)(implicit parentKey: Key[_] = null) = parentKey match {
-    case p: Key[_] => datastore.createKey[ENTITY, META](p, id)
-    case _ => datastore.createKey[ENTITY, META](id)
+  def createKeyWithId(id: Long)(implicit context: Context) = context.ancestor match {
+    case Some(p) => datastore.createKey[ENTITY, META](p, id)
+    case None => datastore.createKey[ENTITY, META](id)
   }
 
-  def createEntityWithId(id: Long)(implicit parentKey: Key[_] = null) = meta.createEntity(createKeyWithId(id))
+  def createEntityWithId(id: Long)(implicit context: Context) = meta.createEntity(createKeyWithId(id))
 
-  def getById(id: Long)(implicit parentKey: Key[_] = null) = datastore.get(createKeyWithId(id))
+  def getById(id: Long)(implicit context: Context) = datastore.get(createKeyWithId(id))
 
-  def getByIdWithoutTx(id: Long)(implicit parentKey: Key[_] = null) = datastore.getWithoutTx(createKeyWithId(id))
+  def getByIdWithoutTx(id: Long)(implicit context: Context) = datastore.getWithoutTx(createKeyWithId(id))
 
-  def getByIdWithTx(tx: Transaction, id: Long)(implicit parentKey: Key[_] = null) = datastore.getWithTx(tx, createKeyWithId(id))
+  def getByIdWithTx(tx: Transaction, id: Long)(implicit context: Context) = datastore.getWithTx(tx, createKeyWithId(id))
 
-  def getOptionById(id: Long)(implicit parentKey: Key[_] = null) = datastore.getOption(createKeyWithId(id))
+  def getOptionById(id: Long)(implicit context: Context) = datastore.getOption(createKeyWithId(id))
 
-  def getOptionByIdWithoutTx(id: Long)(implicit parentKey: Key[_] = null) = datastore.getOptionWithoutTx(createKeyWithId(id))
+  def getOptionByIdWithoutTx(id: Long)(implicit context: Context) = datastore.getOptionWithoutTx(createKeyWithId(id))
 
-  def getOptionByIdWithTx(tx: Transaction, id: Long)(implicit parentKey: Key[_] = null) = datastore.getOptionWithTx(tx, createKeyWithId(id))
+  def getOptionByIdWithTx(tx: Transaction, id: Long)(implicit context: Context) = datastore.getOptionWithTx(tx, createKeyWithId(id))
 
-  def getByIds(ids: Seq[Long])(implicit parentKey: Key[_] = null): Map[Long, ENTITY] = datastore.get(ids.map(createKeyWithId)).map {
+  def getByIds(ids: Seq[Long])(implicit context: Context): Map[Long, ENTITY] = datastore.get(ids.map(createKeyWithId)).map {
     case (k, v) => k.id -> v
   }
 
-  def getByIdsWithoutTx(ids: Seq[Long])(implicit parentKey: Key[_] = null): Map[Long, ENTITY] = datastore.getWithoutTx(ids.map(createKeyWithId)).map {
+  def getByIdsWithoutTx(ids: Seq[Long])(implicit context: Context): Map[Long, ENTITY] = datastore.getWithoutTx(ids.map(createKeyWithId)).map {
     case (k, v) => k.id -> v
   }
 
-  def getByIdsWithTx(tx: Transaction, ids: Seq[Long])(implicit parentKey: Key[_] = null): Map[Long, ENTITY] = datastore.getWithTx(tx, ids.map(createKeyWithId)).map {
+  def getByIdsWithTx(tx: Transaction, ids: Seq[Long])(implicit context: Context): Map[Long, ENTITY] = datastore.getWithTx(tx, ids.map(createKeyWithId)).map {
     case (k, v) => k.id -> v
   }
 }
@@ -318,16 +320,16 @@ trait IdentifiableKeyStore extends EntityStoreBase {
 trait AllocatableKeyStore extends IdentifiableKeyStore {
   type ENTITY <: Entity[ENTITY]
 
-  def allocateKey(implicit parentKey: Key[_] = null) = parentKey match {
-    case p: Key[_] => datastore.allocateKey[ENTITY, META](p)
-    case _ => datastore.allocateKey[ENTITY, META]()
+  def allocateKey(implicit context: Context) = context.ancestor match {
+    case Some(p) => datastore.allocateKey[ENTITY, META](p)
+    case None => datastore.allocateKey[ENTITY, META]()
   }
 
-  def createEntityWithAllocatedKey(implicit parentKey: Key[_] = null) = meta.createEntity(allocateKey)
+  def createEntityWithAllocatedKey(implicit context: Context) = meta.createEntity(allocateKey)
 
-  def allocateKeys(count: Long)(implicit parentKey: Key[_] = null) = parentKey match {
-    case p: Key[_] => datastore.allocateKeys[ENTITY, META](p, count)
-    case _ => datastore.allocateKeys[ENTITY, META](count)
+  def allocateKeys(count: Long)(implicit context: Context) = context.ancestor match {
+    case Some(p) => datastore.allocateKeys[ENTITY, META](p, count)
+    case None => datastore.allocateKeys[ENTITY, META](count)
   }
 }
 
@@ -336,7 +338,7 @@ trait UUIDKeyStore extends NamedStore {
 
   import java.util.UUID
 
-  def generateKey(implicit parentKey: Key[_] = null) = {
+  def generateKey(implicit context: Context) = {
     var key: Key[ENTITY] = null
     while (key == null) {
       val created = createKeyWithName(UUID.randomUUID().toString)
@@ -345,24 +347,24 @@ trait UUIDKeyStore extends NamedStore {
     key
   }
 
-  def createEntityWithGeneratedKey(implicit parentKey: Key[_] = null) = meta.createEntity(generateKey)
+  def createEntityWithGeneratedKey(implicit context: Context) = meta.createEntity(generateKey)
 
 }
 
 trait QueryableStore extends EntityStoreBase {
 
-  def query(implicit parentKey: Key[_] = null): Query[ENTITY, META] = parentKey match {
-    case p: Key[_] => datastore.query[ENTITY, META](p)
-    case _ => datastore.query[ENTITY, META]
+  def query(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
+    case Some(p) => datastore.query[ENTITY, META](p)
+    case None => datastore.query[ENTITY, META]
   }
 
-  def queryWithoutTx(implicit parentKey: Key[_] = null): Query[ENTITY, META] = parentKey match {
-    case p: Key[_] => datastore.queryWithoutTx[ENTITY, META](p)
-    case _ => datastore.queryWithoutTx[ENTITY, META]
+  def queryWithoutTx(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
+    case Some(p) => datastore.queryWithoutTx[ENTITY, META](p)
+    case None => datastore.queryWithoutTx[ENTITY, META]
   }
 
-  def queryWithTx(tx: Transaction)(implicit parentKey: Key[_] = null): Query[ENTITY, META] = parentKey match {
-    case p: Key[_] => datastore.queryWithTx[ENTITY, META](tx, p)
-    case _ => datastore.queryWithTx[ENTITY, META](tx)
+  def queryWithTx(tx: Transaction)(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
+    case Some(p) => datastore.queryWithTx[ENTITY, META](tx, p)
+    case None => datastore.queryWithTx[ENTITY, META](tx)
   }
 }

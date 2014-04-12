@@ -4,10 +4,8 @@ import org.scalatest.{Suite, BeforeAndAfterEach}
 import java.util.logging.{Level, StreamHandler, Logger}
 import com.google.appengine.tools.development.testing.{LocalServiceTestConfig, LocalServiceTestHelper}
 import com.google.appengine.api.datastore.DatastoreServiceFactory
+import com.xhachi.gae4s.datastore.{Key, EntityStoreContext}
 
-/**
- * Created by takashi on 2014/02/20.
- */
 trait AppEngineTestSuite extends BeforeAndAfterEach {
 
   this: Suite =>
@@ -28,5 +26,8 @@ trait AppEngineTestSuite extends BeforeAndAfterEach {
 
   override def afterEach() = helper.tearDown()
 
+  implicit def keyToContext(key: Key[_]) = new EntityStoreContext {
+    override def ancestor: Option[Key[_]] = Some(key)
+  }
 
 }

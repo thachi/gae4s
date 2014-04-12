@@ -11,6 +11,8 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
 
   implicit val meta = new UserStore.Meta
 
+  implicit val context = NoAncestorEntityStoreContext
+
   test("allocateしたKeyが取得できること") {
     val key = UserStore.allocateKey
     assert(key.nameOption.isEmpty)
