@@ -40,14 +40,14 @@ trait CreatedAtMeta extends ApplyProperty {
   final val createdAt = new OptionProperty(new DateProperty("createdAt"))
 
   addApplyToLLEntity {
-    (from: Entity, to: LLEntity) => createdAt.setToStore(from.createdAt match {
+    (from: Entity, to: LLEntity) => createdAt.setValueToLLEntity(to)(from.createdAt match {
       case Some(d: Date) => Some(d)
       case _ => Some(new Date())
-    })(to)
+    })
   }
 
   addApplyFromLLEntity {
-    (from: LLEntity, to: Entity) => to.createdAt = createdAt.getFromStore(from)
+    (from: LLEntity, to: Entity) => to.createdAt = createdAt.getValueFromLLEntity(from)
   }
 }
 
@@ -64,11 +64,11 @@ trait UpdatedAtMeta extends ApplyProperty {
   final val updatedAt = new OptionProperty(new DateProperty("updatedAt"))
 
   addApplyToLLEntity {
-    (from: Entity, to: LLEntity) => updatedAt.setToStore(Some(new Date()))(to)
+    (from: Entity, to: LLEntity) => updatedAt.setValueToLLEntity(to)(Some(new Date()))
   }
 
   addApplyFromLLEntity {
-    (from: LLEntity, to: Entity) => to.updatedAt = updatedAt.getFromStore(from)
+    (from: LLEntity, to: Entity) => to.updatedAt = updatedAt.getValueFromLLEntity(from)
   }
 }
 
@@ -85,12 +85,12 @@ trait VersionMeta extends ApplyProperty {
 
   addApplyToLLEntity {
     (from: Entity, to: LLEntity) =>
-      version.setToStore(from.version + 1L)(to)
+      version.setValueToLLEntity(to)(from.version + 1L)
   }
 
   addApplyFromLLEntity {
     (from: LLEntity, to: Entity) =>
-      to.version = version.getFromStore(from)
+      to.version = version.getValueFromLLEntity(from)
   }
 }
 

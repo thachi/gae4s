@@ -232,21 +232,21 @@ class UserStore
 
     addApplyFromLLEntity {
       (from: LLEntity, to: User) =>
-        to.name = name.getFromStore(from)
-        to.height = height.getFromStore(from)
-        to.weight = weight.getFromStore(from)
-        to.mobilePhone = mobilePhone.getFromStore(from)
-        to.webInfo = webInfo.getFromStore(from)
-        to.deleted = deleted.getFromStore(from)
+        to.name = name.getValueFromLLEntity(from)
+        to.height = height.getValueFromLLEntity(from)
+        to.weight = weight.getValueFromLLEntity(from)
+        to.mobilePhone = mobilePhone.getValueFromLLEntity(from)
+        to.webInfo = webInfo.getValueFromLLEntity(from)
+        to.deleted = deleted.getValueFromLLEntity(from)
     }
 
     addApplyToLLEntity {
-      (entity: User, e: LLEntity) =>
-        name.setToStore(entity.name)(e)
-        height.setToStore(entity.height)(e)
-        weight.setToStore(entity.weight)(e)
-        webInfo.setToStore(entity.webInfo)(e)
-        deleted.setToStore(entity.deleted)(e)
+      (from: User, to: LLEntity) =>
+        name.setValueToLLEntity(to)(from.name)
+        height.setValueToLLEntity(to)(from.height)
+        weight.setValueToLLEntity(to)(from.weight)
+        webInfo.setValueToLLEntity(to)(from.webInfo)
+        deleted.setValueToLLEntity(to)(from.deleted)
     }
   }
 

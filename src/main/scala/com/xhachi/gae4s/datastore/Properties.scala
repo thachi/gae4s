@@ -22,9 +22,9 @@ trait Property[T] {
 
   protected[datastore] def name: String
 
-  def getFromStore(implicit entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
+  def getValueFromLLEntity(entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
 
-  def setToStore(value: T)(implicit entity: LLEntity) = this match {
+  def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
     case p: IndexedProperty[_] => entity.setProperty(name, toStoreProperty(value))
     case _ => entity.setUnindexedProperty(name, toStoreProperty(value))
   }

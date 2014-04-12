@@ -12,11 +12,11 @@ abstract class DataEntityMeta[E <: DataEntity[E, D] : ClassTag, D <: AnyRef : Ma
   val data: JsonProperty[D] = new JsonProperty[D]("data")
 
   addApplyToLLEntity {
-    (from: Entity, to: LLEntity) => data.setToStore(from.data)(to)
+    (from: Entity, to: LLEntity) => data.setValueToLLEntity(to)(from.data)
   }
 
   addApplyFromLLEntity {
-    (from: LLEntity, to: Entity) => to.data = data.getFromStore(from)
+    (from: LLEntity, to: Entity) => to.data = data.getValueFromLLEntity(from)
   }
 }
 
@@ -29,10 +29,10 @@ abstract class DataSeqEntityMeta[E <: DataSeqEntity[E, D] : ClassTag, D <: AnyRe
   val data: JsonProperty[Seq[D]] = new JsonProperty[Seq[D]]("data")
 
   addApplyToLLEntity {
-    (from: Entity, to: LLEntity) => data.setToStore(from.data)(to)
+    (from: Entity, to: LLEntity) => data.setValueToLLEntity(to)(from.data)
   }
 
   addApplyFromLLEntity {
-    (from: LLEntity, to: Entity) => to.data = data.getFromStore(from)
+    (from: LLEntity, to: Entity) => to.data = data.getValueFromLLEntity(from)
   }
 }
