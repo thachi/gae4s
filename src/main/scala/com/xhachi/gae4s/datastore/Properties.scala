@@ -221,7 +221,7 @@ trait ByteProperty[B] extends SimpleProperty[B] {
   override def toStoreProperty(b: B): Any = {
     val value = toByte(b)
     if (value.length < Property.ShortLimit) new ShortBlob(value)
-    else if (value.length < Property.LongLimit) new ShortBlob(value)
+    else if (value.length < Property.LongLimit) new Blob(value)
     else throw createToConversionException(value)
   }
 
