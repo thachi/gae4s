@@ -32,6 +32,7 @@ object Gae4sBuild extends Build {
     Seq(
       "org.json4s" %% "json4s-native" % "3.2.8",
       "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
+      "com.google.appengine.tools" % "appengine-gcs-client" % "0.3.9",
       "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
       "com.google.appengine" % "appengine-testing" % appengineVersion % "test",
       "org.slf4j" % "slf4j-jdk14" % "1.7.5" % "test",
