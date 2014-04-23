@@ -8,16 +8,19 @@ import scala.Some
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
+import com.xhachi.gae4s.common.Logger
 
 
-object CloudStorage {
+object CloudStorage extends Logger {
 
   def apply(bucketName: String) = new CloudStorage(defaultService, bucketName)
 
   def defaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
 }
 
-class CloudStorage(service: GcsService, bucketName: String) {
+class CloudStorage(service: GcsService, bucketName: String) extends Logger {
+
+  info("CloudStorage[" + bucketName + "] created")
 
   implicit def pathToFilename(path: String) = new GcsFilename(bucketName, path)
 
@@ -28,11 +31,16 @@ class CloudStorage(service: GcsService, bucketName: String) {
     }
   }
 
-  def delete(path: String): Boolean = service.delete(path)
+  def delete(path: String): Boolean = {
+    info("CloudStorage[" + bucketName + "] delete : " + path)
+
+    service.delete(path)
+  }
 
   def readByteBuffer(path: String): Option[ByteBuffer] = {
     metadata(path) map {
       case m =>
+        info("CloudStorage[" + bucketName + "] read : " + path)
         val fileSize = m.getLength.toInt
         val result = ByteBuffer.allocate(fileSize)
         val c = service.openReadChannel(path, 0)
@@ -43,16 +51,18 @@ class CloudStorage(service: GcsService, bucketName: String) {
 
   def readBytes(path: String): Option[Array[Byte]] = readByteBuffer(path) map (_.array())
 
-
   def writeBytes(path: String, bytes: Array[Byte]) = writeByteBuffer(path, ByteBuffer.wrap(bytes))
 
   def writeByteBuffer(path: String, bytes: ByteBuffer) = {
+    info("CloudStorage[" + bucketName + "] write : " + path)
     var c: GcsOutputChannel = null
     try {
       c = service.createOrReplace(path, GcsFileOptions.getDefaultInstance)
       c.write(bytes)
+    } catch {
+      case e: Throwable => throw e
     } finally {
-      c.close()
+      if (c != null) c.close()
     }
   }
 
