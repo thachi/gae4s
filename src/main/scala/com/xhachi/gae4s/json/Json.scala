@@ -6,7 +6,6 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s._
 import org.json4s.native.Serialization.write
 import org.json4s.native.JsonMethods._
-import scala.reflect.ClassTag
 
 object Json extends Json
 
