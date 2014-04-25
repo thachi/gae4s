@@ -12,6 +12,7 @@ import com.google.appengine.api.datastore.Query.SortDirection._
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users._
 import com.google.appengine.api.blobstore._
+import com.xhachi.gae4s.json.Json
 
 object Property {
   val ShortLimit = 500
@@ -270,25 +271,7 @@ class SerializableProperty[E <: Serializable](protected[datastore] val name: Str
 
 class JsonProperty[E <: AnyRef : Manifest](protected[datastore] val name: String) extends StringStoreProperty[E] {
 
-  import org.json4s._
-  import org.json4s.native.Serialization.write
-  import org.json4s.native.JsonMethods._
+  override def fromString(value: String): E = Json.fromJsonString[E](value)
 
-  implicit var formats = JsonProperty.formats
-
-  override def fromString(value: String): E = parse(value).extract[E]
-
-  override def toString(value: E): String = write[E](value)
-}
-
-object JsonProperty {
-
-  import org.json4s._
-
-  private var formats: Formats = DefaultFormats
-
-  def :=(serializer: Serializer[_]): Unit = {
-    formats = formats + serializer
-  }
-
+  override def toString(value: E): String = Json.toJsonString(value)
 }

@@ -38,6 +38,7 @@ object Gae4sBuild extends Build {
     val appengineVersion = "1.9.1"
     Seq(
       "org.json4s" %% "json4s-native" % "3.2.9",
+      "org.json4s" %% "json4s-ext" % "3.2.9",
       "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
       "com.google.appengine.tools" % "appengine-gcs-client" % "0.3.9",
       "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
