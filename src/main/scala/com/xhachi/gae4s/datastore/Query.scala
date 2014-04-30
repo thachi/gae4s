@@ -28,6 +28,8 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
 
   def asSeq = datastore.asSeq(this)
 
+  def asSingle = datastore.asSingle(this)
+
   def asKeySeq = datastore.asKeySeq(this)
 
   private[datastore] def toLLQuery(keysOnly: Boolean): LLQuery = {

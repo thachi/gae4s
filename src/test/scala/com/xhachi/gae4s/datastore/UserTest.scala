@@ -102,6 +102,9 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     val seq = UserStore.query.asSeq
     assert(seq.size == 1)
     assert(seq.head.key == expected.key)
+
+    val single = UserStore.query.asSingle
+    assert(single.key == expected.key)
   }
 
   test("propertyが正しいか") {
@@ -124,6 +127,10 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
     val seq2 = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true)).asSeq
     assert(seq2.size == 1)
+
+    val single = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true)).asSingle
+    assert(seq2.head.key == single.key)
+
   }
 
   test("filterでorを試す") {
