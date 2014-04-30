@@ -42,16 +42,24 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def createEntity(key: Key[E]): E
 
-  def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity = {
-    val e = createEntity(createKey(entity.getKey))
-    applyFromLLEntity(entity, e)
-    e
+  def toEntity(entity: LLEntity): Entity = {
+    entity match {
+      case _: LLEntity =>
+        val e = createEntity(createKey(entity.getKey))
+        applyFromLLEntity(entity, e)
+        e
+      case _ => null.asInstanceOf[Entity]
+    }
   }
 
-  def toLLEntity(entity: E): com.google.appengine.api.datastore.Entity = {
-    val e = new LLEntity(entity.key.key)
-    applyToLLEntity(entity, e)
-    e
+  def toLLEntity(entity: E): LLEntity = {
+    entity match {
+      case _: E =>
+        val e = new LLEntity(entity.key.key)
+        applyToLLEntity(entity, e)
+        e
+      case _ => null
+    }
   }
 }
 

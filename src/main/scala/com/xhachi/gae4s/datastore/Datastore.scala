@@ -294,6 +294,14 @@ sealed private[datastore] trait DatastoreQueryMethods extends DatastoreBase {
     query.meta.toEntity(prepare(query, keysOnly = false).asSingleEntity())
   }
 
+  def asSingleOption[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Option[E] = {
+    query.meta.toEntity(prepare(query, keysOnly = false).asSingleEntity()) match {
+      case null => None
+      case e => Some(e)
+    }
+  }
+
+
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
     prepare(query, keysOnly = true).asIterable.map {
       e => query.meta.createKey(e.getKey)

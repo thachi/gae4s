@@ -119,6 +119,37 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     assert(seq.size == 1)
   }
 
+
+
+  test("filterでasSingleを試す") {
+    createTaroJiroSaburo
+
+    val single = UserStore.query.filter(m => (m.name #== "Jiro")).asSingle
+    assert(single.name == "Jiro")
+  }
+
+  test("asSingleでヒットしない場合") {
+    createTaroJiroSaburo
+
+    val single = UserStore.query.filter(m => (m.name #== "hogehoge")).asSingle
+    assert(single == null)
+  }
+
+  test("asSingleOptionで見つかった場合") {
+    createTaroJiroSaburo
+
+    val single = UserStore.query.filter(m => (m.name #== "Jiro")).asSingleOption
+    assert(single.isDefined)
+    assert(single.get.name == "Jiro")
+  }
+
+  test("asSingleOptionで見つからない場合") {
+    createTaroJiroSaburo
+
+    val single = UserStore.query.filter(m => (m.name #== "hogehoge")).asSingleOption
+    assert(single.isEmpty)
+  }
+
   test("filterでandを試す") {
     createTaroJiroSaburo
 
