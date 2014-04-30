@@ -271,7 +271,7 @@ class SerializableProperty[E <: Serializable](protected[datastore] val name: Str
 
 class JsonProperty[E <: AnyRef : Manifest](protected[datastore] val name: String) extends StringStoreProperty[E] {
 
-  override def fromString(value: String): E = Json.fromJsonString[E](value)
+  override def fromString(value: String): E = Json.parseAs[E](value)
 
-  override def toString(value: E): String = Json.toJsonString(value)
+  override def toString(value: E): String = Json.stringify(value)
 }

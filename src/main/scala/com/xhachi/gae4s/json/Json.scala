@@ -5,7 +5,7 @@ import org.json4s.ext.EnumNameSerializer
 
 import org.json4s._
 import org.json4s.native.Serialization.write
-import org.json4s.native.JsonMethods._
+import org.json4s.native.JsonMethods.{parse => parseByJson4s}
 
 object Json extends Json
 
@@ -44,7 +44,11 @@ class Json {
     } ++ enumSeq.map(e => new EnumNameSerializer(e))
   }
 
-  def fromJsonString[E: Manifest](value: String): E = parse(value).extract[E]
+  def parseAs[E: Manifest](value: String): E = parse(value).extract[E]
 
-  def toJsonString[E <: AnyRef: Manifest](value: E): String = write[E](value)
+  def parse(value: String) = parseByJson4s(value)
+
+  def stringify[E <: AnyRef : Manifest](value: E): String = write[E](value)
+
+  def stringify(value: JValue): String = write(value)
 }
