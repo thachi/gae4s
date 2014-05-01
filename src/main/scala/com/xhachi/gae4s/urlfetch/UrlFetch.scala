@@ -30,21 +30,25 @@ class UrlFetch(service: URLFetchService, headers: Map[String, String], charset: 
     lazy val headers: Map[String, String] = response.getHeaders.map(header => header.getName -> header.getValue).toMap
   }
 
-  def get(url: String) = fetch(createRequest(url, GET))
+  def get(url: String, query: Option[Map[String, Seq[String]]] = None) = fetch(createRequest(url, GET, query = query))
 
-  def head(url: String) = fetch(createRequest(url, HEAD))
+  def head(url: String, query: Option[Map[String, Seq[String]]] = None) = fetch(createRequest(url, HEAD, query = query))
 
-  def post(url: String, data: Map[String, Seq[String]]) = fetch(createRequest(url, POST, Some(data)))
+  def post(url: String, query: Option[Map[String, Seq[String]]] = None, data: Option[Map[String, Seq[String]]] = None) = fetch(createRequest(url, POST, query, data))
 
-  def put(url: String, data: Map[String, Seq[String]]) = fetch(createRequest(url, PUT, Some(data)))
+  def put(url: String, query: Option[Map[String, Seq[String]]] = None, data: Option[Map[String, Seq[String]]] = None) = fetch(createRequest(url, PUT, query, data))
 
-  def delete(url: String) = fetch(createRequest(url, POST))
+  def delete(url: String) = fetch(createRequest(url, DELETE))
 
   protected def fetch(request: HTTPRequest) = {
     new Response(service.fetch(request))
   }
 
-  protected def createRequest(url: String, method: HTTPMethod, data: Option[Map[String, Seq[String]]] = None): HTTPRequest = {
+  protected def createRequest(url: String,
+                              method: HTTPMethod,
+                              query: Option[Map[String, Seq[String]]] = None,
+                              data: Option[Map[String, Seq[String]]] = None): HTTPRequest = {
+
     val request: HTTPRequest = new HTTPRequest(new URL(url), method)
 
     headers.map {
