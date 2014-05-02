@@ -95,7 +95,10 @@ class KeyProperty[E <: Entity[E]](protected[datastore] val name: String) extends
     case _ => null
   }
 
-  override protected[datastore] def toStoreProperty(value: Key[E]): Any = value.key
+  override protected[datastore] def toStoreProperty(value: Key[E]): Any = value match {
+    case v: Key[E] => value.key
+    case _ => null
+  }
 }
 
 class LongProperty(protected[datastore] val name: String) extends SimpleProperty[Long] {
