@@ -34,28 +34,28 @@ trait Property[T] {
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
-  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \"" + v + "\"(" + v.getClass.getName + ") can not convert from stored property")
+  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \"" + v + "\"(" + v.getClass.getName + ") can not converted from stored property")
 
-  protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not convert to store property")
+  protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not converted to store property")
 }
 
-trait IndexedProperty[Q] {
+trait IndexedProperty[Q] extends Property[Q] {
 
   protected[datastore] def name: String
 
-  def #==(value: Q): Filter = FilterPredicate(name, EQUAL, value)
+  def #==(value: Q): Filter = FilterPredicate(name, EQUAL, toStoreProperty(value))
 
-  def #!=(value: Q): Filter = FilterPredicate(name, NOT_EQUAL, value)
+  def #!=(value: Q): Filter = FilterPredicate(name, NOT_EQUAL, toStoreProperty(value))
 
-  def in(value: Q, values: Q*): Filter = FilterPredicate(name, IN, value :: values ++: Nil)
+  def in(value: Q, values: Q*): Filter = FilterPredicate(name, IN, toStoreProperty(value) :: values.map(toStoreProperty) ++: Nil)
 
-  def #>(value: Q): Filter = FilterPredicate(name, GREATER_THAN, value)
+  def #>(value: Q): Filter = FilterPredicate(name, GREATER_THAN, toStoreProperty(value))
 
-  def #>=(value: Q): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, value)
+  def #>=(value: Q): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, toStoreProperty(value))
 
-  def #<(value: Q): Filter = FilterPredicate(name, LESS_THAN, value)
+  def #<(value: Q): Filter = FilterPredicate(name, LESS_THAN, toStoreProperty(value))
 
-  def #<=(value: Q): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, value)
+  def #<=(value: Q): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, toStoreProperty(value))
 
   def asc = SortPredicate(name, ASCENDING)
 

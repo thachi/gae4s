@@ -37,7 +37,7 @@ trait CreatedAt {
 trait CreatedAtMeta extends ApplyProperty {
   type Entity <: CreatedAt
 
-  final val createdAt = new OptionProperty(new DateProperty("createdAt")) with IndexedProperty[Date]
+  final val createdAt = new OptionProperty(new DateProperty("createdAt") with IndexedProperty[Date])
 
   addApplyToLLEntity {
     (from: Entity, to: LLEntity) => createdAt.setValueToLLEntity(to)(from.createdAt match {
@@ -61,7 +61,7 @@ trait UpdatedAt {
 trait UpdatedAtMeta extends ApplyProperty {
   type Entity <: UpdatedAt
 
-  final val updatedAt = new OptionProperty(new DateProperty("updatedAt")) with IndexedProperty[Date]
+  final val updatedAt = new OptionProperty(new DateProperty("updatedAt") with IndexedProperty[Date])
 
   addApplyToLLEntity {
     (from: Entity, to: LLEntity) => updatedAt.setValueToLLEntity(to)(Some(new Date()))
