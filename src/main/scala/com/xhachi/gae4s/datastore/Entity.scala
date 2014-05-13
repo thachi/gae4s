@@ -16,7 +16,10 @@ trait Entity[E <: Entity[E]] {
 
 }
 
-
+/**
+ * TODO: ちゃんとしたエラーチェックの仕組みをDatastoreに入れたい
+ * @tparam A
+ */
 trait Ancestor[A <: Entity[A]] {
 
   def key: Key[_]
@@ -29,6 +32,15 @@ trait Ancestor[A <: Entity[A]] {
   }
 }
 
+object EntityMeta {
+  private var _classToKindStrategy: (Class[_] => String) = (clazz => clazz.getName)
+
+  def setClassToKindStrategy(strategy: (Class[_]) => String) = {
+    _classToKindStrategy = strategy
+  }
+
+  def classToKindStrategy = _classToKindStrategy
+}
 
 abstract class EntityMeta[E <: Entity[E] : ClassTag]
   extends ApplyProperty
@@ -36,7 +48,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   type Entity = E
 
-  def kind: String = implicitly[ClassTag[E]].runtimeClass.getName
+  def kind: String = EntityMeta.classToKindStrategy(implicitly[ClassTag[E]].runtimeClass)
 
   val key = new KeyProperty("key")
 
