@@ -32,14 +32,28 @@ trait Ancestor[A <: Entity[A]] {
   }
 }
 
-object EntityMeta {
-  private var _classToKindStrategy: (Class[_] => String) = (clazz => clazz.getName)
 
-  def setClassToKindStrategy(strategy: (Class[_]) => String) = {
-    _classToKindStrategy = strategy
+trait EntityClassToKindStrategy {
+  def toKind(c: Class[_]): String
+}
+
+object EntityClassToKindStrategy {
+  val ClassNameStrategy = new EntityClassToKindStrategy {
+    override def toKind(c: Class[_]): String = c.getName
   }
+  val SimpleNameStrategy = new EntityClassToKindStrategy {
+    override def toKind(c: Class[_]): String = c.getSimpleName
+  }
+  val ShortPackageStrategy = new EntityClassToKindStrategy {
+    override def toKind(c: Class[_]): String = c.getPackage.getName.split("\\.") match {
+      case split if 0 < split.size => split.map(_.substring(0, 1)).mkString("", ".", ".") + c.getSimpleName
+      case _ => c.getSimpleName
+    }
+  }
+}
 
-  def classToKindStrategy = _classToKindStrategy
+object EntityMeta {
+  var entityClassToKindStrategy = EntityClassToKindStrategy.ClassNameStrategy
 }
 
 abstract class EntityMeta[E <: Entity[E] : ClassTag]
@@ -48,7 +62,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   type Entity = E
 
-  def kind: String = EntityMeta.classToKindStrategy(implicitly[ClassTag[E]].runtimeClass)
+  def kind: String = EntityMeta.entityClassToKindStrategy.toKind(implicitly[ClassTag[E]].runtimeClass)
 
   val key = new KeyProperty("key")
 
