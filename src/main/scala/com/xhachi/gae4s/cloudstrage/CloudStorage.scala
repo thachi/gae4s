@@ -20,6 +20,35 @@ object CloudStorage extends Logger {
 
 class CloudStorage(service: GcsService, bucketName: String) extends Logger {
 
+  object MimeType {
+    val HTML = "text/html"
+    val TEXT = "text/plain"
+    val XML = "text/xml"
+    val XHTML = "text/xhtml+xml"
+    val JavaScript = "text/javascript"
+    val CSS = "text/css"
+
+    val JSON = "application/json"
+    val PDF = "application/pdf"
+
+    val JPEG = "image/jpeg"
+    val PNG = "image/png"
+  }
+
+  val Ext2MimeType = Map(
+    ".html" -> MimeType.HTML,
+    ".txt" -> MimeType.TEXT,
+    ".xml" -> MimeType.XML,
+    ".xhtml" -> MimeType.XHTML,
+    ".js" -> MimeType.JavaScript,
+    ".css" -> MimeType.CSS,
+    ".json" -> MimeType.JSON,
+    ".pdf" -> MimeType.PDF,
+    ".jpeg" -> MimeType.JPEG,
+    ".jpg" -> MimeType.JPEG,
+    ".png" -> MimeType.PNG
+  )
+
   info("CloudStorage[" + bucketName + "] created")
 
   implicit def pathToFilename(path: String) = new GcsFilename(bucketName, path)
@@ -51,13 +80,34 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
 
   def readBytes(path: String): Option[Array[Byte]] = readByteBuffer(path) map (_.array())
 
-  def writeBytes(path: String, bytes: Array[Byte]) = writeByteBuffer(path, ByteBuffer.wrap(bytes))
+  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None) = {
+    writeByteBuffer(path, ByteBuffer.wrap(bytes), mimeType)
+  }
 
-  def writeByteBuffer(path: String, bytes: ByteBuffer) = {
+  def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None) = {
     info("CloudStorage[" + bucketName + "] write : " + path)
     var c: GcsOutputChannel = null
     try {
-      c = service.createOrReplace(path, GcsFileOptions.getDefaultInstance)
+
+      val option: GcsFileOptions = mimeType match {
+        case Some(m) => new GcsFileOptions.Builder().mimeType(m).build()
+        case None =>
+          Ext2MimeType.map {
+            case (e, m) => path.endsWith(e) match {
+              case true => Some(m)
+              case false => None
+            }
+          }.find(_.isDefined)
+            .flatten
+            .headOption match {
+            case Some(m) => new GcsFileOptions.Builder().mimeType(m).build()
+            case _ => GcsFileOptions.getDefaultInstance
+          }
+
+        case _ => GcsFileOptions.getDefaultInstance
+      }
+
+      c = service.createOrReplace(path, option)
       c.write(bytes)
     } catch {
       case e: Throwable => throw e

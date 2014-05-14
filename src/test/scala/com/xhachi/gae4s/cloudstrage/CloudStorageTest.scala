@@ -62,5 +62,19 @@ class CloudStorageTest extends FunSuite with AppEngineTestSuite {
     assert(name == "ロト")
   }
 
+  test("writeJson(拡張子あり)") {
+    import org.json4s.JsonDSL._
+
+    val json: JValue = ("name" -> "ロト") ~ ("age" -> 16)
+
+    target.writeJson("/path/json.json", json)
+    val actual = target.readJson("/path/json.json")
+
+    assert(actual.isDefined)
+
+    val JString(name) = actual.get \ "name"
+    assert(name == "ロト")
+  }
+
 
 }
