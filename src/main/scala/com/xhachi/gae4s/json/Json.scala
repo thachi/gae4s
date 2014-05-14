@@ -40,7 +40,7 @@ class Json {
   private def buildFormats(): Unit = {
     _formats = new DefaultFormats {
       override val typeHintFieldName: String = "class"
-      override val typeHints: TypeHints = ShortTypeHints(typeHintTargetSeq.toList)
+      override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
     } ++ enumSeq.map(e => new EnumNameSerializer(e))
   }
 
