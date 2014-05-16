@@ -44,11 +44,48 @@ class Json {
     } ++ enumSeq.map(e => new EnumNameSerializer(e))
   }
 
+  /**
+   * Convert JSON String to case class.
+   *
+   * @param value Instance of case class
+   * @tparam E Class of case class
+   * @return Converted case class instance
+   */
   def parseAs[E: Manifest](value: String): E = parse(value).extract[E]
 
+  /**
+   * Convert JSON String to JValue.
+   *
+   * @param value String as JSON
+   * @return Converted JValue
+   */
   def parse(value: String) = parseByJson4s(value)
 
+  /**
+   * Convert case class to JSON String.
+   *
+   * @param value Instance of case class
+   * @tparam E Class of case class
+   * @return Converted json string
+   */
   def stringify[E <: AnyRef : Manifest](value: E): String = write[E](value)
 
+  /**
+   * Convert case class to JValue.
+   *
+   * @param value Instance of case class
+   * @tparam E Class of case class
+   * @return Converted JValue
+   */
+  def decompose[E <: AnyRef](value: E): JValue = Extraction.decompose(value)
+
+  /**
+   * Convert JValue to JSON String.
+   *
+   * @param value Instance of JValue
+   * @return Converted JSON String
+   */
   def stringify(value: JValue): String = write(value)
+
+
 }
