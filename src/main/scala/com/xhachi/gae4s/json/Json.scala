@@ -54,6 +54,15 @@ class Json {
   def parseAs[E: Manifest](value: String): E = parse(value).extract[E]
 
   /**
+   * Convert JValue to case class.
+   *
+   * @param value Instance of JValue
+   * @tparam E Class of case class
+   * @return Converted case class instance
+   */
+  def extractAs[E: Manifest](value: JValue): E = value.extract[E]
+
+  /**
    * Convert JSON String to JValue.
    *
    * @param value String as JSON
