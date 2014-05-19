@@ -9,6 +9,9 @@ import org.json4s.native.JsonMethods.{parse => parseByJson4s}
 
 object Json extends Json
 
+/**
+ * TODO: もっと汎用的に使えるよう再設計する
+ */
 class Json {
 
   private val enumSeq = new mutable.HashSet[Enumeration]
@@ -39,6 +42,7 @@ class Json {
 
   private def buildFormats(): Unit = {
     _formats = new DefaultFormats {
+      override val dateFormat = DefaultFormats.lossless.dateFormat
       override val typeHintFieldName: String = "class"
       override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
     } ++ enumSeq.map(e => new EnumNameSerializer(e))
