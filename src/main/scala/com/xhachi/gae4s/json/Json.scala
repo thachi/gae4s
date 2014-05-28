@@ -6,6 +6,7 @@ import org.json4s.ext.EnumNameSerializer
 import org.json4s._
 import org.json4s.native.Serialization.write
 import org.json4s.native.JsonMethods.{parse => parseByJson4s}
+import java.util.TimeZone
 
 object Json extends Json
 
@@ -42,7 +43,11 @@ class Json {
 
   private def buildFormats(): Unit = {
     _formats = new DefaultFormats {
-      override val dateFormat = DefaultFormats.lossless.dateFormat
+      override val dateFormatter = {
+        val df = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+        df.setTimeZone(TimeZone.getTimeZone("GMT"))
+        df
+      }
       override val typeHintFieldName: String = "class"
       override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
     } ++ enumSeq.map(e => new EnumNameSerializer(e))
