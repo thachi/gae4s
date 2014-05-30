@@ -2,6 +2,8 @@ package com.xhachi.gae4s.datastore
 
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore._
+import java.util
+import com.google.appengine.api.datastore
 
 /**
  * Class to access Datastore service.
@@ -81,10 +83,11 @@ sealed private[datastore] trait DatastoreGetListMethods extends DatastoreBase {
   }
 
   def get[E <: Entity[E]](keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Map[Key[E], E] = {
-    val entities = service.get(keys.map(_.key)).map {
-      case (k, v) => meta.createKey(k) -> meta.toEntity(v)
+    val got = service.get(keys.map(_.key))
+    val entities = got.map {
+      case (k, v) => (meta.createKey(k) -> meta.toEntity(v))
     }
-    entities.asInstanceOf[Map[Key[E], E]]
+    entities.toMap
   }
 }
 

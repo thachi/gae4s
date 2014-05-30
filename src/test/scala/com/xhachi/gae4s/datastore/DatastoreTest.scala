@@ -87,7 +87,30 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
     assert(actual.height == expected.height)
     assert(actual.deleted == expected.deleted)
     assert(actual.createdAt.isDefined)
+  }
 
+  test("2つputしてgetで一度に取得できること") {
+
+    val key1: Key[User] = UserStore.createKeyWithName("key_name1")
+    val expected1 = new User(key1, "Hoge1")
+    Datastore.put(expected1)
+    val key2: Key[User] = UserStore.createKeyWithName("key_name2")
+
+    val expected2 = new User(key2, "Hoge2")
+    Datastore.put(expected2)
+
+    val actual = Datastore.get(key1 :: key2 :: Nil)
+    assert(actual.size == 2)
+
+    assert(actual(key1).name == expected1.name)
+    assert(actual(key1).height == expected1.height)
+    assert(actual(key1).deleted == expected1.deleted)
+    assert(actual(key1).createdAt.isDefined)
+
+    assert(actual(key2).name == expected2.name)
+    assert(actual(key2).height == expected2.height)
+    assert(actual(key2).deleted == expected2.deleted)
+    assert(actual(key2).createdAt.isDefined)
   }
 
 }
