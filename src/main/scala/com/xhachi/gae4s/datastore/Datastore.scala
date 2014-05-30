@@ -79,13 +79,13 @@ sealed private[datastore] trait DatastoreGetListMethods extends DatastoreBase {
     val entities = service.get(tx, keys.map(_.key)).map {
       case (k, v) => meta.createKey(k) -> meta.toEntity(v)
     }
-    entities.asInstanceOf[Map[Key[E], E]]
+    entities.toMap
   }
 
   def get[E <: Entity[E]](keys: Seq[Key[E]])(implicit meta: EntityMeta[E]): Map[Key[E], E] = {
     val got = service.get(keys.map(_.key))
     val entities = got.map {
-      case (k, v) => (meta.createKey(k) -> meta.toEntity(v))
+      case (k, v) => meta.createKey(k) -> meta.toEntity(v)
     }
     entities.toMap
   }
