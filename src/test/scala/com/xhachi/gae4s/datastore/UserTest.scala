@@ -239,13 +239,20 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   test("sortを試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
 
-    val seq1 = UserStore.query.sort(_.height.asc).asSeq
-    assert(seq1.size == 3)
-    assert(seq1(0).name == "Saburo")
-    assert(seq1(1).name == "Taro")
-    assert(seq1(2).name == "Jiro")
+    val sort1 = UserStore.query.sort(_.height.asc)
+    val seq11 = sort1.asSeq
+    assert(seq11.size == 3)
+    assert(seq11(0).name == "Saburo")
+    assert(seq11(1).name == "Taro")
+    assert(seq11(2).name == "Jiro")
+    val seq12 = sort1.asSeq(all)
+    assert(seq12.size == 3)
+    assert(seq12(0).name == "Saburo")
+    assert(seq12(1).name == "Taro")
+    assert(seq12(2).name == "Jiro")
 
     val seq2 = UserStore.query.sort(_.height.desc, _.weight.desc).asSeq
     assert(seq2.size == 3)

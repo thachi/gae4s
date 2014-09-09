@@ -5,7 +5,7 @@ import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 import KeyFactory._
 
 // TODO: valを取ってcase classにする
-class Key[E](val key: LLKey) {
+class Key[E](val key: LLKey) extends Ordered[Key[E]] {
 
   val kind: String = key.getKind
 
@@ -39,6 +39,8 @@ class Key[E](val key: LLKey) {
   override def toString = key.toString
 
   def toWebSafeString = KeyFactory.keyToString(key)
+
+  override def compare(that: Key[E]): Int = this.key.compareTo(that.key)
 }
 
 object Key {

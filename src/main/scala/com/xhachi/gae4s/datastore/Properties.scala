@@ -39,27 +39,29 @@ trait Property[T] {
   protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not converted to store property")
 }
 
-trait IndexedProperty[Q] extends Property[Q] {
+trait IndexedProperty[T] extends Property[T] {
 
   protected[datastore] def name: String
 
-  def #==(value: Q): Filter = FilterPredicate(name, EQUAL, toStoreProperty(value))
+  protected[datastore] val compare: (T, T) => Int = (v1, v2) => v1.asInstanceOf[Comparable[T]].compareTo(v2)
 
-  def #!=(value: Q): Filter = FilterPredicate(name, NOT_EQUAL, toStoreProperty(value))
+  def #==(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
 
-  def in(value: Q, values: Q*): Filter = FilterPredicate(name, IN, toStoreProperty(value) :: values.map(toStoreProperty) ++: Nil)
+  def #!=(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
 
-  def #>(value: Q): Filter = FilterPredicate(name, GREATER_THAN, toStoreProperty(value))
+  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, value, values)
 
-  def #>=(value: Q): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, toStoreProperty(value))
+  def #>(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, value)
 
-  def #<(value: Q): Filter = FilterPredicate(name, LESS_THAN, toStoreProperty(value))
+  def #>=(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, value)
 
-  def #<=(value: Q): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, toStoreProperty(value))
+  def #<(value: T): Filter = FilterPredicate(name, LESS_THAN, this, value)
 
-  def asc = SortPredicate(name, ASCENDING)
+  def #<=(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, value)
 
-  def desc = SortPredicate(name, DESCENDING)
+  def asc = SortPredicate(name, ASCENDING, this)
+
+  def desc = SortPredicate(name, DESCENDING, this)
 }
 
 class PropertyConversionException(message: String) extends Exception(message)
@@ -99,12 +101,15 @@ class KeyProperty[E <: Entity[E]](protected[datastore] val name: String) extends
     case v: Key[E] => value.key
     case _ => null
   }
+
+  override protected[datastore] val compare: (Key[E], Key[E]) => Int = (v1, v2) => v1.key.compareTo(v2.key)
 }
 
 class LongProperty(protected[datastore] val name: String) extends SimpleProperty[Long] {
   override def toStoreProperty(value: Long): Any = value
 
   override def fromStoreProperty(value: Any): Long = value match {
+    case v: Int => v.toLong
     case v: Long => v
     case v: Double => v.toLong
     case v => throw createFromConversionException(v)
@@ -115,6 +120,7 @@ class IntProperty(protected[datastore] val name: String) extends SimpleProperty[
   override def toStoreProperty(value: Int): Any = value
 
   override def fromStoreProperty(value: Any): Int = value match {
+    case v: Int => v
     case v: Long => v.toInt
     case v: Double => v.toInt
     case v => throw createFromConversionException(v)

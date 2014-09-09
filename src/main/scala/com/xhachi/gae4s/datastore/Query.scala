@@ -1,5 +1,7 @@
 package com.xhachi.gae4s.datastore
 
+import java.util.Date
+
 import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore.Query.{Filter => LLFilter}
 import com.google.appengine.api.datastore.Query.{FilterPredicate => LLFilterPredicate}
@@ -43,9 +45,12 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
         case (_, _, Some(filter)) => filter.isMatch(entity, meta)
         case _ => true
       }
+  }.sortWith {
+    case (e1, e2) => sorts.map(_.lt(e1, e2, meta)).contains(true)
   }
 
-  def asSingle(entities: Seq[E]): E = asSingleOption.getOrElse(throw new IllegalArgumentException("entity not found."))
+
+  def asSingle(entities: Seq[E]): E = asSingleOption.getOrElse(null.asInstanceOf[E])
 
   def asSingleOption(entities: Seq[E]): Option[E] = asSeq(entities) match {
     case head :: Nil => Some(head)
@@ -69,7 +74,7 @@ trait Filter {
 
   private[datastore] def toLLFilter: LLFilter
 
-  def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean
+  private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean
 
   def &&(f: Filter): Filter = {
     CompositeFilterPredicate(CompositeFilterOperator.AND, this :: f :: Nil)
@@ -80,31 +85,28 @@ trait Filter {
   }
 }
 
-case class FilterPredicate(name: String, operator: FilterOperator, value: Any) extends Filter {
+case class FilterPredicate[T](name: String, operator: FilterOperator, property: IndexedProperty[T], value: T, values: Seq[T] = Nil) extends Filter {
 
-  private[datastore] def toLLFilter = (operator, value) match {
-    case (FilterOperator.IN, value: Seq[_]) => new LLFilterPredicate(name, operator, seqAsJavaList(value))
-    case _ => new LLFilterPredicate(name, operator, value)
+  import FilterOperator._
+
+  if (operator != IN && values.nonEmpty) throw new IllegalArgumentException("valid values")
+
+  private[datastore] def toLLFilter = operator match {
+    case FilterOperator.IN => new LLFilterPredicate(name, operator, seqAsJavaList(value +: values))
+    case _ => new LLFilterPredicate(name, operator, property.toStoreProperty(value))
   }
 
-  def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    val e = meta.toLLEntity(entity)
-    import FilterOperator._
-    (operator, e.getProperty(name), value) match {
-      case (LESS_THAN, Some(v1: Ordered[Any]), Some(v2: Ordered[Any])) =>
-        v1 < v2
-      case (LESS_THAN_OR_EQUAL, Some(v1: Ordered[Any]), Some(v2: Ordered[Any]))
-      => v1 <= v2
-      case (GREATER_THAN, Some(v1: Ordered[Any]), Some(v2: Ordered[Any])) =>
-        v1 > v2
-      case (GREATER_THAN_OR_EQUAL, Some(v1: Ordered[Any]), Some(v2: Ordered[Any])) =>
-        v1 >= v2
-      case (  EQUAL, v1, v2) =>
-        v1 == v2
-      case (NOT_EQUAL, v1, v2) =>
-        v1 != v2
-      case (IN, v, values: Seq[_]) =>
-        values.contains(v)
+  private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
+    val v: T = property.fromStoreProperty(meta.toLLEntity(entity).getProperty(name))
+
+    operator match {
+      case EQUAL => property.compare(v, value) == 0
+      case NOT_EQUAL => property.compare(v, value) != 0
+      case LESS_THAN => property.compare(v, value) < 0
+      case LESS_THAN_OR_EQUAL => property.compare(v, value) <= 0
+      case GREATER_THAN => 0 < property.compare(v, value)
+      case GREATER_THAN_OR_EQUAL => 0 <= property.compare(v, value)
+      case IN => (value +: values).contains(v)
       case _ => false
     }
   }
@@ -114,7 +116,7 @@ case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: 
 
   private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
 
-  override def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
+  private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
     import CompositeFilterOperator._
     operator match {
       case AND =>
@@ -130,9 +132,21 @@ trait Sort {
   private[datastore] def name: String
 
   private[datastore] def direction: LLSortDirection
+
+  private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean
 }
 
-case class SortPredicate(name: String, direction: SortDirection) extends Sort {
+case class SortPredicate[T](name: String, direction: SortDirection, property: IndexedProperty[T]) extends Sort {
 
   private[datastore] def toLLSortDirection = new LLSortPredicate(name, direction)
+
+  private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean = {
+    val v1: T = property.fromStoreProperty(meta.toLLEntity(entity1).getProperty(name))
+    val v2: T = property.fromStoreProperty(meta.toLLEntity(entity2).getProperty(name))
+
+    property.compare(v1, v2) < 0
+
+
+  }
+
 }
