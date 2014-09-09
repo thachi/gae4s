@@ -1,14 +1,13 @@
 package com.xhachi.gae4s.cloudstrage
 
-import com.google.appengine.tools.cloudstorage._
-import java.nio.ByteBuffer
 import java.io.StringReader
-import scala.Some
+import java.nio.ByteBuffer
 
+import com.google.appengine.tools.cloudstorage._
+import com.xhachi.gae4s.common.Logger
 import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
-import com.xhachi.gae4s.common.Logger
 
 
 object CloudStorage extends Logger {

@@ -2,17 +2,14 @@ package com.xhachi.gae4s.datastore
 
 import java.util.Date
 
-import scala.reflect.ClassTag
-import scala.Some
-
-import com.google.appengine.api.datastore.{Key => LLKey}
-import com.google.appengine.api.datastore.{Entity => LLEntity}
+import com.google.appengine.api.blobstore._
 import com.google.appengine.api.datastore.Query.FilterOperator._
 import com.google.appengine.api.datastore.Query.SortDirection._
-import com.google.appengine.api.datastore._
+import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, _}
 import com.google.appengine.api.users._
-import com.google.appengine.api.blobstore._
 import com.xhachi.gae4s.json.Json
+
+import scala.reflect.ClassTag
 
 object Property {
   val ShortLimit = 500

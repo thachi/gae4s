@@ -1,11 +1,12 @@
 package com.xhachi.gae4s.memcache
 
-import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory}
 import java.util.Date
 
-import scala.collection.JavaConversions._
 import com.google.appengine.api.memcache.MemcacheService.SetPolicy._
 import com.google.appengine.api.memcache.MemcacheService._
+import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory}
+
+import scala.collection.JavaConversions._
 
 /**
  * Class to access Memcache service.

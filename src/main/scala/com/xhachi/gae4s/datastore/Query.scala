@@ -1,15 +1,9 @@
 package com.xhachi.gae4s.datastore
 
-import java.util.Date
+import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, FilterOperator, CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection, SortPredicate => LLSortPredicate}
+import com.google.appengine.api.datastore.{Transaction, Query => LLQuery}
 
 import scala.collection.JavaConversions._
-import com.google.appengine.api.datastore.Query.{Filter => LLFilter}
-import com.google.appengine.api.datastore.Query.{FilterPredicate => LLFilterPredicate}
-import com.google.appengine.api.datastore.Query.{SortDirection => LLSortDirection}
-import com.google.appengine.api.datastore.Query.{SortPredicate => LLSortPredicate}
-import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter}
-import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, SortDirection, FilterOperator}
-import com.google.appengine.api.datastore.{Query => LLQuery, EntityNotFoundException, Transaction}
 
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
                                                                          datastore: DatastoreQueryMethods,
@@ -38,17 +32,24 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
 
   def count(entities: Seq[E]): Int = asSeq(entities).size
 
-  def asSeq(entities: Seq[E]): Seq[E] = entities.filter {
-    entity =>
-      (entity.keyOption, ancestorOption, filterOption) match {
-        case (Some(entityKey), Some(ancestorKey), _) if entityKey != ancestorKey => false
-        case (_, _, Some(filter)) => filter.isMatch(entity, meta)
-        case _ => true
-      }
-  }.sortWith {
-    case (e1, e2) => sorts.map(_.lt(e1, e2, meta)).contains(true)
+  def asSeq(entities: Seq[E]): Seq[E] = {
+    val filtered = entities.filter {
+      entity =>
+        (entity.keyOption, ancestorOption, filterOption) match {
+          case (Some(entityKey), Some(ancestorKey), _) if entityKey != ancestorKey =>
+            false
+          case (_, _, Some(filter)) =>
+            filter.isMatch(entity, meta)
+          case _ =>
+            true
+        }
+    }
+    val sorted = filtered.sortWith {
+      case (e1, e2) =>
+        sorts.map(_.lt(e1, e2, meta)).contains(true)
+    }
+    sorted
   }
-
 
   def asSingle(entities: Seq[E]): E = asSingleOption.getOrElse(null.asInstanceOf[E])
 
@@ -87,7 +88,7 @@ trait Filter {
 
 case class FilterPredicate[T](name: String, operator: FilterOperator, property: IndexedProperty[T], value: T, values: Seq[T] = Nil) extends Filter {
 
-  import FilterOperator._
+  import com.google.appengine.api.datastore.Query.FilterOperator._
 
   if (operator != IN && values.nonEmpty) throw new IllegalArgumentException("valid values")
 
@@ -117,7 +118,7 @@ case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: 
   private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    import CompositeFilterOperator._
+    import com.google.appengine.api.datastore.Query.CompositeFilterOperator._
     operator match {
       case AND =>
         filters.map(f => f.isMatch(entity, meta)).filter(m => !m).isEmpty
@@ -136,7 +137,7 @@ trait Sort {
   private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean
 }
 
-case class SortPredicate[T](name: String, direction: SortDirection, property: IndexedProperty[T]) extends Sort {
+case class SortPredicate[T](name: String, direction: LLSortDirection, property: IndexedProperty[T]) extends Sort {
 
   private[datastore] def toLLSortDirection = new LLSortPredicate(name, direction)
 
@@ -145,8 +146,6 @@ case class SortPredicate[T](name: String, direction: SortDirection, property: In
     val v2: T = property.fromStoreProperty(meta.toLLEntity(entity2).getProperty(name))
 
     property.compare(v1, v2) < 0
-
-
   }
 
 }

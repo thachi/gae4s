@@ -1,9 +1,9 @@
 package com.xhachi.gae4s.datastore
 
-import org.scalatest.FunSuite
-import com.xhachi.gae4s.tests.AppEngineTestSuite
-import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.google.appengine.api.datastore.KeyFactory
+import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.tests.AppEngineTestSuite
+import org.scalatest.FunSuite
 
 class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 

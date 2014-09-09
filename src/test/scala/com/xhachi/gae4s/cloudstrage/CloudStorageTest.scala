@@ -1,11 +1,12 @@
 package com.xhachi.gae4s.cloudstrage
 
-import org.scalatest.FunSuite
-import com.xhachi.gae4s.tests.AppEngineTestSuite
-import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.google.appengine.tools.cloudstorage.{GcsServiceFactory, RetryParams}
 import java.util.Date
+
+import com.google.appengine.tools.cloudstorage.{GcsServiceFactory, RetryParams}
+import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.json4s.JsonAST.{JString, JValue}
+import org.scalatest.FunSuite
 
 class CloudStorageTest extends FunSuite with AppEngineTestSuite {
 

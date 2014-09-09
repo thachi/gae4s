@@ -1,8 +1,8 @@
 package com.xhachi.gae4s.datastore
 
-import org.scalatest.FunSuite
-import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.tests.AppEngineTestSuite
+import org.scalatest.FunSuite
 
 class LongPropertyTest extends FunSuite {
 

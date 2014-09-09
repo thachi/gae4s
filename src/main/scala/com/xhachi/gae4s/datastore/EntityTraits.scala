@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import java.util.Date
+
 import scala.collection.mutable.ListBuffer
 
 trait ApplyProperty {

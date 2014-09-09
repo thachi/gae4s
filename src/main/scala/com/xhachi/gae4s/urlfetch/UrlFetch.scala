@@ -1,9 +1,9 @@
 package com.xhachi.gae4s.urlfetch
 
-import com.google.appengine.api.urlfetch._
-import java.net.{URLEncoder, URL}
+import java.net.{URL, URLEncoder}
 
 import com.google.appengine.api.urlfetch.HTTPMethod._
+import com.google.appengine.api.urlfetch._
 
 import scala.collection.JavaConversions._
 

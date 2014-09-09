@@ -1,9 +1,8 @@
 package com.xhachi.gae4s.datastore
 
-import scala.collection.JavaConversions._
 import com.google.appengine.api.datastore._
-import java.util
-import com.google.appengine.api.datastore
+
+import scala.collection.JavaConversions._
 
 /**
  * Class to access Datastore service.

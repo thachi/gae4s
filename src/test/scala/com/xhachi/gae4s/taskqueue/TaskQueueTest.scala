@@ -1,10 +1,10 @@
 package com.xhachi.gae4s.taskqueue
 
-import org.scalatest.FunSuite
-import com.google.appengine.tools.development.testing.{LocalTaskQueueTestConfig, LocalDatastoreServiceTestConfig}
-import com.google.appengine.api.taskqueue.{TaskHandle, TransactionalTaskException, TaskOptions}
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.google.appengine.api.taskqueue.{TaskHandle, TaskOptions, TransactionalTaskException}
+import com.google.appengine.tools.development.testing.{LocalDatastoreServiceTestConfig, LocalTaskQueueTestConfig}
 import com.xhachi.gae4s.datastore.Datastore
+import com.xhachi.gae4s.tests.AppEngineTestSuite
+import org.scalatest.FunSuite
 
 class TaskQueueTest extends FunSuite with AppEngineTestSuite {
 

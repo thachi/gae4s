@@ -1,8 +1,8 @@
 package com.xhachi.gae4s.datastore
 
-import org.scalatest.FunSuite
-import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.tests.AppEngineTestSuite
+import org.scalatest.FunSuite
 
 
 class UserTest extends FunSuite with AppEngineTestSuite {
@@ -38,7 +38,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     val expected = new User(key, "Hoge")
     UserStore.create(expected)
 
-    import UserStore._
+    import com.xhachi.gae4s.datastore.UserStore._
 
     val actual = key.get
     assert(actual.key == expected.key)
@@ -115,6 +115,8 @@ class UserTest extends FunSuite with AppEngineTestSuite {
   test("filterを試す") {
     createTaroJiroSaburo
     val all = UserStore.query.asSeq
+
+    assert(UserStore.query.asSeq(all) == all)
 
     val filter = UserStore.query.filter(_.name #== "Taro")
     assert(filter.asSeq.size == 1)

@@ -1,8 +1,8 @@
 package com.xhachi.gae4s.memcache
 
-import org.scalatest.FunSuite
 import com.google.appengine.tools.development.testing.LocalMemcacheServiceTestConfig
 import com.xhachi.gae4s.tests.AppEngineTestSuite
+import org.scalatest.FunSuite
 
 
 class MemcacheTest extends FunSuite with AppEngineTestSuite {

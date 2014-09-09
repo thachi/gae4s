@@ -1,7 +1,7 @@
 package com.xhachi.gae4s.taskqueue
 
-import com.google.appengine.api.taskqueue.{TaskHandle, QueueFactory, TaskOptions, Queue}
 import com.google.appengine.api.datastore.Transaction
+import com.google.appengine.api.taskqueue.{Queue, QueueFactory, TaskHandle, TaskOptions}
 
 import scala.collection.JavaConversions._
 

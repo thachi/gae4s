@@ -1,8 +1,8 @@
 package com.xhachi.gae4s.datastore
 
+import com.google.appengine.api.datastore.{KeyFactory, Key => LLKey}
+
 import scala.reflect.ClassTag
-import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
-import scala.Some
 
 
 trait Entity[E <: Entity[E]] {

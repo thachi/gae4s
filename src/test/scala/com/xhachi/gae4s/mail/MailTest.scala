@@ -1,9 +1,9 @@
 package com.xhachi.gae4s.mail
 
-import org.scalatest.FunSuite
-import com.google.appengine.tools.development.testing.{LocalMailServiceTestConfig, LocalMemcacheServiceTestConfig}
-import com.xhachi.gae4s.tests.AppEngineTestSuite
 import com.google.appengine.api.mail.MailService
+import com.google.appengine.tools.development.testing.LocalMailServiceTestConfig
+import com.xhachi.gae4s.tests.AppEngineTestSuite
+import org.scalatest.FunSuite
 
 
 class MailTest extends FunSuite with AppEngineTestSuite {

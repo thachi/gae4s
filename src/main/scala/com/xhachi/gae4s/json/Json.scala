@@ -1,12 +1,13 @@
 package com.xhachi.gae4s.json
 
-import scala.collection.mutable
-import org.json4s.ext.EnumNameSerializer
+import java.util.TimeZone
 
 import org.json4s._
-import org.json4s.native.Serialization.write
+import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.JsonMethods.{parse => parseByJson4s}
-import java.util.TimeZone
+import org.json4s.native.Serialization.write
+
+import scala.collection.mutable
 
 object Json extends Json
 

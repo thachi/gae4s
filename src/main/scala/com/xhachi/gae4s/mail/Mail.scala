@@ -1,7 +1,7 @@
 package com.xhachi.gae4s.mail
 
-import com.google.appengine.api.mail.{MailServiceFactory, MailService}
-import com.google.appengine.api.mail.MailService.{Header, Attachment, Message => LLMessage}
+import com.google.appengine.api.mail.MailService.{Attachment, Header, Message => LLMessage}
+import com.google.appengine.api.mail.{MailService, MailServiceFactory}
 
 /**
  * Object to access default Mail service.
