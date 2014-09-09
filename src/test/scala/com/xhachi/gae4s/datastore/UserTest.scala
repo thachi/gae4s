@@ -114,93 +114,127 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   test("filterを試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val seq = UserStore.query.filter(_.name #== "Taro").asSeq
-    assert(seq.size == 1)
+    val filter = UserStore.query.filter(_.name #== "Taro")
+    assert(filter.asSeq.size == 1)
+    assert(filter.asSeq(all).size == 1)
   }
 
 
 
   test("filterでasSingleを試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val single = UserStore.query.filter(m => (m.name #== "Jiro")).asSingle
-    assert(single.name == "Jiro")
+    val filter = UserStore.query.filter(m => (m.name #== "Jiro"))
+    assert(filter.asSingle.name == "Jiro")
+    assert(filter.asSingle(all).name == "Jiro")
   }
 
   test("asSingleでヒットしない場合") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val single = UserStore.query.filter(m => (m.name #== "hogehoge")).asSingle
-    assert(single == null)
+    val filter = UserStore.query.filter(m => (m.name #== "hogehoge"))
+    assert(filter.asSingle == null)
+    assert(filter.asSingle(all) == null)
   }
 
   test("asSingleOptionで見つかった場合") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val single = UserStore.query.filter(m => (m.name #== "Jiro")).asSingleOption
-    assert(single.isDefined)
-    assert(single.get.name == "Jiro")
+    val filter = UserStore.query.filter(m => (m.name #== "Jiro"))
+
+    {
+      val single = filter.asSingleOption
+      assert(single.isDefined)
+      assert(single.get.name == "Jiro")
+    }
+    {
+      val single = filter.asSingleOption(all)
+      assert(single.isDefined)
+      assert(single.get.name == "Jiro")
+    }
   }
 
   test("asSingleOptionで見つからない場合") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val single = UserStore.query.filter(m => (m.name #== "hogehoge")).asSingleOption
-    assert(single.isEmpty)
+    val filter = UserStore.query.filter(m => (m.name #== "hogehoge"))
+    assert(filter.asSingleOption.isEmpty)
+    assert(filter.asSingleOption(all).isEmpty)
   }
 
   test("filterでandを試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val seq1 = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== false)).asSeq
-    assert(seq1.size == 0)
+    val filter1 = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== false))
+    assert(filter1.asSeq.size == 0)
+    assert(filter1.asSeq(all).size == 0)
 
-    val seq2 = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true)).asSeq
-    assert(seq2.size == 1)
+    val filter2 = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true))
+    assert(filter2.asSeq.size == 1)
+    assert(filter2.asSeq(all).size == 1)
 
-    val single = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true)).asSingle
-    assert(seq2.head.key == single.key)
+    val filter3 = UserStore.query.filter(m => (m.name #== "Jiro") && (m.deleted #== true))
+    assert(filter2.asSeq.head.key == filter3.asSingle.key)
+    assert(filter2.asSeq.head.key == filter3.asSingle(all).key)
 
   }
 
   test("filterでorを試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val seq1 = UserStore.query.filter(m => (m.name #== "Jiro") || (m.name #== "Taro")).asSeq
-    assert(seq1.size == 2)
+    val filter1 = UserStore.query.filter(m => (m.name #== "Jiro") || (m.name #== "Taro"))
+    assert(filter1.asSeq.size == 2)
+    assert(filter1.asSeq(all).size == 2)
 
-    val seq2 = UserStore.query.filter(m => (m.name #== "Jiro") || (m.name #== "Goro")).asSeq
-    assert(seq2.size == 1)
+    val filter2 = UserStore.query.filter(m => (m.name #== "Jiro") || (m.name #== "Goro"))
+    assert(filter2.asSeq.size == 1)
+    assert(filter2.asSeq(all).size == 1)
   }
 
   test("filterでinを試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val seq1 = UserStore.query.filter(_.name in("Taro", "Jiro", "Saburo")).asSeq
-    assert(seq1.size == 3)
+    val filter1 = UserStore.query.filter(_.name in("Taro", "Jiro", "Saburo"))
+    assert(filter1.asSeq.size == 3)
+    assert(filter1.asSeq(all).size == 3)
 
-    val seq2 = UserStore.query.filter(_.name in("Jiro", "Taro")).asSeq
-    assert(seq2.size == 2)
+    val filter2 = UserStore.query.filter(_.name in("Jiro", "Taro"))
+    assert(filter2.asSeq.size == 2)
+    assert(filter2.asSeq(all).size == 2)
 
-    val seq3 = UserStore.query.filter(_.name in("Jiro", "Goro")).asSeq
-    assert(seq3.size == 1)
+    val filter3 = UserStore.query.filter(_.name in("Jiro", "Goro"))
+    assert(filter3.asSeq.size == 1)
+    assert(filter3.asSeq(all).size == 1)
   }
 
   test("filterで大小比較を試す") {
     createTaroJiroSaburo
+    val all = UserStore.query.asSeq
 
-    val seq1 = UserStore.query.filter(_.height #< 190).asSeq
-    assert(seq1.size == 1)
+    val filter1 = UserStore.query.filter(_.height #< 190)
+    assert(filter1.asSeq.size == 1)
+    assert(filter1.asSeq(all).size == 1)
 
-    val seq2 = UserStore.query.filter(_.height #<= 190).asSeq
-    assert(seq2.size == 2)
+    val filter2 = UserStore.query.filter(_.height #<= 190)
+    assert(filter2.asSeq.size == 2)
+    assert(filter2.asSeq(all).size == 2)
 
-    val seq3 = UserStore.query.filter(_.height #> 190).asSeq
-    assert(seq3.size == 1)
+    val filter3 = UserStore.query.filter(_.height #> 190)
+    assert(filter3.asSeq.size == 1)
+    assert(filter3.asSeq(all).size == 1)
 
-    val seq4 = UserStore.query.filter(_.height #>= 190).asSeq
-    assert(seq4.size == 2)
+    val filter4 = UserStore.query.filter(_.height #>= 190)
+    assert(filter4.asSeq.size == 2)
+    assert(filter4.asSeq(all).size == 2)
   }
 
   test("sortを試す") {
