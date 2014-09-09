@@ -35,8 +35,8 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
   def asSeq(entities: Seq[E]): Seq[E] = {
     val filtered = entities.filter {
       entity =>
-        (entity.keyOption, ancestorOption, filterOption) match {
-          case (Some(entityKey), Some(ancestorKey), _) if entityKey != ancestorKey =>
+        (entity.keyOption.map(_.parent).flatten, ancestorOption, filterOption) match {
+          case (Some(parentKey), Some(ancestorKey), _) if parentKey != ancestorKey =>
             false
           case (_, _, Some(filter)) =>
             filter.isMatch(entity, meta)
