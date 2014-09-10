@@ -1,9 +1,11 @@
 package com.xhachi.gae4s.taskqueue
 
-import com.google.appengine.api.datastore.Transaction
-import com.google.appengine.api.taskqueue.{Queue, QueueFactory, TaskHandle, TaskOptions}
+import java.util.concurrent.Future
 
-import scala.collection.JavaConversions._
+import com.google.appengine.api.datastore.Transaction
+import com.google.appengine.api.taskqueue._
+
+import scala.collection.JavaConverters._
 
 /**
  * Class to access Task Queue service.
@@ -13,31 +15,31 @@ import scala.collection.JavaConversions._
  */
 class TaskQueue private[TaskQueue](val queue: Queue) {
 
-  def add(task: TaskOptions) = queue.add(task)
+  def add(task: TaskOptions): TaskHandle = queue.add(task)
 
-  def addAll(tasks: Seq[TaskOptions]) = queue.add(tasks)
+  def addAll(tasks: Seq[TaskOptions]): Seq[TaskHandle] = queue.add(tasks.asJava).asScala
 
-  def add(tx: Transaction, task: TaskOptions) = queue.add(tx, task)
+  def add(tx: Transaction, task: TaskOptions):TaskHandle = queue.add(tx, task)
 
-  def addAll(tx: Transaction, tasks: Seq[TaskOptions]) = queue.add(tx, tasks)
+  def addAll(tx: Transaction, tasks: Seq[TaskOptions]): Seq[TaskHandle] = queue.add(tx, tasks.asJava).asScala
 
   //  def addGet(tx: Transaction, task: TaskOptions) = queue.add(tx, task)
 
-  def addWithoutTx(task: TaskOptions) = queue.add(null, task)
+  def addWithoutTx(task: TaskOptions):TaskHandle = queue.add(null, task)
 
-  def addAllWithoutTx(tasks: Seq[TaskOptions]) = queue.add(null, tasks)
+  def addAllWithoutTx(tasks: Seq[TaskOptions]):Seq[TaskHandle] = queue.add(null, tasks.asJava).asScala
 
-  def delete(taskName: String) = queue.deleteTask(taskName)
+  def delete(taskName: String):Boolean = queue.deleteTask(taskName)
 
-  def delete(taskHandle: TaskHandle) = queue.deleteTask(taskHandle)
+  def delete(taskHandle: TaskHandle):Boolean = queue.deleteTask(taskHandle)
 
-  def deleteAll(taskHandles: Seq[TaskHandle]) = queue.deleteTask(taskHandles)
+  def deleteAll(taskHandles: Seq[TaskHandle]): Seq[Boolean] = queue.deleteTask(taskHandles.asJava).asScala.toSeq.map(_ == true)
 
-  def queueName = queue.getQueueName
+  def queueName: String = queue.getQueueName
 
-  def fetchStatistics = queue.fetchStatistics()
+  def fetchStatistics: QueueStatistics = queue.fetchStatistics()
 
-  def fetchStatistics(deadlineInSeconds: Double) = queue.fetchStatisticsAsync(deadlineInSeconds)
+  def fetchStatistics(deadlineInSeconds: Double): Future[QueueStatistics] = queue.fetchStatisticsAsync(deadlineInSeconds)
 }
 
 /**

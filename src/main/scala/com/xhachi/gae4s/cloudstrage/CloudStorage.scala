@@ -9,7 +9,6 @@ import org.json4s._
 import org.json4s.native.JsonMethods._
 import org.json4s.native.Serialization
 
-
 object CloudStorage extends Logger {
 
   def apply(bucketName: String) = new CloudStorage(defaultService, bucketName)
@@ -50,10 +49,10 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
 
   info("CloudStorage[" + bucketName + "] created")
 
-  implicit def pathToFilename(path: String) = new GcsFilename(bucketName, path)
+  def pathToFilename(path: String) = new GcsFilename(bucketName, path)
 
   def metadata(path: String): Option[GcsFileMetadata] = {
-    service.getMetadata(path) match {
+    service.getMetadata(pathToFilename(path)) match {
       case m: GcsFileMetadata => Some(m)
       case _ => None
     }
@@ -62,7 +61,7 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
   def delete(path: String): Boolean = {
     info("CloudStorage[" + bucketName + "] delete : " + path)
 
-    service.delete(path)
+    service.delete(pathToFilename(path))
   }
 
   def readByteBuffer(path: String): Option[ByteBuffer] = {
@@ -71,7 +70,7 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
         info("CloudStorage[" + bucketName + "] read : " + path)
         val fileSize = m.getLength.toInt
         val result = ByteBuffer.allocate(fileSize)
-        val c = service.openReadChannel(path, 0)
+        val c = service.openReadChannel(pathToFilename(path), 0)
         c.read(result)
         result
     }
@@ -106,7 +105,7 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
         case _ => GcsFileOptions.getDefaultInstance
       }
 
-      c = service.createOrReplace(path, option)
+      c = service.createOrReplace(pathToFilename(path), option)
       c.write(bytes)
     } catch {
       case e: Throwable => throw e
@@ -114,7 +113,6 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
       if (c != null) c.close()
     }
   }
-
 
   implicit var formats = DefaultFormats
 
