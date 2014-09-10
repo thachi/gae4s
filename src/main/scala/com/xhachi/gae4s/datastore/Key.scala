@@ -4,7 +4,7 @@ package com.xhachi.gae4s.datastore
 import com.google.appengine.api.datastore.{KeyFactory, Key => LLKey}
 
 // TODO: valを取ってcase classにする
-class Key[E](val key: LLKey) extends Ordered[Key[E]] {
+class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
 
   val kind: String = key.getKind
 
