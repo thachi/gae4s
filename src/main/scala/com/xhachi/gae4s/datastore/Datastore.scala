@@ -203,21 +203,21 @@ sealed private[datastore] trait DatastoreUpdateListMethods extends DatastoreBase
 
   def updateWithTx[E <: Entity[E]](tx: Transaction, entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val got = get[E](entities.map(_.key)).values.toSeq
-    val sames = getSameVersion(entities, got)
-    if (sames.nonEmpty) throw new IllegalStateException("invalid version property." + sames)
+    val invalids = getInvalidVersion(entities, got)
+    if (invalids.nonEmpty) throw new IllegalStateException("invalid version property." + invalids)
     putWithTx(tx, entities)
   }
 
   def update[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val got = get[E](entities.map(_.key)).values.toSeq
-    val sames = getSameVersion(entities, got)
-    if (sames.nonEmpty) throw new IllegalStateException("invalid version property." + sames)
+    val invalids = getInvalidVersion(entities.sortBy(_.key), got.sortBy(_.key))
+    if (invalids.nonEmpty) throw new IllegalStateException("invalid version property." + invalids)
     put(entities)
   }
 
-  def getSameVersion[E <: Entity[E]](entity1: Seq[E], entity2: Seq[E]): Seq[Key[E]] = {
+  def getInvalidVersion[E <: Entity[E]](entity1: Seq[E], entity2: Seq[E]): Seq[Key[E]] = {
     assert(entity1.size == entity2.size)
-    entity1.zip(entity2).filter {
+    entity1.zip(entity2).filterNot {
       case (e1: Version, e2: Version) => e1.version == e2.version
       case _ => false
     }.map(_._1.key).toSeq

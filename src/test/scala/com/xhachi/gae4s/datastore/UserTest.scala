@@ -60,6 +60,46 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     assert(u3.version == 2L)
   }
 
+  test("createしてgetして2回UPDATEしてVersionチェックエラーになること") {
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
+    val u1 = new User(key, "Hoge")
+    assert(u1.version == 0L)
+
+    UserStore.create(u1)
+    val u21 = UserStore.get(key)
+    val u22 = UserStore.get(key)
+    assert(u21.version == 1L)
+
+    UserStore.update(u21)
+    val u31 = UserStore.get(key)
+    assert(u31.version == 2L)
+
+    intercept[Exception] {
+      UserStore.update(u22)
+    }
+
+  }
+
+  test("createしてgetして2回SeqでUPDATEしてVersionチェックエラーになること") {
+    val key: Key[User] = UserStore.createKeyWithName("key_name")
+    val u1 = new User(key, "Hoge")
+    assert(u1.version == 0L)
+
+    UserStore.create(u1)
+    val u21 = UserStore.get(key)
+    val u22 = UserStore.get(key)
+    assert(u21.version == 1L)
+
+    UserStore.update(Seq(u21))
+    val u31 = UserStore.get(key)
+    assert(u31.version == 2L)
+
+    intercept[Exception] {
+      UserStore.update(Seq(u21))
+    }
+
+  }
+
   test("createしてgetしてcreatedAtと設定され、updateしてcreatedAtが変更されないこと") {
     val key: Key[User] = UserStore.createKeyWithName("key_name")
     val u1 = new User(key, "Hoge")
@@ -74,6 +114,8 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     assert(u3.createdAt.isDefined)
     assert(u3.createdAt.get == u2.createdAt.get)
   }
+
+
 
   test("createしてgetしてupdatedAtと設定され、updateしてupdatedAtが変更されること") {
     val key: Key[User] = UserStore.createKeyWithName("key_name")
