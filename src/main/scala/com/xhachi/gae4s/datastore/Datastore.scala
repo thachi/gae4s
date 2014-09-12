@@ -222,7 +222,7 @@ sealed private[datastore] trait DatastoreUpdateListMethods extends DatastoreBase
       case _ => false
     }.map{
       case (e1: Version, e2: Version) =>
-        "%s store:%d, stored%d".format(e1.asInstanceOf[Entity[_]].key, e1.version, e2.version)
+        "%s store:%d, stored:%d".format(e1.asInstanceOf[Entity[_]].key, e1.version, e2.version)
     }.toSeq
   }
 }

@@ -6,6 +6,8 @@ import com.google.appengine.tools.development.testing.{LocalServiceTestConfig, L
 import com.xhachi.gae4s.datastore.{EntityStoreContext, Key}
 import org.scalatest.{BeforeAndAfterEach, Suite}
 
+import scala.language.implicitConversions
+
 trait AppEngineTestSuite extends BeforeAndAfterEach {
 
   this: Suite =>

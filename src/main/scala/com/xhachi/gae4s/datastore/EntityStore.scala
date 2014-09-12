@@ -17,7 +17,9 @@ trait EntityStoreBase {
   type META <: EntityMeta[ENTITY]
   type Context = EntityStoreContext
 
-  protected implicit def meta: META
+  def meta: META
+
+  protected implicit def implicitMeta: META = meta
 
   protected def datastore: Datastore = Datastore
 }

@@ -104,7 +104,7 @@ class UserDiaryStore
   override type ENTITY = UserDiary
   override type META = UserDiaryMeta
 
-  override protected implicit val meta = new UserDiaryMeta
+  override val meta = new UserDiaryMeta
 }
 
 

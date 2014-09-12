@@ -11,6 +11,7 @@ object Gae4sBuild extends Build {
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       scalaVersion := "2.11.0",
       crossScalaVersions := Seq("2.10.3", "2.11.0"),
+      scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       version := "0.5-SNAPSHOT",
       publishTo <<= version { (v: String) =>
