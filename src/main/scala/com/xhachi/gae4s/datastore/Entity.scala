@@ -64,7 +64,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def kind: String = EntityMeta.entityClassToKindStrategy.toKind(implicitly[ClassTag[E]].runtimeClass)
 
-  val key = new KeyProperty("key")
+  val key = new KeyProperty[E]("key")
 
   def createEntity(key: Key[E]): E
 
