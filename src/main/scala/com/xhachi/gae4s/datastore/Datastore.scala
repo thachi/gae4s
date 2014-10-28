@@ -292,7 +292,13 @@ sealed private[datastore] trait DatastoreQueryMethods extends DatastoreBase {
   }
 
   def asSeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[E] = {
-    prepare(query, keysOnly = false).asIterable.map {
+    val options = (query.offset, query.limit) match {
+      case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
+      case (Some(o), _) => FetchOptions.Builder.withOffset(o)
+      case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
+      case _ => FetchOptions.Builder.withDefaults()
+    }
+    prepare(query, keysOnly = false).asIterable(options).map {
       e => query.meta.toEntity(e)
     }.toSeq
   }
@@ -310,7 +316,13 @@ sealed private[datastore] trait DatastoreQueryMethods extends DatastoreBase {
 
 
   def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
-    prepare(query, keysOnly = true).asIterable.map {
+    val options = (query.offset, query.limit) match {
+      case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
+      case (Some(o), _) => FetchOptions.Builder.withOffset(o)
+      case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
+      case _ => FetchOptions.Builder.withDefaults()
+    }
+    prepare(query, keysOnly = true).asIterable(options).map {
       e => query.meta.createKey(e.getKey)
     }.toSeq
   }

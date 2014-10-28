@@ -11,7 +11,9 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
                                                                          tx: Option[Transaction],
                                                                          ancestorOption: Option[Key[_]] = None,
                                                                          filterOption: Option[Filter] = None,
-                                                                         sorts: Seq[Sort] = Nil
+                                                                         sorts: Seq[Sort] = Nil,
+                                                                         offset: Option[Int] = None,
+                                                                         limit: Option[Int] = None
                                                                          ) {
 
   def ancestor(ancestor: Key[_]): Query[E, M] = copy(ancestorOption = Some(ancestor))
@@ -19,6 +21,10 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
   def filter(filters: (M => Filter)): Query[E, M] = copy(filterOption = Some(filters(meta)))
 
   def sort(sort: (M => Sort), sorts: (M => Sort)*): Query[E, M] = copy(sorts = sort(meta) :: sorts.map(_(meta)).toList)
+
+  def offset(o: Int): Query[E, M] = copy(offset = Some(o))
+
+  def limit(l: Int): Query[E, M] = copy(limit = Some(l))
 
   def count: Int = datastore.count(this)
 

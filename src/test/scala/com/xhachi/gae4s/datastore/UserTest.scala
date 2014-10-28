@@ -312,6 +312,45 @@ class UserTest extends FunSuite with AppEngineTestSuite {
 
   }
 
+  test("offsetを試す") {
+    createTaroJiroSaburo
+
+    //基本は三郎、太郎、次郎の順。
+    val all = UserStore.query.sort(_.height.asc).asSeq
+    assert(all.size == 3)
+    assert(all(0).name == "Saburo")
+    assert(all(1).name == "Taro")
+    assert(all(2).name == "Jiro")
+
+
+    val sort1 = UserStore.query.sort(_.height.asc).offset(1)
+    val seq11 = sort1.asSeq
+    assert(seq11.size == 2)
+    assert(seq11(0).name == "Taro")
+    assert(seq11(1).name == "Jiro")
+  }
+
+  test("limitを試す") {
+    createTaroJiroSaburo
+    val all = UserStore.query.asSeq
+
+    val sort1 = UserStore.query.sort(_.height.asc).limit(2)
+    val seq11 = sort1.asSeq
+    assert(seq11.size == 2)
+    assert(seq11(0).name == "Saburo")
+    assert(seq11(1).name == "Taro")
+  }
+
+  test("offsetとlimitを試す") {
+    createTaroJiroSaburo
+    val all = UserStore.query.asSeq
+
+    val sort1 = UserStore.query.sort(_.height.asc).offset(1).limit(1)
+    val seq11 = sort1.asSeq
+    assert(seq11.size == 1)
+    assert(seq11(0).name == "Taro")
+  }
+
 }
 
 class User(val key: Key[User],
