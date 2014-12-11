@@ -1,4 +1,5 @@
 import sbt._
+import sbtappengine.Plugin._
 
 object Gae4sBuild extends Build {
 
@@ -33,6 +34,19 @@ object Gae4sBuild extends Build {
       libraryDependencies ++= defaultDependency
     )
   )
+
+  lazy val sample = Project(
+    id = "gae4s-sample",
+    base = file("sample"),
+    settings = defaultSetting ++ appengineSettings ++ Seq(
+      name := "gae4s-sample",
+      buildInfoPackage := "com.xhachi.gae4s.buildinfo",
+      libraryDependencies ++= defaultDependency ++ Seq(
+        "javax.servlet" % "servlet-api" % "2.5" % "provided",
+        "org.eclipse.jetty" % "jetty-webapp" % "7.0.2.v20100331" % "container"
+      )
+    )
+  ).dependsOn(root)
 
 
   val defaultDependency = {
