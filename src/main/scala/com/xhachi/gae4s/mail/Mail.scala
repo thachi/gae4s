@@ -50,14 +50,14 @@ case class Message(
     val m = new LLMessage()
     m.setSender(sender)
     replyTo.foreach(m.setReplyTo)
-    if (!to.isEmpty) m.setTo(to: _*)
-    if (!cc.isEmpty) m.setCc(cc: _*)
-    if (!bcc.isEmpty) m.setBcc(bcc: _*)
+    if (to.nonEmpty) m.setTo(to: _*)
+    if (cc.nonEmpty) m.setCc(cc: _*)
+    if (bcc.nonEmpty) m.setBcc(bcc: _*)
     subject.foreach(m.setSubject)
     textBody.foreach(m.setTextBody)
     htmlBody.foreach(m.setHtmlBody)
-    if (!attachments.isEmpty) m.setAttachments(attachments: _*)
-    if (!headers.isEmpty) m.setHeaders(headers: _*)
+    if (attachments.nonEmpty) m.setAttachments(attachments: _*)
+    if (headers.nonEmpty) m.setHeaders(headers: _*)
     m
   }
 }
