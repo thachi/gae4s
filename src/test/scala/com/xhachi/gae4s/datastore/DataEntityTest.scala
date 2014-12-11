@@ -47,6 +47,7 @@ class SampleDataEntity(val key: Key[SampleDataEntity])
 object SampleDataEntity
   extends EntityStore[SampleDataEntity]
   with SingleStore
+  with CreatableStore
   with UpdatableStore
   with NamedStore {
 

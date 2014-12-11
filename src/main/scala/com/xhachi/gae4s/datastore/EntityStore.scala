@@ -28,7 +28,8 @@ trait EntityStore[E <: Entity[E]] extends EntityStoreBase with GettableStore {
   type ENTITY = E
 }
 
-trait GettableStore extends EntityStoreBase {
+trait GettableStore {
+  self: EntityStoreBase =>
 
   def get(key: Key[ENTITY]): ENTITY = datastore.get(key)
 
@@ -91,7 +92,9 @@ trait GettableStore extends EntityStoreBase {
 }
 
 
-trait CreatableStore extends EntityStoreBase with GettableStore {
+trait CreatableStore {
+  self: EntityStoreBase with GettableStore =>
+
   type ENTITY <: Entity[ENTITY]
 
   def create(e: ENTITY) = datastore.create(e)
@@ -155,7 +158,8 @@ trait CreatableStore extends EntityStoreBase with GettableStore {
 
 }
 
-trait UpdatableStore extends EntityStoreBase {
+trait UpdatableStore {
+  self: EntityStoreBase =>
   type ENTITY <: Entity[ENTITY]
 
   def update(e: ENTITY): Key[ENTITY] = datastore.update(e)
@@ -194,7 +198,8 @@ trait UpdatableStore extends EntityStoreBase {
 
 }
 
-trait DeletableStore extends EntityStoreBase {
+trait DeletableStore {
+  self: EntityStoreBase =>
 
   def delete(key: Key[ENTITY]): Unit = datastore.delete(key)
 
@@ -227,7 +232,9 @@ trait DeletableStore extends EntityStoreBase {
 
 }
 
-trait SingleStore extends IdentifiableKeyStore with CreatableStore {
+trait SingleStore extends IdentifiableKeyStore {
+  self: EntityStoreBase with GettableStore with CreatableStore =>
+
   type ENTITY <: Entity[ENTITY]
 
   def createSingleKey(implicit context: Context): Key[ENTITY] = createKeyWithId(1)
@@ -251,7 +258,9 @@ trait SingleStore extends IdentifiableKeyStore with CreatableStore {
   def getOptionSingleWithTx(tx: Transaction)(implicit context: Context): Option[ENTITY] = getOptionWithTx(tx, createSingleKey)
 }
 
-trait NamedStore extends EntityStoreBase with GettableStore {
+trait NamedStore {
+  self: EntityStoreBase with GettableStore =>
+
   type ENTITY <: Entity[ENTITY]
 
   def createKeyWithName(name: String)(implicit context: Context) = context.ancestor match {
@@ -286,7 +295,9 @@ trait NamedStore extends EntityStoreBase with GettableStore {
   }
 }
 
-trait IdentifiableKeyStore extends EntityStoreBase {
+trait IdentifiableKeyStore {
+  self: EntityStoreBase =>
+
   type ENTITY <: Entity[ENTITY]
 
   def createKeyWithId(id: Long)(implicit context: Context) = context.ancestor match {
@@ -322,6 +333,7 @@ trait IdentifiableKeyStore extends EntityStoreBase {
 }
 
 trait AllocatableKeyStore extends IdentifiableKeyStore {
+  self: EntityStoreBase =>
   type ENTITY <: Entity[ENTITY]
 
   def allocateKey(implicit context: Context) = context.ancestor match {
@@ -337,7 +349,9 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
   }
 }
 
-trait UUIDKeyStore extends NamedStore {
+trait UUIDKeyStore {
+  self: EntityStoreBase with GettableStore with NamedStore =>
+
   type ENTITY <: Entity[ENTITY]
 
   import java.util.UUID
@@ -355,7 +369,8 @@ trait UUIDKeyStore extends NamedStore {
 
 }
 
-trait QueryableStore extends EntityStoreBase {
+trait QueryableStore {
+  self: EntityStoreBase =>
 
   def query(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
     case Some(p) => datastore.query[ENTITY, META](p)
