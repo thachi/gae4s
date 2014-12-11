@@ -349,8 +349,8 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
   }
 }
 
-trait UUIDKeyStore {
-  self: EntityStoreBase with GettableStore with NamedStore =>
+trait UUIDKeyStore extends NamedStore {
+  self: EntityStoreBase with GettableStore  =>
 
   type ENTITY <: Entity[ENTITY]
 
