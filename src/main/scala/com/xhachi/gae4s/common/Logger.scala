@@ -1,11 +1,10 @@
 package com.xhachi.gae4s.common
 
-import java.util.logging.{Level, Logger}
-
+import java.util.logging.{Level, Logger => JLogger}
 
 trait Logger {
 
-  lazy val logger = Logger.getLogger(this.getClass.toString)
+  lazy val logger = JLogger.getLogger(this.getClass.toString)
 
   def trace(message: => String): Unit = if (logger.isLoggable(Level.FINER)) logger.finer(message)
 
