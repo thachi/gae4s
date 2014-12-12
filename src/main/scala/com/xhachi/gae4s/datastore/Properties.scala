@@ -31,9 +31,6 @@ trait Property[T] {
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
-  protected[datastore] def createFromConversionException(v: Any) = new PropertyConversionException(name + " \"" + v + "\"(" + v.getClass.getName + ") can not converted from stored property")
-
-  protected[datastore] def createToConversionException(v: Any) = new PropertyConversionException(name + " \"\"+v+\"\"(\" + v.getClass.getName + \") can not converted to store property")
 }
 
 trait IndexedProperty[T] extends Property[T] {
@@ -62,6 +59,12 @@ trait IndexedProperty[T] extends Property[T] {
 }
 
 class PropertyConversionException(message: String) extends Exception(message)
+
+class PropertyConvertFromLLPropertyException(name: String, value: Any)
+  extends PropertyConversionException(s"""$name "$value" can not converte from stored property""")
+
+class PropertyConvertToLLPropertyException(name: String, value: Any)
+  extends PropertyConversionException(s"""$name "$value" can not converte to store property""")
 
 
 trait SimpleProperty[T] extends Property[T] {
@@ -109,7 +112,7 @@ class LongProperty(protected[datastore] val name: String) extends SimpleProperty
     case v: Int => v.toLong
     case v: Long => v
     case v: Double => v.toLong
-    case v => throw createFromConversionException(v)
+    case v => throw new PropertyConvertFromLLPropertyException(name, v)
   }
 }
 
@@ -120,7 +123,7 @@ class IntProperty(protected[datastore] val name: String) extends SimpleProperty[
     case v: Int => v
     case v: Long => v.toInt
     case v: Double => v.toInt
-    case v => throw createFromConversionException(v)
+    case v => throw new PropertyConvertFromLLPropertyException(name, v)
   }
 }
 
@@ -229,14 +232,14 @@ trait ByteProperty[B] extends SimpleProperty[B] {
     val value = toByte(b)
     if (value.length < Property.ShortLimit) new ShortBlob(value)
     else if (value.length < Property.LongLimit) new Blob(value)
-    else throw createToConversionException(value)
+    else throw new PropertyConvertToLLPropertyException(name, value)
   }
 
   override def fromStoreProperty(value: Any): B = {
     val b: Array[Byte] = value match {
       case value: ShortBlob => value.getBytes
       case value: Blob => value.getBytes
-      case value: Any => throw createFromConversionException(value)
+      case value: Any => throw new PropertyConvertToLLPropertyException(name, value)
       case _ => null
     }
     fromByte(b)
