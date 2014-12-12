@@ -112,6 +112,7 @@ class LongProperty(protected[datastore] val name: String) extends SimpleProperty
     case v: Int => v.toLong
     case v: Long => v
     case v: Double => v.toLong
+    case null => 0
     case v => throw new PropertyConvertFromLLPropertyException(name, v)
   }
 }
@@ -123,6 +124,7 @@ class IntProperty(protected[datastore] val name: String) extends SimpleProperty[
     case v: Int => v
     case v: Long => v.toInt
     case v: Double => v.toInt
+    case null => 0
     case v => throw new PropertyConvertFromLLPropertyException(name, v)
   }
 }
