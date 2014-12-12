@@ -54,7 +54,7 @@ object SampleDataEntity
   type META = Meta
   val meta = new Meta
 
-  class Meta extends JsonDataEntityMeta[SampleDataEntity, SampleData] with Mutable {
+  class Meta extends JsonDataEntityMeta[SampleDataEntity, SampleData] with MutableMeta {
     def createEntity(key: Key[SampleDataEntity]): SampleDataEntity = new SampleDataEntity(key)
 
   }

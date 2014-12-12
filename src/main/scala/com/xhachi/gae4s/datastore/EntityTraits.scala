@@ -30,12 +30,14 @@ trait ApplyProperty {
 
 
 trait CreatedAt {
+  self: Entity[_] =>
 
   final var createdAt: Option[Date] = None
 
 }
 
 trait CreatedAtMeta extends ApplyProperty {
+
   type Entity <: CreatedAt
 
   final val createdAt = new OptionProperty(new DateProperty("createdAt") with IndexedProperty[Date])
@@ -54,6 +56,7 @@ trait CreatedAtMeta extends ApplyProperty {
 
 
 trait UpdatedAt {
+  self: Entity[_] =>
 
   final var updatedAt: Option[Date] = None
 
@@ -74,6 +77,7 @@ trait UpdatedAtMeta extends ApplyProperty {
 }
 
 trait Version {
+  self: Entity[_] =>
 
   final var version: Long = 0L
 
@@ -95,13 +99,17 @@ trait VersionMeta extends ApplyProperty {
   }
 }
 
-trait Mutable extends CreatedAt with UpdatedAt with Version
+trait Mutable extends CreatedAt with UpdatedAt with Version {
+  self: Entity[_] =>
+}
 
 trait MutableMeta extends CreatedAtMeta with UpdatedAtMeta with VersionMeta {
   type Entity <: Mutable
 }
 
-trait Immutable extends CreatedAt
+trait Immutable extends CreatedAt {
+  self: Entity[_] =>
+}
 
 trait ImmutableMeta extends CreatedAtMeta {
   type Entity <: Immutable
