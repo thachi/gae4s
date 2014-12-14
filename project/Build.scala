@@ -40,7 +40,6 @@ object Gae4sBuild extends Build {
     base = file("sample"),
     settings = defaultSetting ++ appengineSettings ++ Seq(
       name := "gae4s-sample",
-      buildInfoPackage := "com.xhachi.gae4s.buildinfo",
       libraryDependencies ++= defaultDependency ++ Seq(
         "javax.servlet" % "servlet-api" % "2.5" % "provided",
         "org.eclipse.jetty" % "jetty-webapp" % "7.0.2.v20100331" % "container"
