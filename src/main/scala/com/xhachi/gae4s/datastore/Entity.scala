@@ -66,6 +66,8 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   val key = new KeyProperty[E]("key")
 
+  def properties: Seq[Property[_]] = Seq(key)
+
   def createEntity(key: Key[E]): E
 
   def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity = {

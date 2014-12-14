@@ -11,6 +11,8 @@ abstract class JsonDataEntityMeta[E <: JsonDataEntity[E, D] : ClassTag, D <: Any
 
   val data = new JsonProperty[D]("data")
 
+  override def properties = super.properties ++ Seq(data)
+
   addApplyToLLEntity {
     (from: Entity, to: LLEntity) => data.setValueToLLEntity(to)(from.data)
   }
@@ -27,6 +29,8 @@ abstract class SerializableDataEntity[E <: SerializableDataEntity[E, D], D <: Se
 abstract class SerializableDataEntityMeta[E <: SerializableDataEntity[E, D] : ClassTag, D <: Serializable : Manifest] extends EntityMeta[E] {
 
   val data = new SerializableProperty[D]("data")
+
+  override def properties = super.properties ++ Seq(data)
 
   addApplyToLLEntity {
     (from: Entity, to: LLEntity) => data.setValueToLLEntity(to)(from.data)

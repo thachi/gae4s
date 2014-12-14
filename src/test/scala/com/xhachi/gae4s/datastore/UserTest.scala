@@ -390,6 +390,9 @@ class UserStore
     val webInfo = new SerializableProperty[WebInfo]("webInfo")
     val deleted = new BooleanProperty("deleted") with IndexedProperty[Boolean]
 
+    override def properties = super.properties ++ Seq(name, height, weight, mobilePhone, webInfo, deleted)
+
+
     override def createEntity(key: Key[User]) = new User(key)
 
     addApplyFromLLEntity {
