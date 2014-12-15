@@ -58,7 +58,8 @@ object EntityMeta {
 
 abstract class EntityMeta[E <: Entity[E] : ClassTag]
   extends ApplyProperty
-  with EntityMetaCreateKeyMethods {
+  with EntityMetaCreateKeyMethods
+  with Serializable {
 
   type Entity = E
 

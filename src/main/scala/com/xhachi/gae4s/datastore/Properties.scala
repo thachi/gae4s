@@ -16,7 +16,7 @@ object Property {
   val LongLimit = 1000000
 }
 
-abstract class Property[T: ClassTag] {
+abstract class Property[T: ClassTag] extends Serializable {
 
   type PropertyType = T
 
