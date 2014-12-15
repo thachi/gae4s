@@ -18,7 +18,7 @@ object Property {
 
 trait Property[T] {
 
-  protected[datastore] def name: String
+  def name: String
 
   def getValueFromLLEntity(entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
 
