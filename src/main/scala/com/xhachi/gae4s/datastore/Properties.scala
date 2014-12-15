@@ -20,7 +20,7 @@ abstract class Property[T: ClassTag] {
 
   type PropertyType = T
 
-  def propertyType = implicitly[ClassTag[T]].runtimeClass
+  def propertyType: Class[_] = implicitly[ClassTag[T]].runtimeClass
 
   def name: String
 
