@@ -25,3 +25,5 @@ trait Logger {
   }
 
 }
+
+object Logger extends Logger
