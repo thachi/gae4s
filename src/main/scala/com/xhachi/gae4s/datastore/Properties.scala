@@ -16,7 +16,9 @@ object Property {
   val LongLimit = 1000000
 }
 
-trait Property[T] {
+abstract class Property[T: ClassTag] {
+
+  def propertyType = implicitly[ClassTag[T]].runtimeClass
 
   def name: String
 
@@ -61,10 +63,10 @@ trait IndexedProperty[T] extends Property[T] {
 class PropertyConversionException(message: String) extends Exception(message)
 
 class PropertyConvertFromLLPropertyException(name: String, value: Any)
-  extends PropertyConversionException(s"""$name "$value" can not converte from stored property""")
+  extends PropertyConversionException( s"""$name "$value" can not converte from stored property""")
 
 class PropertyConvertToLLPropertyException(name: String, value: Any)
-  extends PropertyConversionException(s"""$name "$value" can not converte to store property""")
+  extends PropertyConversionException( s"""$name "$value" can not converte to store property""")
 
 
 trait SimpleProperty[T] extends Property[T] {
@@ -256,7 +258,7 @@ class ByteArrayProperty(val name: String) extends ByteProperty[Array[Byte]] {
   override def toByte(value: Array[Byte]): Array[Byte] = value
 }
 
-class SerializableProperty[E <: Serializable](val name: String) extends ByteProperty[E] {
+class SerializableProperty[E <: Serializable: ClassTag](val name: String) extends ByteProperty[E] {
 
   import java.io._
 
