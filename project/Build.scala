@@ -10,8 +10,8 @@ object Gae4sBuild extends Build {
     Seq(
       sourceGenerators in Compile <+= buildInfo,
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
-      scalaVersion := "2.11.2",
-      crossScalaVersions := Seq("2.10.4", "2.11.2"),
+      scalaVersion := "2.11.4",
+      crossScalaVersions := Seq("2.10.4", "2.11.4"),
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       version := "0.5-SNAPSHOT",
@@ -26,10 +26,10 @@ object Gae4sBuild extends Build {
     )
 
   lazy val root = Project(
-    id = "gae4s",
-    base = file("."),
+    id = "gae4s-core",
+    base = file("core"),
     settings = defaultSetting ++ Seq(
-      name := "gae4s",
+      name := "gae4s-core",
       buildInfoPackage := "com.xhachi.gae4s.buildinfo",
       libraryDependencies ++= defaultDependency
     )
