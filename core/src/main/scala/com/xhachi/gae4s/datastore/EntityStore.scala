@@ -8,6 +8,10 @@ trait EntityStoreContext {
   def ancestor: Option[Key[_]]
 }
 
+case class SimpleEntityStoreContext[T](key: Key[T]) extends EntityStoreContext {
+  def ancestor: Option[Key[_]] = Some(key)
+}
+
 object NoAncestorEntityStoreContext extends EntityStoreContext {
   override def ancestor: Option[Key[_]] = None
 }
@@ -264,8 +268,8 @@ trait NamedStore {
   type ENTITY <: Entity[ENTITY]
 
   def createKeyWithName(name: String)(implicit context: Context) = context.ancestor match {
-    case Some(p) => datastore.createKey[ENTITY, META](p, name)
-    case None => datastore.createKey[ENTITY, META](name)
+    case Some(p) => datastore.createKey[ENTITY](p, name)
+    case None => datastore.createKey[ENTITY](name)
   }
 
   def createEntityWithName(name: String)(implicit context: Context) = meta.createEntity(createKeyWithName(name))
@@ -301,8 +305,8 @@ trait IdentifiableKeyStore {
   type ENTITY <: Entity[ENTITY]
 
   def createKeyWithId(id: Long)(implicit context: Context) = context.ancestor match {
-    case Some(p) => datastore.createKey[ENTITY, META](p, id)
-    case None => datastore.createKey[ENTITY, META](id)
+    case Some(p) => datastore.createKey[ENTITY](p, id)
+    case None => datastore.createKey[ENTITY](id)
   }
 
   def createEntityWithId(id: Long)(implicit context: Context) = meta.createEntity(createKeyWithId(id))
@@ -337,15 +341,15 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
   type ENTITY <: Entity[ENTITY]
 
   def allocateKey(implicit context: Context) = context.ancestor match {
-    case Some(p) => datastore.allocateKey[ENTITY, META](p)
-    case None => datastore.allocateKey[ENTITY, META]()
+    case Some(p) => datastore.allocateKey[ENTITY](p)
+    case None => datastore.allocateKey[ENTITY]
   }
 
   def createEntityWithAllocatedKey(implicit context: Context) = meta.createEntity(allocateKey)
 
   def allocateKeys(count: Long)(implicit context: Context) = context.ancestor match {
-    case Some(p) => datastore.allocateKeys[ENTITY, META](p, count)
-    case None => datastore.allocateKeys[ENTITY, META](count)
+    case Some(p) => datastore.allocateKeys[ENTITY](p, count)
+    case None => datastore.allocateKeys[ENTITY](count)
   }
 }
 

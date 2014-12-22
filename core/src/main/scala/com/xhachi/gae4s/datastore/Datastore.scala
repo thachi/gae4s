@@ -241,27 +241,27 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
 sealed private[datastore] trait DatastoreCreateKeyMethods {
   self: DatastoreBase =>
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](name: String)(implicit meta: M): Key[E] = meta.createKeyWithName(name)
+  def createKey[E <: Entity[E]](name: String)(implicit meta: EntityMeta[E]): Key[E] = meta.createKeyWithName(name)
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], name: String)(implicit meta: M): Key[E] = meta.createKeyWithName(parent, name)
+  def createKey[E <: Entity[E]](parent: Key[_], name: String)(implicit meta: EntityMeta[E]): Key[E] = meta.createKeyWithName(parent, name)
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](id: Long)(implicit meta: M): Key[E] = meta.createKeyWithId(id)
+  def createKey[E <: Entity[E]](id: Long)(implicit meta: EntityMeta[E]): Key[E] = meta.createKeyWithId(id)
 
-  def createKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], id: Long)(implicit meta: M): Key[E] = meta.createKeyWithId(parent, id)
+  def createKey[E <: Entity[E]](parent: Key[_], id: Long)(implicit meta: EntityMeta[E]): Key[E] = meta.createKeyWithId(parent, id)
 
-  def allocateKey[E <: Entity[E], M <: EntityMeta[E]]()(implicit meta: M): Key[E] = {
+  def allocateKey[E <: Entity[E]](implicit meta: EntityMeta[E]): Key[E] = {
     meta.createKeyWithId(service.allocateIds(meta.kind, 1).getStart.getId)
   }
 
-  def allocateKeys[E <: Entity[E], M <: EntityMeta[E]](count: Long)(implicit meta: M): Seq[Key[E]] = {
+  def allocateKeys[E <: Entity[E]](count: Long)(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     service.allocateIds(meta.kind, count).map(k => meta.createKey(k)).toSeq
   }
 
-  def allocateKey[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_])(implicit meta: M): Key[E] = {
+  def allocateKey[E <: Entity[E]](parent: Key[_])(implicit meta: EntityMeta[E]): Key[E] = {
     meta.createKey(service.allocateIds(parent.key, meta.kind, 1).getStart)
   }
 
-  def allocateKeys[E <: Entity[E], M <: EntityMeta[E]](parent: Key[_], count: Long)(implicit meta: M): Seq[Key[E]] = {
+  def allocateKeys[E <: Entity[E]](parent: Key[_], count: Long)(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     service.allocateIds(parent.key, meta.kind, count).map(k => meta.createKey(k)).toSeq
   }
 }
@@ -269,6 +269,8 @@ sealed private[datastore] trait DatastoreCreateKeyMethods {
 sealed private[datastore] trait DatastoreQueryMethods {
   self: DatastoreBase =>
 
+
+  //todo Mいらない
   def query[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) =
     Query[E, M](this, meta, None)
 
