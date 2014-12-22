@@ -1,6 +1,7 @@
-package com.xhachi.gae4s.datastore
+package com.xhachi.gae4s.extension.store
 
 import com.google.appengine.api.datastore.Transaction
+import com.xhachi.gae4s.datastore._
 
 import scala.language.implicitConversions
 
@@ -354,7 +355,7 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
 }
 
 trait UUIDKeyStore extends NamedStore {
-  self: EntityStoreBase with GettableStore  =>
+  self: EntityStoreBase with GettableStore =>
 
   type ENTITY <: Entity[ENTITY]
 
@@ -370,7 +371,6 @@ trait UUIDKeyStore extends NamedStore {
   }
 
   def createEntityWithGeneratedKey(implicit context: Context) = meta.createEntity(generateKey)
-
 }
 
 trait QueryableStore {

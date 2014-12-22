@@ -1,11 +1,14 @@
-package com.xhachi.gae4s.datastore
+package com.xhachi.gae4s.extension.store
+
+import com.xhachi.gae4s.datastore._
+import com.xhachi.gae4s.extension.store
 
 class User(val key: Key[User],
            var name: String = "",
            var height: Int = 0,
            var weight: Int = 0,
            var mobilePhone: Option[String] = None,
-           var webInfo: WebInfo = WebInfo(),
+           var webInfo: WebInfo = store.WebInfo(),
            var deleted: Boolean = false)
   extends Entity[User]
   with CreatedAt

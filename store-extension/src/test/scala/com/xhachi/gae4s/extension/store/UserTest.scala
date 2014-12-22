@@ -1,6 +1,7 @@
-package com.xhachi.gae4s.datastore
+package com.xhachi.gae4s.extension.store
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.datastore.{Datastore, Key}
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -242,11 +243,6 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     assert(single.key == expected.key)
   }
 
-  test("propertyが正しいか") {
-    val filter = new UserMeta().name #< "a"
-    filter.toLLFilter
-  }
-
   test("filterを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
@@ -258,13 +254,11 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     assert(filter.asSeq(all).size == 1)
   }
 
-
-
   test("filterでasSingleを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter = UserStore.query.filter(m => (m.name #== "Jiro"))
+    val filter = UserStore.query.filter(m => m.name #== "Jiro")
     assert(filter.asSingle.name == "Jiro")
     assert(filter.asSingle(all).name == "Jiro")
   }
@@ -273,7 +267,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter = UserStore.query.filter(m => (m.name #== "hogehoge"))
+    val filter = UserStore.query.filter(m => m.name #== "hogehoge")
     assert(filter.asSingle == null)
     assert(filter.asSingle(all) == null)
   }
@@ -282,7 +276,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter = UserStore.query.filter(m => (m.name #== "Jiro"))
+    val filter = UserStore.query.filter(m => m.name #== "Jiro")
 
     {
       val single = filter.asSingleOption
@@ -300,7 +294,7 @@ class UserTest extends FunSuite with AppEngineTestSuite {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter = UserStore.query.filter(m => (m.name #== "hogehoge"))
+    val filter = UserStore.query.filter(m => m.name #== "hogehoge")
     assert(filter.asSingleOption.isEmpty)
     assert(filter.asSingleOption(all).isEmpty)
   }
