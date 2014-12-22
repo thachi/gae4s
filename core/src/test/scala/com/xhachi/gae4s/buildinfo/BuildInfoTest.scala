@@ -5,7 +5,7 @@ import org.scalatest.FunSuite
 class BuildInfoTest extends FunSuite {
 
   test("BuildInfoにアクセスできること") {
-    assert(BuildInfo.name == "gae4s")
+    assert(BuildInfo.name == "gae4s-core")
     assert(BuildInfo.version != null)
   }
 

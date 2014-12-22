@@ -14,7 +14,7 @@ object Gae4sBuild extends Build {
       crossScalaVersions := Seq("2.10.4", "2.11.4"),
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
-      version := "0.5-SNAPSHOT",
+      version := "0.5",
       publishTo <<= version { (v: String) =>
         val base = "/Users/takashi/Documents/xhachi/repository"
         if (v.trim.endsWith("SNAPSHOT"))
