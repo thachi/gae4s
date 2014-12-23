@@ -14,14 +14,14 @@ import scala.collection.JavaConversions._
  * @param service the URLFetchService instance
  * @param defaultHeaders the HTTP request Headers
  */
-class UrlFetch(service: URLFetchService, defaultHeaders: Map[String, String], charset: String = "UTF-8") {
+class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[String, String], charset: String = "UTF-8") {
 
   class Response private[UrlFetch](response: HTTPResponse) {
 
     lazy val status: Int = response.getResponseCode
 
     lazy val content: Option[String] = response.getContent match {
-      case content: Array[Byte] if !content.isEmpty => Some(new String(response.getContent, charset))
+      case content: Array[Byte] if content.nonEmpty => Some(new String(response.getContent, charset))
       case _ => None
     }
 
@@ -31,34 +31,34 @@ class UrlFetch(service: URLFetchService, defaultHeaders: Map[String, String], ch
   }
 
   def get(url: String,
-          query: Option[Map[String, Seq[String]]] = None,
-          headers: Option[Map[String, String]] = None) = {
+          query: Map[String, Seq[String]] = Map(),
+          headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, GET, query = query, headers = headers))
   }
 
   def head(url: String,
-           query: Option[Map[String, Seq[String]]] = None,
-           headers: Option[Map[String, String]] = None) = {
+           query: Map[String, Seq[String]] = Map(),
+           headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, HEAD, query = query, headers = headers))
   }
 
   def post(url: String,
-           query: Option[Map[String, Seq[String]]] = None,
-           data: Option[Map[String, Seq[String]]] = None,
-           headers: Option[Map[String, String]] = None) = {
+           query: Map[String, Seq[String]] = Map(),
+           data: Map[String, Seq[String]] = Map(),
+           headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, POST, query = query, data = data, headers = headers))
   }
 
   def put(url: String,
-          query: Option[Map[String, Seq[String]]] = None,
-          data: Option[Map[String, Seq[String]]] = None,
-          headers: Option[Map[String, String]] = None) = {
+          query: Map[String, Seq[String]] = Map(),
+          data: Map[String, Seq[String]] = Map(),
+          headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, PUT, query = query, data = data, headers = headers))
   }
 
   def delete(url: String,
-             query: Option[Map[String, Seq[String]]] = None,
-             headers: Option[Map[String, String]] = None) = {
+             query: Map[String, Seq[String]] = Map(),
+             headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, DELETE, query = query, headers = headers))
   }
 
@@ -68,38 +68,35 @@ class UrlFetch(service: URLFetchService, defaultHeaders: Map[String, String], ch
 
   protected def createRequest(url: String,
                               method: HTTPMethod,
-                              query: Option[Map[String, Seq[String]]] = None,
-                              data: Option[Map[String, Seq[String]]] = None,
-                              headers: Option[Map[String, String]] = None): HTTPRequest = {
+                              query: Map[String, Seq[String]] = Map(),
+                              data: Map[String, Seq[String]] = Map(),
+                              headers: Map[String, String] = Map()): HTTPRequest = {
 
-    val requestUrl = query match {
-      case Some(d) =>
-        val queryString = d.map {
-          case (key, values) => values.map {
-            value => URLEncoder.encode(key, charset) + "=" + URLEncoder.encode(value, charset)
+    val requestUrl = if (query.isEmpty) {
+      url
+    } else {
+      url + "?" + query.map {
+        case (name, values) =>
+          values.map {
+            value =>
+              URLEncoder.encode(name, charset) + "=" + URLEncoder.encode(value, charset)
           }
-        }.flatten
-
-        if (0 < queryString.size) url + "?" + queryString.mkString("&")
-        else url
-      case None => url
+      }.flatten.mkString("&")
     }
 
-    val request: HTTPRequest = new HTTPRequest(new URL(requestUrl), method)
+    val request = new HTTPRequest(new URL(requestUrl), method)
 
-    (defaultHeaders ++ headers.getOrElse(Nil)).map {
+    (defaultHeaders ++ headers).map {
       case (k, v) => new HTTPHeader(k, v)
     }.foreach(request.addHeader)
 
-    data match {
-      case Some(d) =>
-        val payload = d.map {
-          case (key, values) => values.map {
-            value => URLEncoder.encode(key, charset) + "=" + URLEncoder.encode(value, charset)
-          }
-        }.flatten
-        request.setPayload(payload.mkString("&").getBytes(charset))
-      case None => // no-op
+    if (data.nonEmpty) {
+      val payload = data.map {
+        case (name, values) => values.map {
+          value => URLEncoder.encode(name, charset) + "=" + URLEncoder.encode(value, charset)
+        }
+      }.flatten
+      request.setPayload(payload.mkString("&").getBytes(charset))
     }
     request
   }
