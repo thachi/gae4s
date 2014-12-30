@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{KeyFactory, Key => LLKey}
+import com.xhachi.gae4s.datastore.meta.EntityMacro
 
 import scala.reflect.ClassTag
 
@@ -54,6 +55,9 @@ object EntityClassToKindStrategy {
 
 object EntityMeta {
   var entityClassToKindStrategy = EntityClassToKindStrategy.ClassNameStrategy
+
+  import scala.language.experimental.macros
+  def createMeta[E <: Entity[E]]: EntityMeta[E] = macro EntityMacro.createMeta[E]
 }
 
 abstract class EntityMeta[E <: Entity[E] : ClassTag]

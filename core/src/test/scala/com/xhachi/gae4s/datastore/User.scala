@@ -1,16 +1,30 @@
 package com.xhachi.gae4s.datastore
 
+import com.xhachi.gae4s.datastore.meta.{indexed, entity}
+
+@entity
 class User(val key: Key[User],
            var name: String = "",
+
+           @indexed
            var height: Int = 0,
+           @indexed
            var weight: Int = 0,
+
            var mobilePhone: Option[String] = None,
            var webInfo: WebInfo = WebInfo(),
            var deleted: Boolean = false)
   extends Entity[User]
   with CreatedAt
   with Version
-  with UpdatedAt
+  with UpdatedAt {
+
+  @transient
+  val internalVersion = 1
+
+  @transient
+  var var1 = 1
+}
 
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 

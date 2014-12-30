@@ -4,6 +4,8 @@ import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, Filter
 import com.google.appengine.api.datastore.{Transaction, Query => LLQuery}
 
 import scala.collection.JavaConversions._
+import scala.language.experimental.macros
+import scala.reflect.macros.blackbox.Context
 
 case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
                                                                          datastore: DatastoreQueryMethods,
@@ -74,6 +76,17 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
     sorts.foreach(s => query.addSort(s.name, s.direction))
     query
   }
+
+//  def mFilter(filter: E => Boolean): Query[E, M] = {
+//    val f = this.mF(filter)
+//    copy(
+//      filterOption = Some(f)
+//    )
+//  }
+  def mF(filter: E => Boolean): Query[E, M] = macro QueryMacro.filter[E, M]
+
+  def mSortBy(sort: E => Any): Query[E, M] = macro QueryMacro.sortBy[E, M]
+
 }
 
 
@@ -152,6 +165,52 @@ case class SortPredicate[T](name: String, direction: LLSortDirection, property: 
     val v2: T = property.fromStoreProperty(meta.toLLEntity(entity2).getProperty(name))
 
     property.compare(v1, v2) < 0
+  }
+
+}
+
+
+object QueryMacro {
+  def filter[E <: Entity[E] : c.WeakTypeTag,M <: EntityMeta[E] : c.WeakTypeTag](c: Context)(filter: c.Expr[E => Boolean]): c.Expr[Query[E, M]] = {
+    import c.universe._
+
+
+    c.Expr[Query[E, M]](q"null")
+  }
+
+  def sortBy[E <: Entity[E] : c.WeakTypeTag,M <: EntityMeta[E] : c.WeakTypeTag](c: Context)(sort: c.Expr[E => Any]): c.Expr[Query[E, M]] = {
+    import c.universe._
+
+
+    def printChildren(tree: Tree, depth: Int = 0): Unit = {
+      tree match {
+        case t: Tree if t.isType =>
+          println(("\t" * depth) + t.symbol + " (type)")
+        case t: Apply =>
+          println(("\t" * depth) + t.symbol + " (Apply)")
+        case t: Select =>
+          println(("\t" * depth) + t.symbol + " (Select)" + t.symbol.name)
+        case t: Ident =>
+          println(("\t" * depth) + t.symbol + " (Ident)" + t.symbol.asTerm.typeSignature)
+        case t: Tree =>
+          println(("\t" * depth) + t.symbol + " (" + t.getClass + ")")
+      }
+      tree.children.foreach(child => printChildren(child, depth + 1))
+    }
+
+
+          println("--- QueryMacro ---")
+
+    val prefix = c.prefix.tree
+    println(sort)
+
+    printChildren(sort.tree, 0)
+
+    sort.tree match {
+      case t => t
+    }
+    val ow = c.macroApplication.symbol.owner
+    c.Expr[Query[E, M]](q"$prefix")
   }
 
 }
