@@ -108,13 +108,9 @@ $query.copy(sorts = Seq(meta.$s.asc))
                             creationDate: Boolean,
                             modificationDate: Boolean,
                             readonly: Boolean,
-                            listener: Seq[Type]) {
-
-    }
+                            listener: Seq[Type])
 
     def toPropertyInfo(name: TermName): PropertyInfo = {
-
-
       val member0 = entityType.member(name)
       val member1 = entityType.member(TermName(name + "_$eq"))
       val member2 = entityType.member(TermName(name + " "))
@@ -140,7 +136,6 @@ $query.copy(sorts = Seq(meta.$s.asc))
         listener = Nil
       )
     }
-
 
     def isMemberOfEntity(member: c.Symbol): Boolean = {
       member.owner.annotations.exists(_.tree.tpe == typeOf[entity])
@@ -241,7 +236,6 @@ $query.copy(sorts = Seq(meta.$s.asc))
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         }
 
-
         if (option && indexed) {
           val p0 = createBaseProperty(baseType)
           q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
@@ -253,60 +247,10 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else {
           createBaseProperty(baseType)
         }
-        //      else if (memberType =:= typeOf[Option[String]]) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.OptionProperty(new com.xhachi.gae4s.datastore.StringProperty(${propertyName}))""")
-        //      }
-        //      else if (memberType =:= typeOf[String] && isIndexed(member)) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.StringProperty(${propertyName}) with com.xhachi.gae4s.datastore.IndexedProperty[String]""")
-        //      }
-        //      else if (memberType =:= typeOf[String]) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.StringProperty(${propertyName})""")
-        //      }
-        //      else if (memberType =:= typeOf[Long] && isIndexed(member)) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.LongProperty(${propertyName}) with com.xhachi.gae4s.datastore.IndexedProperty[Long]""")
-        //      }
-        //      else if (memberType =:= typeOf[Int] && isIndexed(member)) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.IntProperty(${propertyName}) with com.xhachi.gae4s.datastore.IndexedProperty[Int]""")
-        //      }
-        //      else if (memberType =:= typeOf[Int]) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.IntProperty(${propertyName})""")
-        //      }
-        //      else if (memberType =:= typeOf[Boolean] && isIndexed(member)) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.ValueProperty[Boolean](${propertyName}) with com.xhachi.gae4s.datastore.IndexedProperty[Boolean]""")
-        //      }
-        //      else if (memberType =:= typeOf[Boolean]) {
-        //        Some(propertyTermName -> q"""new com.xhachi.gae4s.datastore.ValueProperty[Boolean](${propertyName})""")
-        //      }
-        //      else {
-        //        None
-        //      }
       }
       Some(propertyTermName -> propertyTree)
     }
 
-
-
-
-
-    //    val members = (entityType.members +: entityType.baseClasses.map(_.typeSignature.members)).flatten.toSet
-    //
-    //    members.foreach(m => println(m.name + ": " + m.getClass))
-    //
-    //    val propertyNames = entityType.members
-    //      .filter(_.name.toString != "key")
-    //      .filter(_.isMethod)
-    //      .filter(_.asMethod.isGetter)
-    //      .filter(isMemberOfEntity(_))
-    //      .map(_.name)
-    //      .toSet
-    //
-    //    println("property names: " + propertyNames.map(_.toString))
-    //
-    //    propertyNames.foreach { n =>
-    //      val m = entityType.member(n)
-    //      val indexed = isIndexedByName(n)
-    //      println(n + ": " + m + " indexed:" + indexed + " version:" + isVersioning(m))
-    //    }
 
     val propertyInfos = entityType.members
       .filter(m => m.isMethod && m.asMethod.isGetter)
@@ -500,6 +444,3 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
   }
 
 }
-
-
-//}

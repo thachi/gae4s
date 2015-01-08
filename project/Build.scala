@@ -9,7 +9,7 @@ object Gae4sBuild extends Build {
   lazy val defaultSetting = Defaults.defaultSettings ++
     Seq(
       scalaVersion := "2.11.4",
-      crossScalaVersions := Seq("2.10.4", "2.11.4"),
+      crossScalaVersions := Seq("2.11.4"),
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       version := "0.6-SNAPSHOT",
