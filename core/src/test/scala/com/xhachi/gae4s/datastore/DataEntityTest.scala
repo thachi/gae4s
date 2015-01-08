@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.datastore.annotations.entity
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -8,8 +9,6 @@ import org.scalatest.FunSuite
 class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
-
-  implicit val meta = new TestDataEntityMeta
 
   test("typeにEntityでデータを保存し取得できること") {
 
@@ -37,6 +36,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
   }
 }
 
+@entity
 class TestDataEntity(val key: Key[TestDataEntity])
   extends JsonDataEntity[TestDataEntity, TestData] with Mutable {
   override var data: TestData = TestData("unknown", 0)
@@ -44,8 +44,3 @@ class TestDataEntity(val key: Key[TestDataEntity])
 }
 
 case class TestData(name: String, age: Int)
-
-class TestDataEntityMeta extends JsonDataEntityMeta[TestDataEntity, TestData] with MutableMeta{
-  def createEntity(key: Key[TestDataEntity]): TestDataEntity = new TestDataEntity(key)
-
-}

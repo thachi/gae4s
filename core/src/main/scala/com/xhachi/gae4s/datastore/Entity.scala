@@ -1,6 +1,6 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.{KeyFactory, Key => LLKey}
+import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
 import scala.reflect.ClassTag
 
@@ -54,12 +54,14 @@ object EntityClassToKindStrategy {
 
 object EntityMeta {
   var entityClassToKindStrategy = EntityClassToKindStrategy.ClassNameStrategy
+
+  import scala.language.experimental.macros
+
+  implicit def createMeta[E <: Entity[E]]: EntityMeta[E] = macro EntityMacro.createMeta[E]
 }
 
 abstract class EntityMeta[E <: Entity[E] : ClassTag]
-  extends ApplyProperty
-  with EntityMetaCreateKeyMethods
-  with Serializable {
+  extends Serializable {
 
   type Entity = E
 
@@ -71,34 +73,17 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def properties: Seq[Property[_]] = Seq(key)
 
+  def versionProperty: Option[VersionProperty] = None
+
+  def versionEnabled: Boolean = versionProperty.isDefined
+
+  def version(e: E): Option[Long] = versionProperty.map(_.getValueFromLLEntity(toLLEntity(e)))
+
   def createEntity(key: Key[E]): E
 
-  def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity = {
-    entity match {
-      case _: com.google.appengine.api.datastore.Entity =>
-        val e = createEntity(createKey(entity.getKey))
-        applyFromLLEntity(entity, e)
-        e
-      case _ => null.asInstanceOf[Entity]
-    }
-  }
+  def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity
 
-  def toLLEntity(entity: E): com.google.appengine.api.datastore.Entity = {
-    entity match {
-      case _: E =>
-        val e = new LLEntity(entity.key.key)
-        applyToLLEntity(entity, e)
-        e
-      case _ => null.asInstanceOf[com.google.appengine.api.datastore.Entity]
-    }
-  }
-}
-
-
-sealed private[datastore] trait EntityMetaCreateKeyMethods {
-  type Entity
-
-  def kind: String
+  def toLLEntity(entity: E): com.google.appengine.api.datastore.Entity
 
   def createKey(key: LLKey) = new Key[Entity](key)
 

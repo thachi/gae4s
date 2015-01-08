@@ -4,6 +4,7 @@ import com.google.appengine.api.datastore.Transaction
 import com.xhachi.gae4s.datastore._
 
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 
 trait EntityStoreContext {
   def ancestor: Option[Key[_]]
@@ -19,22 +20,20 @@ object NoAncestorEntityStoreContext extends EntityStoreContext {
 
 trait EntityStoreBase {
   type ENTITY <: Entity[ENTITY]
-  type META <: EntityMeta[ENTITY]
   type Context = EntityStoreContext
 
-  def meta: META
+  implicit val meta: EntityMeta[ENTITY]
 
-  protected implicit def implicitMeta: META = meta
-
-  protected def datastore: Datastore = Datastore
+  def datastore: Datastore = Datastore
 }
 
-trait EntityStore[E <: Entity[E]] extends EntityStoreBase with GettableStore {
+abstract class EntityStore[E <: Entity[E]: ClassTag] extends EntityStoreBase with GettableStore {
   type ENTITY = E
 }
 
 trait GettableStore {
   self: EntityStoreBase =>
+  type ENTITY <: Entity[ENTITY]
 
   def get(key: Key[ENTITY]): ENTITY = datastore.get(key)
 
@@ -165,7 +164,6 @@ trait CreatableStore {
 
 trait UpdatableStore {
   self: EntityStoreBase =>
-  type ENTITY <: Entity[ENTITY]
 
   def update(e: ENTITY): Key[ENTITY] = datastore.update(e)
 
@@ -240,8 +238,6 @@ trait DeletableStore {
 trait SingleStore extends IdentifiableKeyStore {
   self: EntityStoreBase with GettableStore with CreatableStore =>
 
-  type ENTITY <: Entity[ENTITY]
-
   def createSingleKey(implicit context: Context): Key[ENTITY] = createKeyWithId(1)
 
   def createSingleIfNotExists(init: ENTITY => Unit = (e) => Unit)(implicit context: Context) = createIfNotExists(createSingleKey, init)
@@ -265,8 +261,6 @@ trait SingleStore extends IdentifiableKeyStore {
 
 trait NamedStore {
   self: EntityStoreBase with GettableStore =>
-
-  type ENTITY <: Entity[ENTITY]
 
   def createKeyWithName(name: String)(implicit context: Context) = context.ancestor match {
     case Some(p) => datastore.createKey[ENTITY](p, name)
@@ -303,8 +297,6 @@ trait NamedStore {
 trait IdentifiableKeyStore {
   self: EntityStoreBase =>
 
-  type ENTITY <: Entity[ENTITY]
-
   def createKeyWithId(id: Long)(implicit context: Context) = context.ancestor match {
     case Some(p) => datastore.createKey[ENTITY](p, id)
     case None => datastore.createKey[ENTITY](id)
@@ -339,7 +331,6 @@ trait IdentifiableKeyStore {
 
 trait AllocatableKeyStore extends IdentifiableKeyStore {
   self: EntityStoreBase =>
-  type ENTITY <: Entity[ENTITY]
 
   def allocateKey(implicit context: Context) = context.ancestor match {
     case Some(p) => datastore.allocateKey[ENTITY](p)
@@ -356,8 +347,6 @@ trait AllocatableKeyStore extends IdentifiableKeyStore {
 
 trait UUIDKeyStore extends NamedStore {
   self: EntityStoreBase with GettableStore =>
-
-  type ENTITY <: Entity[ENTITY]
 
   import java.util.UUID
 
@@ -376,18 +365,18 @@ trait UUIDKeyStore extends NamedStore {
 trait QueryableStore {
   self: EntityStoreBase =>
 
-  def query(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
-    case Some(p) => datastore.query[ENTITY, META](p)
-    case None => datastore.query[ENTITY, META]
+  def query(implicit context: Context): Query[ENTITY] = context.ancestor match {
+    case Some(p) => datastore.query[ENTITY](p)
+    case None => datastore.query[ENTITY]
   }
 
-  def queryWithoutTx(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
-    case Some(p) => datastore.queryWithoutTx[ENTITY, META](p)
-    case None => datastore.queryWithoutTx[ENTITY, META]
+  def queryWithoutTx(implicit context: Context): Query[ENTITY] = context.ancestor match {
+    case Some(p) => datastore.queryWithoutTx[ENTITY](p)
+    case None => datastore.queryWithoutTx[ENTITY]
   }
 
-  def queryWithTx(tx: Transaction)(implicit context: Context): Query[ENTITY, META] = context.ancestor match {
-    case Some(p) => datastore.queryWithTx[ENTITY, META](tx, p)
-    case None => datastore.queryWithTx[ENTITY, META](tx)
+  def queryWithTx(tx: Transaction)(implicit context: Context): Query[ENTITY] = context.ancestor match {
+    case Some(p) => datastore.queryWithTx[ENTITY](tx, p)
+    case None => datastore.queryWithTx[ENTITY](tx)
   }
 }

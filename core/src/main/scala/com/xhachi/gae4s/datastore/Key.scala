@@ -45,29 +45,3 @@ class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
 object Key {
   def fromWebSafeString[E](string: String) = new Key[E](KeyFactory.stringToKey(string))
 }
-//  def apply[E <: Entity[E]](key: LLKey) = new Key[E](key)
-//
-//  def apply[E <: Entity[E]](name: String)(implicit meta: EntityMeta[E]) = {
-//    val key = createKey(meta.kind, name)
-//    new Key[E](key)
-//  }
-//
-//  def apply[E <: Entity[E]](id: Long)(implicit meta: EntityMeta[E]) = {
-//    new Key[E](createKey(meta.kind, id))
-//  }
-//
-//  def apply[E <: Entity[E]](parent: Key[_], name: String)(implicit meta: EntityMeta[E]) = {
-//    val key = createKey(parent.key, meta.kind, name)
-//    new Key[E](key)
-//  }
-//
-//  def apply[E <: Entity[E]](parent: Key[_], id: Long)(implicit meta: EntityMeta[E]) = {
-//    val key = createKey(parent.key, meta.kind, id)
-//    new Key[E](key)
-//  }
-//
-//  def fromKeyStrong[E <: Entity[E]](keyString: String): Key[E] = Key[E](stringToKey(keyString))
-//
-//  def toKeyStrong(key: Key[_]): String = keyToString(key.key)
-//
-//}
