@@ -6,10 +6,8 @@ object Gae4sBuild extends Build {
   import sbtbuildinfo.Plugin._
   import Versions._
 
-  lazy val defaultSetting = Defaults.defaultSettings ++ buildInfoSettings ++
+  lazy val defaultSetting = Defaults.defaultSettings ++
     Seq(
-      sourceGenerators in Compile <+= buildInfo,
-      buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       scalaVersion := "2.11.4",
       crossScalaVersions := Seq("2.10.4", "2.11.4"),
       scalacOptions ++= Seq("-feature", "-deprecation"),
@@ -28,8 +26,10 @@ object Gae4sBuild extends Build {
   lazy val core = Project(
     id = "gae4s-core",
     base = file("core"),
-    settings = defaultSetting ++ Seq(
+    settings = defaultSetting ++ buildInfoSettings ++ Seq(
       name := "gae4s-core",
+      sourceGenerators in Compile <+= buildInfo,
+      buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       buildInfoPackage := "com.xhachi.gae4s.buildinfo",
       libraryDependencies ++= defaultDependency
     )
