@@ -1,32 +1,34 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.Query.{CompositeFilterOperator, FilterOperator, CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection, SortPredicate => LLSortPredicate}
-import com.google.appengine.api.datastore.{Transaction, Query => LLQuery}
+import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, CompositeFilterOperator, Filter => LLFilter, FilterOperator, FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection, SortPredicate => LLSortPredicate}
+import com.google.appengine.api.datastore.{Query => LLQuery, Transaction}
 
 import scala.collection.JavaConversions._
 import scala.language.experimental.macros
-import scala.reflect.macros.blackbox.Context
 
-case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
-                                                                         datastore: DatastoreQueryMethods,
-                                                                         meta: M,
-                                                                         tx: Option[Transaction],
-                                                                         ancestorOption: Option[Key[_]] = None,
-                                                                         filterOption: Option[Filter] = None,
-                                                                         sorts: Seq[Sort] = Nil,
-                                                                         offset: Option[Int] = None,
-                                                                         limit: Option[Int] = None
-                                                                         ) {
 
-  def ancestor(ancestor: Key[_]): Query[E, M] = copy(ancestorOption = Some(ancestor))
+case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMethods,
+                                                    meta: EntityMeta[E],
+                                                    tx: Option[Transaction],
+                                                    ancestorOption: Option[Key[_]] = None,
+                                                    filterOption: Option[Filter] = None,
+                                                    sorts: Seq[Sort] = Nil,
+                                                    offset: Option[Int] = None,
+                                                    limit: Option[Int] = None) {
 
-  def filter(filters: (M => Filter)): Query[E, M] = copy(filterOption = Some(filters(meta)))
+  def ancestor(ancestor: Key[_]): Query[E] = copy(ancestorOption = Some(ancestor))
 
-  def sort(sort: (M => Sort), sorts: (M => Sort)*): Query[E, M] = copy(sorts = sort(meta) :: sorts.map(_(meta)).toList)
+  def filter(filter: E => Boolean): Query[E] = macro EntityMacro.filter[E]
 
-  def offset(o: Int): Query[E, M] = copy(offset = Some(o))
+  def sort(sort: E => Any): Query[E] = macro EntityMacro.sortBy[E]
 
-  def limit(l: Int): Query[E, M] = copy(limit = Some(l))
+  //  def filter(filters: (meta.type => Filter)): Query[E] = copy(filterOption = Some(filters(meta)))
+
+  //  def sort(sort: (meta.type => Sort), sorts: (meta.type => Sort)*): Query[E] = copy(sorts = sort(meta) :: sorts.map(_(meta)).toList)
+
+  def offset(o: Int): Query[E] = copy(offset = Some(o))
+
+  def limit(l: Int): Query[E] = copy(limit = Some(l))
 
   def count: Int = datastore.count(this)
 
@@ -77,15 +79,6 @@ case class Query[E <: Entity[E], M <: EntityMeta[E]] private[datastore](
     query
   }
 
-//  def mFilter(filter: E => Boolean): Query[E, M] = {
-//    val f = this.mF(filter)
-//    copy(
-//      filterOption = Some(f)
-//    )
-//  }
-  def mF(filter: E => Boolean): Query[E, M] = macro QueryMacro.filter[E, M]
-
-  def mSortBy(sort: E => Any): Query[E, M] = macro QueryMacro.sortBy[E, M]
 
 }
 
@@ -169,48 +162,3 @@ case class SortPredicate[T](name: String, direction: LLSortDirection, property: 
 
 }
 
-
-object QueryMacro {
-  def filter[E <: Entity[E] : c.WeakTypeTag,M <: EntityMeta[E] : c.WeakTypeTag](c: Context)(filter: c.Expr[E => Boolean]): c.Expr[Query[E, M]] = {
-    import c.universe._
-
-
-    c.Expr[Query[E, M]](q"null")
-  }
-
-  def sortBy[E <: Entity[E] : c.WeakTypeTag,M <: EntityMeta[E] : c.WeakTypeTag](c: Context)(sort: c.Expr[E => Any]): c.Expr[Query[E, M]] = {
-    import c.universe._
-
-
-    def printChildren(tree: Tree, depth: Int = 0): Unit = {
-      tree match {
-        case t: Tree if t.isType =>
-          println(("\t" * depth) + t.symbol + " (type)")
-        case t: Apply =>
-          println(("\t" * depth) + t.symbol + " (Apply)")
-        case t: Select =>
-          println(("\t" * depth) + t.symbol + " (Select)" + t.symbol.name)
-        case t: Ident =>
-          println(("\t" * depth) + t.symbol + " (Ident)" + t.symbol.asTerm.typeSignature)
-        case t: Tree =>
-          println(("\t" * depth) + t.symbol + " (" + t.getClass + ")")
-      }
-      tree.children.foreach(child => printChildren(child, depth + 1))
-    }
-
-
-          println("--- QueryMacro ---")
-
-    val prefix = c.prefix.tree
-    println(sort)
-
-    printChildren(sort.tree, 0)
-
-    sort.tree match {
-      case t => t
-    }
-    val ow = c.macroApplication.symbol.owner
-    c.Expr[Query[E, M]](q"$prefix")
-  }
-
-}

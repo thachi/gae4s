@@ -8,23 +8,23 @@ class LongPropertyTest extends FunSuite {
 
 
   test("fromStorePropertyが正しいこと") {
-    val property: LongProperty = new LongProperty("name")
+    val property: Property[Long] = new LongProperty("name")
 
     assert(property.fromStoreProperty(1L) == 1L, "1Lが変換できる")
     assert(property.fromStoreProperty(1L) == 1, "1が変換できる")
     assert(property.fromStoreProperty(1.1) == 1, "1.1が変換できる")
     assert(property.fromStoreProperty(1.9) == 1, "1.9が変換できる")
 
-    intercept[PropertyConversionException] {
+    intercept[PropertyConvertFromLLPropertyException] {
       property.fromStoreProperty("A")
     }
-    intercept[PropertyConversionException] {
+    intercept[PropertyConvertFromLLPropertyException] {
       property.fromStoreProperty("1")
     }
   }
 
   test("toStorePropertyが正しいこと") {
-    val property: LongProperty = new LongProperty("name")
+    val property: Property[Long] = new ValueProperty[Long]("name")
     assert(property.toStoreProperty(1L) == 1L, "1Lが変換できる")
     assert(property.toStoreProperty(1) == 1L, "1Lが変換できる")
   }
@@ -36,8 +36,8 @@ class KeyPropertyTest extends FunSuite with AppEngineTestSuite {
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
   test("toStorePropertyとfromStorePropertyが正しいこと") {
-    val m = new UserMeta
-    val expected = m.createKeyWithName("hoge")
+
+    val expected = Datastore.createKey[User]("hoge")
     val store = new KeyProperty("name").toStoreProperty(expected)
 
     assert(store == expected.key)

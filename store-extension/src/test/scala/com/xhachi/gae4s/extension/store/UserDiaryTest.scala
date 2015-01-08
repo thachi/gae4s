@@ -83,17 +83,6 @@ final class UserDiary(
 
 }
 
-class UserDiaryMeta extends EntityMeta[UserDiary] {
-
-  def createEntity(key: Key[UserDiary]): UserDiary = new UserDiary(key)
-
-  override def kind: String = "com.example.UserDiary"
-
-  //  addApplyFromLLEntity {
-  ////    (from: LLEntity, to) => from.tilke
-  //  }
-}
-
 
 class UserDiaryStore
   extends EntityStore[UserDiary]
@@ -102,10 +91,7 @@ class UserDiaryStore
   with QueryableStore
   with AllocatableKeyStore {
 
-  override type ENTITY = UserDiary
-  override type META = UserDiaryMeta
-
-  override val meta = new UserDiaryMeta
+  implicit val meta: EntityMeta[UserDiary] = EntityMeta.createMeta[UserDiary]
 }
 
 

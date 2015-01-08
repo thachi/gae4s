@@ -1,8 +1,7 @@
-package com.xhachi.gae4s.datastore.meta
+package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey}
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore._
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -17,7 +16,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
     assert(meta.entityType == classOf[com.xhachi.gae4s.datastore.User])
     assert(meta.kind == "com.xhachi.gae4s.datastore.User")
-    assert(meta.properties.size == 5)
+    assert(meta.properties.size == 9)
 
     val key = Datastore.allocateKey[User]
     assert(key.kind == "com.xhachi.gae4s.datastore.User")
@@ -29,11 +28,10 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
 
     val lle = meta.toLLEntity(entity)
-    assert(lle.getProperties.size() == 5)
+    assert(lle.getProperties.size() == 9)
 
     val n = lle.getProperty("name")
     assert(n == "Roto")
+
   }
 }
-
-

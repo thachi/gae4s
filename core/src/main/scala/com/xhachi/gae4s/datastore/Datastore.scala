@@ -195,16 +195,21 @@ sealed private[datastore] trait DatastoreUpdateMethods {
     case None => throw new IllegalStateException()
   }
 
-  def update[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = getOption(entity.key) match {
-    case Some(e) if isSameVersion(entity, e) => put(entity)
-    case Some(_) => throw new IllegalStateException("invalid version property.")
-    case None => throw new IllegalStateException("entity is not exists in datastore.")
+  def update[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = if(meta.versionEnabled) {
+    getOption(entity.key) match {
+      case Some(e) if isSameVersion(entity, e) => put(entity)
+      case Some(e) => throw new IllegalStateException("invalid version property. %s store:%d, stored:%d".format(entity.key, meta.version(entity).get, meta.version(e).get))
+      case None => throw new IllegalStateException("entity is not exists in datastore.")
+    }
+  } else {
+    put(entity)
   }
 
-  def isSameVersion[E <: Entity[E]](entity1: E, entity2: E) = (entity1, entity2) match {
-    case (e1: Version, e2: Version) => e1.version == e2.version
-    case _ => true
-  }
+  def isSameVersion[E <: Entity[E]](entity1: E, entity2: E)(implicit meta: EntityMeta[E]) =
+    (meta.version(entity1), meta.version(entity2)) match {
+      case (Some(v1), Some(v2)) => v1 == v2
+      case _ => throw new IllegalStateException("%s versioning is not enabled.".format(meta.kind))
+    }
 }
 
 sealed private[datastore] trait DatastoreUpdateListMethods {
@@ -222,19 +227,23 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
   def update[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val got = get[E](entities.map(_.key)).values.toSeq
     val invalids = getInvalidVersion(entities.sortBy(_.key), got.sortBy(_.key))
-    if (invalids.nonEmpty) throw new IllegalStateException("invalid version property." + invalids)
+    if (invalids.nonEmpty) throw new IllegalStateException("invalid version property. " + invalids)
     put(entities)
   }
 
-  def getInvalidVersion[E <: Entity[E]](entity1: Seq[E], entity2: Seq[E]): Seq[String] = {
+  def getInvalidVersion[E <: Entity[E]](entity1: Seq[E], entity2: Seq[E])(implicit meta: EntityMeta[E]): Seq[String] = {
     assert(entity1.size == entity2.size)
-    entity1.zip(entity2).filterNot {
-      case (e1: Version, e2: Version) => e1.version == e2.version
-      case _ => false
-    }.map {
-      case (e1: Version, e2: Version) =>
-        "%s store:%d, stored:%d".format(e1.asInstanceOf[Entity[_]].key, e1.version, e2.version)
-    }.toSeq
+    if (meta.versionEnabled) {
+      entity1.zip(entity2).filterNot {
+        case (e1, e2) =>
+          meta.version(e1) == meta.version(e2)
+      }.map {
+        case (e1, e2) =>
+          "%s store:%d, stored:%d".format(e1.asInstanceOf[Entity[_]].key, meta.version(e1).get, meta.version(e2).get)
+      }.toSeq
+    } else {
+      Nil
+    }
   }
 }
 
@@ -271,30 +280,30 @@ sealed private[datastore] trait DatastoreQueryMethods {
 
 
   //todo Mいらない
-  def query[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) =
-    Query[E, M](this, meta, None)
+  def query[E <: Entity[E]](implicit meta: EntityMeta[E]) =
+    Query[E](this, meta, None)
 
-  def query[E <: Entity[E], M <: EntityMeta[E]](ancestor: Key[_])(implicit meta: M) =
-    Query[E, M](this, meta, None, Some(ancestor))
+  def query[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]) =
+    Query[E](this, meta, None, Some(ancestor))
 
-  def queryWithTx[E <: Entity[E], M <: EntityMeta[E]](tx: Transaction)(implicit meta: M) =
-    Query[E, M](this, meta, Some(tx))
+  def queryWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]) =
+    Query[E](this, meta, Some(tx))
 
-  def queryWithTx[E <: Entity[E], M <: EntityMeta[E]](tx: Transaction, ancestor: Key[_])(implicit meta: M) =
-    Query[E, M](this, meta, Some(tx), Some(ancestor))
+  def queryWithTx[E <: Entity[E]](tx: Transaction, ancestor: Key[_])(implicit meta: EntityMeta[E]) =
+    Query[E](this, meta, Some(tx), Some(ancestor))
 
-  def queryWithoutTx[E <: Entity[E], M <: EntityMeta[E]](implicit meta: M) =
-    Query[E, M](this, meta, null)
+  def queryWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]) =
+    Query[E](this, meta, null)
 
-  def queryWithoutTx[E <: Entity[E], M <: EntityMeta[E]](ancestor: Key[_])(implicit meta: M) =
-    Query[E, M](this, meta, null, Some(ancestor))
+  def queryWithoutTx[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]) =
+    Query[E](this, meta, null, Some(ancestor))
 
-  def count[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Int = {
+  def count[E <: Entity[E]](query: Query[E]): Int = {
     val llQuery = query.toLLQuery(keysOnly = false)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
   }
 
-  private def prepare[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M], keysOnly: Boolean): PreparedQuery = {
+  private def prepare[E <: Entity[E]](query: Query[E], keysOnly: Boolean): PreparedQuery = {
     val llQuery = query.toLLQuery(keysOnly = keysOnly)
     query.tx match {
       case o: Option[Transaction] => o match {
@@ -306,7 +315,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-  def asSeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[E] = {
+  def asSeq[E <: Entity[E]](query: Query[E]): Seq[E] = {
     val options = (query.offset, query.limit) match {
       case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
       case (Some(o), _) => FetchOptions.Builder.withOffset(o)
@@ -318,11 +327,11 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }.toSeq
   }
 
-  def asSingle[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): E = {
+  def asSingle[E <: Entity[E]](query: Query[E]): E = {
     query.meta.toEntity(prepare(query, keysOnly = false).asSingleEntity())
   }
 
-  def asSingleOption[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Option[E] = {
+  def asSingleOption[E <: Entity[E]](query: Query[E]): Option[E] = {
     query.meta.toEntity(prepare(query, keysOnly = false).asSingleEntity()) match {
       case null => None
       case e => Some(e)
@@ -330,7 +339,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
   }
 
 
-  def asKeySeq[E <: Entity[E], M <: EntityMeta[E]](query: Query[E, M]): Seq[Key[E]] = {
+  def asKeySeq[E <: Entity[E]](query: Query[E]): Seq[Key[E]] = {
     val options = (query.offset, query.limit) match {
       case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
       case (Some(o), _) => FetchOptions.Builder.withOffset(o)
