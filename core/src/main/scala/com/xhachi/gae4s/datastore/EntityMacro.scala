@@ -340,7 +340,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
   }
 }
 """
-    println(tree)
+//    println(tree)
     tree
   }
 
