@@ -110,13 +110,24 @@ $query.copy(sorts = Seq(meta.$s.asc))
                             readonly: Boolean,
                             listener: Seq[Type])
 
+    def hasIndexedAnnotationInVar(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[indexed])
+    def hasIndexedAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
+      case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
+        o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
+          .paramLists.flatMap(_.filter(_.name == member.name))
+          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[indexed]))
+      case _ => false
+    }
+
+
+
     def toPropertyInfo(name: TermName): PropertyInfo = {
       val member0 = entityType.member(name)
       val member1 = entityType.member(TermName(name + "_$eq"))
       val member2 = entityType.member(TermName(name + " "))
       assert(member0.isMethod)
 
-      val hasIndexed = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[indexed])
+      val hasIndexed = (member2.isTerm && member2.asTerm.isVar && hasIndexedAnnotationInVar(member2)) || hasIndexedAnnotationInConstructorParam(member0)
       val hasVersion = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[version])
       val hasCreationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[creationDate])
       val hasModificationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[modificationDate])
@@ -139,11 +150,6 @@ $query.copy(sorts = Seq(meta.$s.asc))
 
     def isMemberOfEntity(member: c.Symbol): Boolean = {
       member.owner.annotations.exists(_.tree.tpe == typeOf[entity])
-    }
-
-    def isIndexed(member: c.Symbol): Boolean = {
-      //    println("isIndexed: " + member.asTerm.annotations)
-      member.annotations.exists(_.tree.tpe == typeOf[indexed])
     }
 
     def findAnnotationValue(name: String): Seq[String] = {
