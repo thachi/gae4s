@@ -1,27 +1,13 @@
+import sbt.Keys._
 import sbt._
 import sbtappengine.Plugin._
 
 object Gae4sBuild extends Build {
+  import Versions._
+  import Settings._
   import sbt.Keys._
   import sbtbuildinfo.Plugin._
-  import Versions._
 
-  lazy val defaultSetting = Defaults.defaultSettings ++
-    Seq(
-      scalaVersion := "2.11.4",
-      crossScalaVersions := Seq("2.11.4"),
-      scalacOptions ++= Seq("-feature", "-deprecation"),
-      organization := "com.xhachi",
-      version := "0.6-SNAPSHOT",
-      publishTo <<= version { (v: String) =>
-        val base = "/Users/takashi/Documents/xhachi/repository"
-        if (v.trim.endsWith("SNAPSHOT"))
-          Some(Resolver.file("snapshot", file(base + "/maven2-snapshot")))
-        else
-          Some(Resolver.file("release" , file(base + "/maven2")))
-      },
-      parallelExecution in Test := false
-    )
 
   lazy val core = Project(
     id = "gae4s-core",
@@ -65,9 +51,32 @@ object Gae4sBuild extends Build {
       libraryDependencies ++= defaultDependency ++ Seq(
         "javax.servlet" % "servlet-api" % "2.5" % "provided",
         "org.eclipse.jetty" % "jetty-webapp" % "7.0.2.v20100331" % "container"
-      )
+      ),
+      packagedArtifacts := Map.empty
     )
   ).dependsOn(core)
+
+}
+
+object Settings {
+  import Versions._
+
+  lazy val defaultSetting = Defaults.defaultSettings ++
+    Seq(
+      scalaVersion := "2.11.4",
+      //      crossScalaVersions := Seq("2.11.4"),
+      scalacOptions ++= Seq("-feature", "-deprecation"),
+      organization := "com.xhachi",
+      version := "0.6-SNAPSHOT",
+      parallelExecution in Test := false,
+      publishTo <<= version { (v: String) =>
+        val base = "/Users/takashi/Documents/xhachi/repository"
+        if (v.trim.endsWith("SNAPSHOT"))
+          Some(Resolver.file("snapshot", file(base + "/maven2-snapshot")))
+        else
+          Some(Resolver.file("release" , file(base + "/maven2")))
+      }
+    )
 
   val defaultDependency = {
     Seq(
@@ -83,6 +92,6 @@ object Gae4sBuild extends Build {
 }
 
 object Versions {
-  val appengineVersion = "1.9.17"
+  val appengineVersion = "1.9.17a"
   val scalatestVersion = "2.2.2"
 }
