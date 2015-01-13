@@ -1,7 +1,6 @@
-package com.xhachi.gae4s.extension.store
+package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.Transaction
-import com.xhachi.gae4s.datastore._
 
 import scala.language.implicitConversions
 import scala.reflect.ClassTag

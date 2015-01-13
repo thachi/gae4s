@@ -1,7 +1,6 @@
-package com.xhachi.gae4s.extension.store
+package com.xhachi.gae4s.datastore
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore._
 import com.xhachi.gae4s.datastore.annotations.entity
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
@@ -20,7 +19,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
     before.data = SampleData("Takashi", 5)
 
     SampleDataEntityStore.create(before)
-    assert(key.kind == "com.xhachi.gae4s.extension.store.SampleDataEntity")
+    assert(key.kind == "com.xhachi.gae4s.datastore.SampleDataEntity")
     assert(key.idOption.isEmpty)
     assert(key.nameOption.isDefined)
     assert(key.nameOption.get == "hoge")

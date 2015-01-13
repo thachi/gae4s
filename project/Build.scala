@@ -3,8 +3,8 @@ import sbt._
 import sbtappengine.Plugin._
 
 object Gae4sBuild extends Build {
-  import Versions._
   import Settings._
+  import Versions._
   import sbt.Keys._
   import sbtbuildinfo.Plugin._
 

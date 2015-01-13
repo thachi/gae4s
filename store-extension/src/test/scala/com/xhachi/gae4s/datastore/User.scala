@@ -1,6 +1,5 @@
-package com.xhachi.gae4s.extension.store
+package com.xhachi.gae4s.datastore
 
-import com.xhachi.gae4s.datastore._
 import com.xhachi.gae4s.datastore.annotations._
 
 @entity

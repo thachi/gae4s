@@ -1,8 +1,7 @@
-package com.xhachi.gae4s.extension.store
+package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.KeyFactory
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore._
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 

@@ -49,7 +49,6 @@ object CloudStorage extends Logger {
 
 class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends Logger {
 
-  import CloudStorage._
 
   def pathToFilename(path: String) = new GcsFilename(bucketName, path)
 
@@ -92,7 +91,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
       val option: GcsFileOptions = mimeType match {
         case Some(m) => new GcsFileOptions.Builder().mimeType(m).build()
         case None =>
-          Ext2MimeType.map {
+          CloudStorage.Ext2MimeType.map {
             case (e, m) => path.endsWith(e) match {
               case true => Some(m)
               case false => None
