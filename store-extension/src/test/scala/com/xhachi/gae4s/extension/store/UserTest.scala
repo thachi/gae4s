@@ -1,9 +1,9 @@
 package com.xhachi.gae4s.extension.store
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.{Datastore, EntityMeta, Key}
+import com.xhachi.gae4s.datastore.{EntityMeta, Datastore, Key}
 import com.xhachi.gae4s.tests.AppEngineTestSuite
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 
 
 class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
@@ -454,15 +454,12 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
 }
 
 class UserStore
-  extends EntityStore[User]
+  extends EntityStore[User](EntityMeta.createMeta)
   with NamedStore
   with IdentifiableKeyStore
   with AllocatableKeyStore
   with CreatableStore
   with UpdatableStore
-  with QueryableStore {
-
-  implicit val meta: EntityMeta[User] = EntityMeta.createMeta[User]
-}
+  with QueryableStore
 
 object UserStore extends UserStore

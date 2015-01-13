@@ -49,13 +49,12 @@ class SampleDataEntity(val key: Key[SampleDataEntity])
 }
 
 object SampleDataEntityStore
-  extends EntityStore[SampleDataEntity]
+  extends EntityStore[SampleDataEntity](EntityMeta.createMeta)
   with SingleStore
   with CreatableStore
   with UpdatableStore
   with NamedStore {
 
-  implicit val meta = EntityMeta.createMeta[SampleDataEntity]
 }
 
 case class SampleData(name: String, age: Int) {

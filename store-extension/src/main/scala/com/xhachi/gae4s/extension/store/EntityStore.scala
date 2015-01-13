@@ -22,12 +22,11 @@ trait EntityStoreBase {
   type ENTITY <: Entity[ENTITY]
   type Context = EntityStoreContext
 
-  implicit val meta: EntityMeta[ENTITY]
-
+  implicit def meta: EntityMeta[ENTITY]
   def datastore: Datastore = Datastore
 }
 
-abstract class EntityStore[E <: Entity[E]: ClassTag] extends EntityStoreBase with GettableStore {
+abstract class EntityStore[E <: Entity[E]: ClassTag](val meta: EntityMeta[E]) extends EntityStoreBase with GettableStore {
   type ENTITY = E
 }
 
