@@ -9,10 +9,16 @@ class User(val key: Key[User],
            @indexed var weight: Int = 0,
            var mobilePhone: Option[String] = None,
            var webInfo: WebInfo = WebInfo(),
-           @indexed var deleted: Boolean = false)
+           @indexed var deleted: Boolean = false,
+           @indexed var spouse: Option[Key[User]] = None)
   extends Entity[User]
   with Version
   with CreatedAt
-  with UpdatedAt
+  with UpdatedAt {
+
+  @indexed
+  def twitter: Option[String] = webInfo.twitter
+}
 
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
+

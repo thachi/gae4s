@@ -46,6 +46,18 @@ class KeyPropertyTest extends FunSuite with AppEngineTestSuite {
     assert(actual == expected)
   }
 
+  test("toStorePropertyとfromStorePropertyが正しいこと2") {
+
+    val expected = Datastore.createKey[User]("hoge")
+    val p = new OptionProperty(new KeyProperty[User]("spouse")) with IndexedProperty[Option[Key[User]]]
+    val store = p.toStoreProperty(Some(expected))
+
+    assert(store == expected.key)
+
+    val actual = new KeyProperty[User]("name").fromStoreProperty(store)
+    assert(actual == expected)
+  }
+
 }
 
 class EnumPropertyTest extends FunSuite {
