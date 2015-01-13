@@ -229,7 +229,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
           q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName)"""
         } else {
-          println("jsonp: " + t)
+//          println("jsonp: " + t)
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName)"""
         }
 
@@ -247,7 +247,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
           q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         } else {
-          println("jsonp: " + t)
+//          println("jsonp: " + t)
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         }
 
