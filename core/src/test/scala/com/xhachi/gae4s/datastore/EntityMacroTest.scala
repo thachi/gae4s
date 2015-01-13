@@ -16,7 +16,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
     assert(meta.entityType == classOf[com.xhachi.gae4s.datastore.User])
     assert(meta.kind == "com.xhachi.gae4s.datastore.User")
-    assert(meta.properties.size == 10)
+    assert(meta.properties.size == 13)
 
     val key = Datastore.allocateKey[User]
     assert(key.kind == "com.xhachi.gae4s.datastore.User")
@@ -28,7 +28,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
 
     val lle = meta.toLLEntity(entity)
-    assert(lle.getProperties.size() == 10)
+    assert(lle.getProperties.size() == 13)
 
     val n = lle.getProperty("name")
     assert(n == "Roto")

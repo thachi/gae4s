@@ -207,9 +207,11 @@ $query.copy(sorts = Seq(meta.$s.asc))
       else {
         val option = memberType.typeSymbol.fullName == "scala.Option"
         val indexed = info.indexed
-        val (baseType, baseType2): (Type, Type) = memberType match {
-          case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) => (t.asType.toType, t2.asType.toType)
-          case TypeRef(_, _, TypeRef(_, t, _) :: Nil) => (t.asType.toType, NoType)
+
+        val (baseType, keyType): (Type, Type) = memberType match {
+          case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) if option && t.fullName == "com.xhachi.gae4s.datastore.Key" => (t.asType.toType, t2.asType.toType)
+          case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if option => (t.asType.toType, NoType)
+          case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if memberType.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" => (memberType, t.asType.toType)
           case _ => (memberType, NoType)
         }
 
@@ -225,8 +227,9 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else if (t =:= typeOf[Long]) {
           q"""new com.xhachi.gae4s.datastore.LongProperty($propertyName)"""
         } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
-          q"""new com.xhachi.gae4s.datastore.KeyProperty[$baseType2]($propertyName)"""
+          q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName)"""
         } else {
+          println("jsonp: " + t)
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName)"""
         }
 
@@ -242,8 +245,9 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else if (t =:= typeOf[Long]) {
           q"""new com.xhachi.gae4s.datastore.LongProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
-          q"""new com.xhachi.gae4s.datastore.KeyProperty[$baseType2]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         } else {
+          println("jsonp: " + t)
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         }
 
@@ -251,7 +255,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
           val p0 = createBaseProperty(baseType)
           baseType match {
             case b if b.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" =>
-              q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[com.xhachi.gae4s.datastore.Key[$baseType2]]]"""
+              q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[com.xhachi.gae4s.datastore.Key[$keyType]]]"""
             case _ =>
               q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[$baseType]]"""
           }
