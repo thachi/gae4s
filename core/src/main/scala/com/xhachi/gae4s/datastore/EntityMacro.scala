@@ -336,7 +336,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
 
   override val versionProperty: Option[com.xhachi.gae4s.datastore.VersionProperty] = $versionName
 
-  def createEntity(key: Key[$entityType]) = new $entityType(key)
+  def createEntity(key: com.xhachi.gae4s.datastore.Key[$entityType]) = new $entityType(key)
 
   override def toEntity(from: com.google.appengine.api.datastore.Entity): $entityType = {
     from match {
