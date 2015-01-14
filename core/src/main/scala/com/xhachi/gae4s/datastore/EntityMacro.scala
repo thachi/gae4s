@@ -136,7 +136,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
       val existsCreationDateEntityAnnotation = findAnnotationValue("creationDate").contains(name.toString)
       val existsModificationDateEntityAnnotation = findAnnotationValue("modificationDate").contains(name.toString)
 
-      PropertyInfo(
+      val p = PropertyInfo(
         name,
         member0.asMethod.returnType,
         indexed = hasIndexed,
@@ -146,10 +146,12 @@ $query.copy(sorts = Seq(meta.$s.asc))
         readonly = !member1.isMethod,
         listener = Nil
       )
+//      println("PropertyInfo: " + p)
+      p
     }
 
     def isMemberOfEntity(member: c.Symbol): Boolean = {
-      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) || member.owner.asType.typeSignature.baseClasses.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
+      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) || member.owner.asType.typeSignature.baseClasses.tail.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
     }
 
     def findAnnotationValue(name: String): Seq[String] = {
@@ -274,12 +276,17 @@ $query.copy(sorts = Seq(meta.$s.asc))
 
 
     val propertyInfos = entityType.members
-      .filter(m => m.isMethod && m.asMethod.isGetter)
+      .filter(m => m.isMethod && m.asMethod.paramLists.isEmpty)
       .filter(_.name.encodedName.toString != "key")
       .filter(isMemberOfEntity)
       .map(m => toPropertyInfo(m.name.toTermName))
 
-    val notVersionProperties = propertyInfos.filterNot(_.version)
+    val readableProperties = propertyInfos.filterNot(_.version).filterNot(_.readonly)
+      .map(i => toProperty(i))
+      .toSeq
+      .filter(_.isDefined).map(_.get)
+
+    val readonlyProperties = propertyInfos.filterNot(_.version).filter(_.readonly)
       .map(i => toProperty(i))
       .toSeq
       .filter(_.isDefined).map(_.get)
@@ -290,13 +297,13 @@ $query.copy(sorts = Seq(meta.$s.asc))
       .filter(_.isDefined).map(_.get)
       .headOption
 
-    val properties = notVersionProperties ++ versionProperty.toSeq
+    val properties = readableProperties ++ readonlyProperties ++ versionProperty.toSeq
 
     val fields = properties.map {
       case (n, v) => q"""val $n = $v"""
     }
 
-    val toEntities = properties.map {
+    val toEntities = (readableProperties ++ versionProperty.toSeq).map {
       case (n, v) => q"""to.$n = $n.getValueFromLLEntity(from)"""
     }
     val toLLEntities = properties.map {
