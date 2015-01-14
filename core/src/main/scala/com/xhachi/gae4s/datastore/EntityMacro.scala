@@ -149,7 +149,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
     }
 
     def isMemberOfEntity(member: c.Symbol): Boolean = {
-      member.owner.annotations.exists(_.tree.tpe == typeOf[entity])
+      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) || member.owner.asType.typeSignature.baseClasses.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
     }
 
     def findAnnotationValue(name: String): Seq[String] = {

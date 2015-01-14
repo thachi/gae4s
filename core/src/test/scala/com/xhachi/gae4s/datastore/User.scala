@@ -2,7 +2,6 @@ package com.xhachi.gae4s.datastore
 
 import com.xhachi.gae4s.datastore.annotations._
 
-@entity
 class User(val key: Key[User],
            var name: String = "",
            @indexed var height: Int = 0,

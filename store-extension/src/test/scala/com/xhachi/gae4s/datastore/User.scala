@@ -2,20 +2,11 @@ package com.xhachi.gae4s.datastore
 
 import com.xhachi.gae4s.datastore.annotations._
 
-@entity
-class User(val key: Key[User])
+class User(val key: Key[User], @indexed var name: String = "")
   extends Entity[User]
   with CreatedAt
   with Version
   with UpdatedAt {
-
-  def this(key: Key[User], name: String) = {
-    this(key)
-    this.name = name
-  }
-
-  @indexed
-  var name: String = ""
 
   @indexed
   var height: Int = 0
