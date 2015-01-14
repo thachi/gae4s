@@ -3,6 +3,7 @@ package com.xhachi.gae4s.datastore
 import java.util.Date
 
 import com.xhachi.gae4s.datastore.annotations._
+import scala.concurrent.duration._
 
 class User(val key: Key[User],
            var name: String = "",
@@ -30,4 +31,11 @@ class UserInfo(val key: Key[UserInfo],
                @indexed var lastLoginDate: Option[Date] = None,
                var lastLoginDevice: Option[String] = None)
   extends Entity[UserInfo]
-  with Ancestor[User]
+  with Ancestor[User] {
+
+  @indexed
+  def loggedIn = lastLoginDate.isDefined
+
+  @transient
+  def durationFromLastLoginDate = lastLoginDate.map(l => new Date().getTime - l.getTime).map(_.milliseconds)
+}
