@@ -28,6 +28,8 @@ class User(val key: Key[User],
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
 class UserInfo(val key: Key[UserInfo],
+               @indexed var role: com.xhachi.gae4s.datastore.UserRoles.Value = UserRoles.Guest,
+               var role2: com.xhachi.gae4s.datastore.UserRoles.Value = UserRoles.Guest,
                @indexed var lastLoginDate: Option[Date] = None,
                var lastLoginDevice: Option[String] = None)
   extends Entity[UserInfo]
@@ -38,4 +40,10 @@ class UserInfo(val key: Key[UserInfo],
 
   @transient
   def durationFromLastLoginDate = lastLoginDate.map(l => new Date().getTime - l.getTime).map(_.milliseconds)
+}
+
+object UserRoles extends Enumeration {
+  type UserRole = Value
+
+  val Admin, User, Guest = Value
 }

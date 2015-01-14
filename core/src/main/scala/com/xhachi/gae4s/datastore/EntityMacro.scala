@@ -117,6 +117,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
                             tpe: Type,
                             transient: Boolean,
                             indexed: Boolean,
+                            scalaEnum: Boolean,
                             version: Boolean,
                             creationDate: Boolean,
                             modificationDate: Boolean,
@@ -157,10 +158,12 @@ $query.copy(sorts = Seq(meta.$s.desc))
       val existsCreationDateEntityAnnotation = findAnnotationValue("creationDate").contains(name.toString)
       val existsModificationDateEntityAnnotation = findAnnotationValue("modificationDate").contains(name.toString)
 
+      val tpe = member0.asMethod.returnType
       val p = PropertyInfo(
         name,
-        member0.asMethod.returnType,
+        tpe,
         transient = hasTransient,
+        scalaEnum = tpe.typeSymbol.fullName == "scala.Enumeration.Value",
         indexed = hasIndexed,
         version = existsVersionEntityAnnotation || hasVersion,
         creationDate = existsCreationDateEntityAnnotation || hasCreationDate,
@@ -253,6 +256,17 @@ $query.copy(sorts = Seq(meta.$s.desc))
             q"""new com.xhachi.gae4s.datastore.LongProperty($propertyName)"""
           } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
             q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName)"""
+          } else if (info.scalaEnum) {
+
+            val enumName = baseType.toString.split('.').dropRight(1).mkString(".")
+            val enum = c.mirror.staticModule(enumName)
+
+            q"""
+new StringStoreProperty[$enum.Value]($propertyName) {
+  override def fromString(value: String): $enum.Value = $enum.withName(value)
+  override def toString(value: $enum.Value): String = value.toString
+}
+"""
           } else {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName)"""
@@ -271,6 +285,17 @@ $query.copy(sorts = Seq(meta.$s.desc))
             q"""new com.xhachi.gae4s.datastore.LongProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
             q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else if (info.scalaEnum) {
+
+            val enumName = baseType.toString.split('.').dropRight(1).mkString(".")
+            val enum = c.mirror.staticModule(enumName)
+
+            q"""
+new StringStoreProperty[$enum.Value]($propertyName) with IndexedProperty[$enum.Value] {
+  override def fromString(value: String): $enum.Value = $enum.withName(value)
+  override def toString(value: $enum.Value): String = value.toString
+}
+"""
           } else {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""

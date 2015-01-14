@@ -45,14 +45,25 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
     assert(meta.entityType == classOf[com.xhachi.gae4s.datastore.UserInfo])
     assert(meta.kind == "com.xhachi.gae4s.datastore.UserInfo")
-    assert(meta.properties.size == 3)
+    assert(meta.properties.size == 5)
     assert(meta.property("loggedIn").isDefined)
     assert(meta.property("durationFromLastLoginDate").isEmpty)
+
+    assert(meta.property("role").isDefined)
 
     val s = Datastore.query[UserInfo].sort(_.lastLoginDate)
     assert(s.sorts.size == 1)
     assert(s.sorts.head.name == "lastLoginDate")
     assert(s.sorts.head.direction == SortDirection.ASCENDING)
 
+    val key = Datastore.createKey(Datastore.createKey[User](1), 1)
+    val e = meta.createEntity(key)
+    e.role = UserRoles.Admin
+    e.role2 = UserRoles.User
+    Datastore.put(e)
+
+    val got = Datastore.get(key)
+    assert(got.role == UserRoles.Admin)
+    assert(got.role2 == UserRoles.User)
   }
 }
