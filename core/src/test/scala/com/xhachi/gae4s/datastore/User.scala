@@ -28,10 +28,11 @@ class User(val key: Key[User],
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
 class UserInfo(val key: Key[UserInfo],
-               @indexed var role: com.xhachi.gae4s.datastore.UserRoles.Value = UserRoles.Guest,
-               var role2: com.xhachi.gae4s.datastore.UserRoles.Value = UserRoles.Guest,
+               @indexed var role: UserRoles.UserRole = UserRoles.Guest,
+               var role2: UserRoles.UserRole = UserRoles.Guest,
                @indexed var lastLoginDate: Option[Date] = None,
-               var lastLoginDevice: Option[String] = None)
+               var lastLoginDevice: Option[String] = None,
+               var flags: Seq[String] = Nil)
   extends Entity[UserInfo]
   with Ancestor[User] {
 
@@ -39,7 +40,9 @@ class UserInfo(val key: Key[UserInfo],
   def loggedIn = lastLoginDate.isDefined
 
   @transient
-  def durationFromLastLoginDate = lastLoginDate.map(l => new Date().getTime - l.getTime).map(_.milliseconds)
+  def durationFromLastLoginDate = durationFromLastLoginDateTo(new Date)
+
+  def durationFromLastLoginDateTo(now: Date) = lastLoginDate.map(l => now.getTime - l.getTime).map(_.milliseconds)
 }
 
 object UserRoles extends Enumeration {

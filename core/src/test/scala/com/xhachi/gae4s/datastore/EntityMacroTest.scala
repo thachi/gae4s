@@ -45,7 +45,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
     assert(meta.entityType == classOf[com.xhachi.gae4s.datastore.UserInfo])
     assert(meta.kind == "com.xhachi.gae4s.datastore.UserInfo")
-    assert(meta.properties.size == 5)
+    assert(meta.properties.size == 6)
     assert(meta.property("loggedIn").isDefined)
     assert(meta.property("durationFromLastLoginDate").isEmpty)
 

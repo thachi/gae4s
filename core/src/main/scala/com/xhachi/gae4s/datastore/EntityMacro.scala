@@ -269,7 +269,7 @@ new StringStoreProperty[$enum.Value]($propertyName) {
 """
           } else {
             //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName)"""
+            q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName)"""
           }
 
           def createBasePropertyWithIndex(t: Type): Tree = if (isValueType(t)) {
@@ -298,7 +298,7 @@ new StringStoreProperty[$enum.Value]($propertyName) with IndexedProperty[$enum.V
 """
           } else {
             //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+            q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           }
 
           if (option && indexed) {
