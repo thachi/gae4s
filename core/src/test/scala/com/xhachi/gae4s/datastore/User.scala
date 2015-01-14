@@ -1,5 +1,7 @@
 package com.xhachi.gae4s.datastore
 
+import java.util.Date
+
 import com.xhachi.gae4s.datastore.annotations._
 
 class User(val key: Key[User],
@@ -24,3 +26,8 @@ class User(val key: Key[User],
 
 case class WebInfo(email: Option[String] = None, twitter: Option[String] = None)
 
+class UserInfo(val key: Key[UserInfo],
+               @indexed var lastLoginDate: Option[Date] = None,
+               var lastLoginDevice: Option[String] = None)
+  extends Entity[UserInfo]
+  with Ancestor[User]

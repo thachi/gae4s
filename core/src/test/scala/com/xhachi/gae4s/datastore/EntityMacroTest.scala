@@ -1,5 +1,6 @@
 package com.xhachi.gae4s.datastore
 
+import com.google.appengine.api.datastore.Query.SortDirection
 import com.google.appengine.api.datastore.{Key => LLKey}
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.xhachi.gae4s.tests.AppEngineTestSuite
@@ -35,6 +36,21 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
     assert(n == "Roto")
 
     assert(!lle.isUnindexedProperty("twitter"))
+
+  }
+
+  test("UserInfoのMetaが生成されること") {
+
+    implicit val meta = EntityMeta.createMeta[UserInfo]
+
+    assert(meta.entityType == classOf[com.xhachi.gae4s.datastore.UserInfo])
+    assert(meta.kind == "com.xhachi.gae4s.datastore.UserInfo")
+    assert(meta.properties.size == 2)
+
+    val s = Datastore.query[UserInfo].sort(_.lastLoginDate)
+    assert(s.sorts.size == 1)
+    assert(s.sorts.head.name == "lastLoginDate")
+    assert(s.sorts.head.direction == SortDirection.ASCENDING)
 
   }
 }
