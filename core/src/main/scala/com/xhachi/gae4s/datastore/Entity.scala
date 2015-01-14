@@ -18,11 +18,10 @@ trait Entity[E <: Entity[E]] extends Serializable {
 
 /**
  * TODO: ちゃんとしたエラーチェックの仕組みをDatastoreに入れたい
- * @tparam A
+ * @tparam A 親のキー
  */
 trait Ancestor[A <: Entity[A]] {
-
-  def key: Key[_]
+  self: Entity[_] =>
 
   if (key != null) assert(key.key.getParent != null)
 
@@ -31,7 +30,6 @@ trait Ancestor[A <: Entity[A]] {
     case _ => throw new IllegalStateException("this entity has no parent.")
   }
 }
-
 
 trait EntityClassToKindStrategy {
   def toKind(c: Class[_]): String
