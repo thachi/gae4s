@@ -453,12 +453,15 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
 }
 
 class UserStore
-  extends EntityStore[User](EntityMeta.createMeta)
+  extends EntityStore[User]
   with NamedStore
   with IdentifiableKeyStore
   with AllocatableKeyStore
   with CreatableStore
   with UpdatableStore
-  with QueryableStore
+  with QueryableStore {
+
+  val meta = EntityMeta.createMeta[User]
+}
 
 object UserStore extends UserStore

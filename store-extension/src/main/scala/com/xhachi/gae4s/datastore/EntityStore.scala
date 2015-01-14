@@ -25,7 +25,7 @@ trait EntityStoreBase {
   def datastore: Datastore = Datastore
 }
 
-abstract class EntityStore[E <: Entity[E]: ClassTag](val meta: EntityMeta[E]) extends EntityStoreBase with GettableStore {
+abstract class EntityStore[E <: Entity[E]: ClassTag] extends EntityStoreBase with GettableStore {
   type ENTITY = E
 }
 

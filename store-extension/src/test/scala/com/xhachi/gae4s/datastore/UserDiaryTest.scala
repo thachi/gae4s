@@ -84,11 +84,14 @@ final class UserDiary(
 
 
 class UserDiaryStore
-  extends EntityStore[UserDiary](EntityMeta.createMeta)
+  extends EntityStore[UserDiary]
   with CreatableStore
   with UpdatableStore
   with QueryableStore
-  with AllocatableKeyStore
+  with AllocatableKeyStore {
+
+  val meta = EntityMeta.createMeta[UserDiary]
+}
 
 
 object UserDiary extends UserDiaryStore

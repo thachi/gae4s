@@ -1,7 +1,6 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.entity
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -40,7 +39,6 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
 }
 
-@entity
 class SampleDataEntity(val key: Key[SampleDataEntity])
   extends JsonDataEntity[SampleDataEntity, SampleData] with Mutable {
 
@@ -48,12 +46,13 @@ class SampleDataEntity(val key: Key[SampleDataEntity])
 }
 
 object SampleDataEntityStore
-  extends EntityStore[SampleDataEntity](EntityMeta.createMeta)
+  extends EntityStore[SampleDataEntity]
   with SingleStore
   with CreatableStore
   with UpdatableStore
   with NamedStore {
 
+  val meta: EntityMeta[SampleDataEntity] = EntityMeta.createMeta
 }
 
 case class SampleData(name: String, age: Int) {
