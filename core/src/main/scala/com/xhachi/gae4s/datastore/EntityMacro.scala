@@ -291,7 +291,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
             val enum = c.mirror.staticModule(enumName)
 
             q"""
-new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) with IndexedProperty[$enum.Value] {
+new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$enum.Value] {
   override def fromString(value: String): $enum.Value = $enum.withName(value)
   override def toString(value: $enum.Value): String = value.toString
 }
