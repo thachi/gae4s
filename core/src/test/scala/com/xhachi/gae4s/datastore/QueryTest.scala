@@ -123,6 +123,14 @@ class QueryTest extends FunSuite with AppEngineTestSuite {
     assert(s.head.direction == SortDirection.ASCENDING)
   }
 
+  test("User#heightで逆順ソートできること") {
+    val q = Datastore.query[User].sortDesc(_.height)
+    val s = q.sorts
+    assert(s.nonEmpty)
+    assert(s.head.name == "height")
+    assert(s.head.direction == SortDirection.DESCENDING)
+  }
+
 }
 
 

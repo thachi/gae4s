@@ -56,7 +56,11 @@ $query.copy(filterOption = Some(f))
     }
   }
 
-  def sortBy[E <: Entity[E] : c.WeakTypeTag](c: BContext)(sort: c.Expr[E => Any]): c.Expr[Query[E]] = {
+  def sort[E <: Entity[E] : c.WeakTypeTag](c: BContext)(sort: c.Expr[E => Any]): c.Expr[Query[E]] = _sort[E](c)(sort, asc = true).asInstanceOf[c.Expr[Query[E]]]
+
+  def sortDesc[E <: Entity[E] : c.WeakTypeTag](c: BContext)(sort: c.Expr[E => Any]): c.Expr[Query[E]] = _sort[E](c)(sort, asc = false).asInstanceOf[c.Expr[Query[E]]]
+
+  private def _sort[E <: Entity[E] : c.WeakTypeTag](c: BContext)(sort: c.Expr[E => Any], asc: Boolean): c.Expr[Query[E]] = {
     import c.universe._
 
     val query = c.prefix.tree
@@ -82,11 +86,19 @@ $query.copy(filterOption = Some(f))
         sortTraverser.sort.map {
           s =>
             val meta = toEntityMetaTree(c)(entityType, metaName)
-            val tree = q"""
+            val tree = if (asc) {
+              q"""
 $meta;
 val meta = new $metaName;
 $query.copy(sorts = Seq(meta.$s.asc))
 """
+            } else {
+              q"""
+$meta;
+val meta = new $metaName;
+$query.copy(sorts = Seq(meta.$s.desc))
+"""
+            }
             c.Expr[Query[E]](tree)
         }
     }.flatten.getOrElse {
@@ -146,7 +158,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
         readonly = !member1.isMethod,
         listener = Nil
       )
-//      println("PropertyInfo: " + p)
+      //      println("PropertyInfo: " + p)
       p
     }
 
@@ -231,7 +243,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
           q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName)"""
         } else {
-//          println("jsonp: " + t)
+          //          println("jsonp: " + t)
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName)"""
         }
 
@@ -249,7 +261,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
         } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
           q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         } else {
-//          println("jsonp: " + t)
+          //          println("jsonp: " + t)
           q"""new com.xhachi.gae4s.datastore.JsonProperty[${t.typeSymbol.asType.name}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
         }
 
@@ -347,7 +359,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
   }
 }
 """
-//    println(tree)
+    //    println(tree)
     tree
   }
 

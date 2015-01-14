@@ -20,7 +20,9 @@ case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMet
 
   def filter(filter: E => Boolean): Query[E] = macro EntityMacro.filter[E]
 
-  def sort(sort: E => Any): Query[E] = macro EntityMacro.sortBy[E]
+  def sort(sort: E => Any): Query[E] = macro EntityMacro.sort[E]
+
+  def sortDesc(sort: E => Any): Query[E] = macro EntityMacro.sortDesc[E]
 
   //  def filter(filters: (meta.type => Filter)): Query[E] = copy(filterOption = Some(filters(meta)))
 
