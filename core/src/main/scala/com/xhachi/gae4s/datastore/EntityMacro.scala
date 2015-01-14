@@ -262,7 +262,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
             val enum = c.mirror.staticModule(enumName)
 
             q"""
-new StringStoreProperty[$enum.Value]($propertyName) {
+new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
   override def fromString(value: String): $enum.Value = $enum.withName(value)
   override def toString(value: $enum.Value): String = value.toString
 }
@@ -291,7 +291,7 @@ new StringStoreProperty[$enum.Value]($propertyName) {
             val enum = c.mirror.staticModule(enumName)
 
             q"""
-new StringStoreProperty[$enum.Value]($propertyName) with IndexedProperty[$enum.Value] {
+new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) with IndexedProperty[$enum.Value] {
   override def fromString(value: String): $enum.Value = $enum.withName(value)
   override def toString(value: $enum.Value): String = value.toString
 }
