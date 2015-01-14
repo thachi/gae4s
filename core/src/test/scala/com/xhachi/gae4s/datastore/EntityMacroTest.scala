@@ -34,5 +34,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
     val n = lle.getProperty("name")
     assert(n == "Roto")
 
+    assert(!lle.isUnindexedProperty("twitter"))
+
   }
 }

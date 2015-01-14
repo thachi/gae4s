@@ -110,7 +110,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
                             readonly: Boolean,
                             listener: Seq[Type])
 
-    def hasIndexedAnnotationInVar(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[indexed])
+    def hasIndexedAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[indexed])
     def hasIndexedAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
       case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
         o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
@@ -127,7 +127,7 @@ $query.copy(sorts = Seq(meta.$s.asc))
       val member2 = entityType.member(TermName(name + " "))
       assert(member0.isMethod)
 
-      val hasIndexed = (member2.isTerm && member2.asTerm.isVar && hasIndexedAnnotationInVar(member2)) || hasIndexedAnnotationInConstructorParam(member0)
+      val hasIndexed = (member2.isTerm && member2.asTerm.isVar && hasIndexedAnnotation(member2)) || hasIndexedAnnotation(member0) || hasIndexedAnnotationInConstructorParam(member0)
       val hasVersion = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[version])
       val hasCreationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[creationDate])
       val hasModificationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[modificationDate])

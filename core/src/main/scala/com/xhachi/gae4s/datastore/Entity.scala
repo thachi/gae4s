@@ -73,6 +73,8 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def properties: Seq[Property[_]] = Seq(key)
 
+  def property(name: String): Option[Property[_]] = properties.find(_.name == name)
+
   def versionProperty: Option[VersionProperty] = None
 
   def versionEnabled: Boolean = versionProperty.isDefined

@@ -35,6 +35,8 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
+  override def toString = s"(${getClass.getName}($name)})"
+
 }
 
 trait IndexedProperty[T] extends Property[T] {
