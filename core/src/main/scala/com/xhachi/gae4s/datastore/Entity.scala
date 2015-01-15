@@ -58,8 +58,7 @@ object EntityMeta {
   implicit def createMeta[E <: Entity[E]]: EntityMeta[E] = macro EntityMacro.createMeta[E]
 }
 
-abstract class EntityMeta[E <: Entity[E] : ClassTag]
-  extends Serializable {
+abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
 
   type Entity = E
 
@@ -67,7 +66,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def kind: String = EntityMeta.entityClassToKindStrategy.toKind(implicitly[ClassTag[E]].runtimeClass)
 
-  val key = new KeyProperty[E]("key")
+  val key = new KeyProperty[Entity]("key")
 
   def properties: Seq[Property[_]] = Seq(key)
 
@@ -77,13 +76,13 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def versionEnabled: Boolean = versionProperty.isDefined
 
-  def version(e: E): Option[Long] = versionProperty.map(_.getValueFromLLEntity(toLLEntity(e)))
+  def version(e: Entity): Option[Long] = versionProperty.map(_.getValueFromLLEntity(toLLEntity(e)))
 
-  def createEntity(key: Key[E]): E
+  def createEntity(key: Key[Entity]): Entity
 
   def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity
 
-  def toLLEntity(entity: E): com.google.appengine.api.datastore.Entity
+  def toLLEntity(entity: Entity): com.google.appengine.api.datastore.Entity
 
   def createKey(key: LLKey) = Key[Entity](key)
 
@@ -107,7 +106,6 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
   }
 
   def fromKeyStrong(keyString: String): Key[Entity] = {
-    //TODO: newを取る
     val key = Key[Entity](KeyFactory.stringToKey(keyString))
     assert(key.kind == kind)
     key
