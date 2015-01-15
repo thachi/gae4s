@@ -11,7 +11,7 @@
 
     <servlet-mapping>
         <servlet-name>SampleServlet</servlet-name>
-        <url-pattern>/*</url-pattern>
+        <url-pattern>/counter</url-pattern>
     </servlet-mapping>
 
 </web-app>
