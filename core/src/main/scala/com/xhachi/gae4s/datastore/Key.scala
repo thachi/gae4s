@@ -3,7 +3,7 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
-case class Key[E] private(key: LLKey) extends Ordered[Key[E]] with Serializable {
+case class Key[E](key: LLKey) extends Ordered[Key[E]] with Serializable {
 
   val kind: String = key.getKind
 

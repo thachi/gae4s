@@ -26,7 +26,7 @@ trait Ancestor[A <: Entity[A]] {
   if (key != null) assert(key.key.getParent != null)
 
   def parentKey = key.key.getParent match {
-    case k: LLKey => new Key[A](k)
+    case k: LLKey => Key[A](k)
     case _ => throw new IllegalStateException("this entity has no parent.")
   }
 }
@@ -85,30 +85,30 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag]
 
   def toLLEntity(entity: E): com.google.appengine.api.datastore.Entity
 
-  def createKey(key: LLKey) = new Key[Entity](key)
+  def createKey(key: LLKey) = Key[Entity](key)
 
   def createKeyWithName(name: String) = {
     val key = KeyFactory.createKey(kind, name)
-    new Key[Entity](key)
+    Key[Entity](key)
   }
 
   def createKeyWithId(id: Long) = {
-    new Key[Entity](KeyFactory.createKey(kind, id))
+    Key[Entity](KeyFactory.createKey(kind, id))
   }
 
   def createKeyWithName(parent: Key[_], name: String) = {
     val key = KeyFactory.createKey(parent.key, kind, name)
-    new Key[Entity](key)
+    Key[Entity](key)
   }
 
   def createKeyWithId(parent: Key[_], id: Long) = {
     val key = KeyFactory.createKey(parent.key, kind, id)
-    new Key[Entity](key)
+    Key[Entity](key)
   }
 
   def fromKeyStrong(keyString: String): Key[Entity] = {
     //TODO: newを取る
-    val key = new Key[Entity](KeyFactory.stringToKey(keyString))
+    val key = Key[Entity](KeyFactory.stringToKey(keyString))
     assert(key.kind == kind)
     key
   }

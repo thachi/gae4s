@@ -111,8 +111,7 @@ class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
 class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] with IndexedProperty[Key[E]] {
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
-    //TODO: あとで
-    case k: LLKey => new Key[E](k)
+    case k: LLKey => Key[E](k)
     case _ => null
   }
 
