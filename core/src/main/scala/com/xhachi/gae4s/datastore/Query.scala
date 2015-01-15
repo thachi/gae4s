@@ -24,10 +24,6 @@ case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMet
 
   def sortDesc(sort: E => Any): Query[E] = macro EntityMacro.sortDesc[E]
 
-  //  def filter(filters: (meta.type => Filter)): Query[E] = copy(filterOption = Some(filters(meta)))
-
-  //  def sort(sort: (meta.type => Sort), sorts: (meta.type => Sort)*): Query[E] = copy(sorts = sort(meta) :: sorts.map(_(meta)).toList)
-
   def offset(o: Int): Query[E] = copy(offset = Some(o))
 
   def limit(l: Int): Query[E] = copy(limit = Some(l))
@@ -80,10 +76,7 @@ case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMet
     sorts.foreach(s => query.addSort(s.name, s.direction))
     query
   }
-
-
 }
-
 
 trait Filter {
 
@@ -161,6 +154,5 @@ case class SortPredicate[T](name: String, direction: LLSortDirection, property: 
 
     property.compare(v1, v2) < 0
   }
-
 }
 
