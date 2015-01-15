@@ -36,7 +36,6 @@ object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) 
   def apply(service: DatastoreService) = new Datastore(service)
 }
 
-
 sealed private[datastore] trait DatastoreBase {
 
   private[datastore] def service: DatastoreService
@@ -195,7 +194,7 @@ sealed private[datastore] trait DatastoreUpdateMethods {
     case None => throw new IllegalStateException()
   }
 
-  def update[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = if(meta.versionEnabled) {
+  def update[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = if (meta.versionEnabled) {
     getOption(entity.key) match {
       case Some(e) if isSameVersion(entity, e) => put(entity)
       case Some(e) => throw new IllegalStateException("invalid version property. %s store:%d, stored:%d".format(entity.key, meta.version(entity).get, meta.version(e).get))
@@ -278,8 +277,6 @@ sealed private[datastore] trait DatastoreCreateKeyMethods {
 sealed private[datastore] trait DatastoreQueryMethods {
   self: DatastoreBase =>
 
-
-  //todo Mいらない
   def query[E <: Entity[E]](implicit meta: EntityMeta[E]) =
     Query[E](this, meta, None)
 
@@ -338,7 +335,6 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-
   def asKeySeq[E <: Entity[E]](query: Query[E]): Seq[Key[E]] = {
     val options = (query.offset, query.limit) match {
       case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
@@ -351,7 +347,6 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }.toSeq
   }
 }
-
 
 sealed private[datastore] trait DatastoreTxMethods {
   self: DatastoreBase =>
