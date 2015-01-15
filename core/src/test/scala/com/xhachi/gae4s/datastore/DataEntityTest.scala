@@ -38,8 +38,8 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 
 @entity
 class TestDataEntity(val key: Key[TestDataEntity])
-  extends JsonDataEntity[TestDataEntity, TestData] with Mutable {
-  override var data: TestData = TestData("unknown", 0)
+  extends Entity[TestDataEntity] with Mutable {
+  var data: TestData = TestData("unknown", 0)
   def addAge(a: Int) = data = data.copy(age = data.age + a)
 }
 

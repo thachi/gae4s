@@ -40,9 +40,9 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SampleDataEntity(val key: Key[SampleDataEntity])
-  extends JsonDataEntity[SampleDataEntity, SampleData] with Mutable {
+  extends Entity[SampleDataEntity] with Mutable {
 
-  override var data: SampleData = SampleData("unknown", 0)
+  var data: SampleData = SampleData("unknown", 0)
 }
 
 object SampleDataEntityStore
