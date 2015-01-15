@@ -5,14 +5,14 @@ import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 import scala.reflect.ClassTag
 
 
-trait Entity[E <: Entity[E]] extends Serializable {
+abstract class Entity[E <: Entity[E]] extends Serializable {
+
+  val key: Key[E]
 
   final def keyOption: Option[Key[E]] = key match {
     case k: Key[E] => Some(k)
     case _ => None
   }
-
-  def key: Key[E]
 
 }
 
