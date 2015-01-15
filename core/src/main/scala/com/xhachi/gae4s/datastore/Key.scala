@@ -3,8 +3,7 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
-// TODO: valを取ってcase classにする
-class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
+case class Key[E] private(key: LLKey) extends Ordered[Key[E]] with Serializable {
 
   val kind: String = key.getKind
 
@@ -23,8 +22,7 @@ class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
   }
 
   def parent[P <: Entity[P]]: Option[Key[P]] = key.getParent match {
-      //TODO: new Keyじゃなくする
-    case p: LLKey => Some(new Key[P](p))
+    case p: LLKey => Some(Key[P](p))
     case _ => None
   }
 
@@ -43,5 +41,5 @@ class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
 }
 
 object Key {
-  def fromWebSafeString[E](string: String) = new Key[E](KeyFactory.stringToKey(string))
+  def fromWebSafeString[E](string: String) = Key[E](KeyFactory.stringToKey(string))
 }
