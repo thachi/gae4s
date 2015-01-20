@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.datastore.annotations.json
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -39,7 +40,7 @@ class TestDataEntity(val key: Key[TestDataEntity])
   extends Entity[TestDataEntity]
   with Mutable {
 
-  var data: TestData = TestData("unknown", 0)
+  @json var data: TestData = TestData("unknown", 0)
   def addAge(a: Int) = data = data.copy(age = data.age + a)
 }
 

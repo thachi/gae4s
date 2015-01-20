@@ -12,6 +12,10 @@ import scala.annotation.StaticAnnotation
  */
 class entity(val version: String = "", val creationDate: String = "", val modificationDate: String = "") extends StaticAnnotation
 
+class json extends StaticAnnotation
+
+class serialize extends StaticAnnotation
+
 class indexed extends StaticAnnotation
 
 class version extends StaticAnnotation

@@ -115,14 +115,54 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
     case class PropertyInfo(name: TermName,
                             tpe: Type,
+                            bases: Seq[String],
+                            serializable: Boolean,
+                            json: Boolean,
                             transient: Boolean,
                             indexed: Boolean,
+                            javaEnum: Boolean,
                             scalaEnum: Boolean,
                             version: Boolean,
                             creationDate: Boolean,
                             modificationDate: Boolean,
                             readonly: Boolean,
-                            listener: Seq[Type])
+                            listener: Seq[Type]) {
+      override def toString = {
+        s"""PropertyInfo(
+          name: $name,
+          tpe: $tpe,
+          bases: $bases,
+          serializable: $serializable,
+          json: $json,
+          transient: $transient,
+          indexed: $indexed,
+          javaEnum: $javaEnum,
+          scalaEnum: $scalaEnum,
+          version: $version,
+          creationDate: $creationDate,
+          modificationDate: $modificationDate,
+          readonly: $readonly,
+          listener: $listener)
+        """
+      }
+    }
+
+    def hasSerializeAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[serialize])
+    def hasSerializeAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
+      case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
+        o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
+          .paramLists.flatMap(_.filter(_.name == member.name))
+          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[serialize]))
+      case _ => false
+    }
+    def hasJsonAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[json])
+    def hasJsonAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
+      case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
+        o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
+          .paramLists.flatMap(_.filter(_.name == member.name))
+          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[json]))
+      case _ => false
+    }
 
     def hasIndexedAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[indexed])
     def hasIndexedAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
@@ -149,6 +189,8 @@ $query.copy(sorts = Seq(meta.$s.desc))
       assert(member0.isMethod)
 
       val hasTransient = (member2.isTerm && member2.asTerm.isVar && hasTransientAnnotation(member2)) || hasTransientAnnotation(member0) || hasTransientAnnotationInConstructorParam(member0)
+      val hasJson = (member2.isTerm && member2.asTerm.isVar && hasJsonAnnotation(member2)) || hasJsonAnnotation(member0) || hasJsonAnnotationInConstructorParam(member0)
+      val hasSerialize = (member2.isTerm && member2.asTerm.isVar && hasSerializeAnnotation(member2)) || hasSerializeAnnotation(member0) || hasSerializeAnnotationInConstructorParam(member0)
       val hasIndexed = (member2.isTerm && member2.asTerm.isVar && hasIndexedAnnotation(member2)) || hasIndexedAnnotation(member0) || hasIndexedAnnotationInConstructorParam(member0)
       val hasVersion = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[version])
       val hasCreationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[creationDate])
@@ -162,7 +204,11 @@ $query.copy(sorts = Seq(meta.$s.desc))
       val p = PropertyInfo(
         name,
         tpe,
+        tpe.baseClasses.map(_.asType.fullName).toSeq,
+        serializable = hasSerialize && tpe <:< typeOf[Serializable],
+        json = hasJson,
         transient = hasTransient,
+        javaEnum = 1 < tpe.baseClasses.size && tpe.baseClasses.drop(1).head.fullName == "java.lang.Enum",
         scalaEnum = tpe.typeSymbol.fullName == "scala.Enumeration.Value",
         indexed = hasIndexed,
         version = existsVersionEntityAnnotation || hasVersion,
@@ -171,7 +217,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
         readonly = !member1.isMethod,
         listener = Nil
       )
-      //      println("PropertyInfo: " + p)
+      //            println("PropertyInfo: " + p)
       p
     }
 
@@ -209,6 +255,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
         def isValueType(memberType: Type): Boolean = Seq(
           //              typeOf[String],
           //      typeOf[Short], typeOf[Int], typeOf[Integer], typeOf[Long], typeOf[Float], typeOf[Double],
+          typeOf[BigInt], typeOf[BigDecimal],
           typeOf[Boolean],
           typeOf[Date],
           //      typeOf[Key],
@@ -234,11 +281,12 @@ $query.copy(sorts = Seq(meta.$s.desc))
         }
         else {
           val option = memberType.typeSymbol.fullName == "scala.Option"
+          val seq = memberType.typeSymbol.fullName == "scala.collection.Seq"
           val indexed = info.indexed
 
           val (baseType, keyType): (Type, Type) = memberType match {
-            case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) if option && t.fullName == "com.xhachi.gae4s.datastore.Key" => (t.asType.toType, t2.asType.toType)
-            case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if option => (t.asType.toType, NoType)
+            case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) if (option || seq) && t.fullName == "com.xhachi.gae4s.datastore.Key" => (t.asType.toType, t2.asType.toType)
+            case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if (option || seq) => (t.asType.toType, NoType)
             case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if memberType.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" => (memberType, t.asType.toType)
             case _ => (memberType, NoType)
           }
@@ -246,6 +294,8 @@ $query.copy(sorts = Seq(meta.$s.desc))
           def createBaseProperty(t: Type): Tree = if (isValueType(t)) {
             val propertyTypeName = TypeName(t.typeSymbol.asType.name.toTypeName + "Property")
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName($propertyName)"""
+          } else if (t =:= typeOf[Array[Byte]]) {
+            q"""new com.xhachi.gae4s.datastore.ByteArrayProperty($propertyName)"""
           } else if (t =:= typeOf[String]) {
             q"""new com.xhachi.gae4s.datastore.StringProperty($propertyName)"""
           } else if (t =:= typeOf[Double]) {
@@ -267,9 +317,18 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
   override def toString(value: $enum.Value): String = value.toString
 }
 """
-          } else {
+          } else if (info.javaEnum) {
+            //          println("jsonp: " + t)
+            q"""new com.xhachi.gae4s.datastore.EnumProperty[$baseType]($propertyName)"""
+          } else if (info.json) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName)"""
+          } else if (info.serializable) {
+            //          println("jsonp: " + t)
+            q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName)"""
+          } else {
+            c.abort(c.enclosingPosition, s"${info.name} cannot be property")
+            //            throw new RuntimeException(s"${info.name} cannot be property")
           }
 
           def createBasePropertyWithIndex(t: Type): Tree = if (isValueType(t)) {
@@ -277,6 +336,8 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t =:= typeOf[String]) {
             q"""new com.xhachi.gae4s.datastore.StringProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else if (t =:= typeOf[Array[Byte]]) {
+            q"""new com.xhachi.gae4s.datastore.ByteArrayProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t =:= typeOf[Double]) {
             q"""new com.xhachi.gae4s.datastore.DoubleProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t =:= typeOf[Int]) {
@@ -296,9 +357,18 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
   override def toString(value: $enum.Value): String = value.toString
 }
 """
-          } else {
+          } else if (info.javaEnum) {
+            //          println("jsonp: " + t)
+            q"""new com.xhachi.gae4s.datastore.EnumProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else if (info.json) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else if (info.serializable) {
+            //          println("jsonp: " + t)
+            q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else {
+            c.abort(c.enclosingPosition, s"${info.name} cannot be property")
+            //            throw new RuntimeException(s"${info.name} cannot be property")
           }
 
           if (option && indexed) {
@@ -313,6 +383,18 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
           } else if (option) {
             val p0 = createBaseProperty(baseType)
             q"""new com.xhachi.gae4s.datastore.OptionProperty($p0)"""
+          } else if (seq && indexed) {
+            val p0 = createBaseProperty(baseType)
+            baseType match {
+              case b if b.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" =>
+                q"""new com.xhachi.gae4s.datastore.SeqProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Seq[com.xhachi.gae4s.datastore.Key[$keyType]]]"""
+              case _ =>
+                q"""new com.xhachi.gae4s.datastore.SeqProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Seq[$baseType]]"""
+            }
+
+          } else if (seq) {
+            val p0 = createBaseProperty(baseType)
+            q"""new com.xhachi.gae4s.datastore.SeqProperty($p0)"""
           } else if (indexed) {
             createBasePropertyWithIndex(baseType)
           } else {

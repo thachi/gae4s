@@ -108,6 +108,21 @@ class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
   }
 }
 
+class SeqProperty[T](property: Property[T]) extends Property[Seq[T]] {
+
+  def name = property.name
+
+  override protected[datastore] def fromStoreProperty(value: Any): Seq[T] = property.fromStoreProperty(value) match {
+    case null => Nil
+    case v: Array[T] => v.toSeq
+  }
+
+  override protected[datastore] def toStoreProperty(value: Seq[T]): Any = value match {
+    case Nil => null
+    case v: Seq[T] => v.map(property.toStoreProperty).toArray
+  }
+}
+
 class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] with IndexedProperty[Key[E]] {
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {

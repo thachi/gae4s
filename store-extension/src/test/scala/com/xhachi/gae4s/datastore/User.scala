@@ -15,6 +15,7 @@ class User(val key: Key[User], @indexed var name: String = "")
   var weight: Int = 0
   var mobilePhone: Option[String] = None
 
+  @json
   var webInfo = WebInfo()
 
   @indexed

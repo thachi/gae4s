@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.datastore.annotations.json
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -42,7 +43,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 class SampleDataEntity(val key: Key[SampleDataEntity])
   extends Entity[SampleDataEntity] with Mutable {
 
-  var data: SampleData = SampleData("unknown", 0)
+  @json var data: SampleData = SampleData("unknown", 0)
 }
 
 object SampleDataEntityStore
