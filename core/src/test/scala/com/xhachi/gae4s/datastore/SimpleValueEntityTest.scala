@@ -117,9 +117,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
   }
 }
 
-class SimpleValueEntity(val key: Key[SimpleValueEntity])
-  extends Entity[SimpleValueEntity] {
-
+class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleValueEntity] {
   var string: String = ""
   var int: Int = 0
   var long: Long = 0
@@ -138,7 +136,6 @@ class SimpleValueEntity(val key: Key[SimpleValueEntity])
   var category: Category = new Category("category")
   var rating: Rating = new Rating(0)
   var blobKey: BlobKey = new BlobKey("")
-
   var bigInt: BigInt = BigInt(0)
   var bigDecimal: BigDecimal = BigDecimal(0)
   var javaEnum: JavaEnum = JavaEnum.JAVA_ENUM1
@@ -146,7 +143,6 @@ class SimpleValueEntity(val key: Key[SimpleValueEntity])
   var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
   @json var json: JsonValue = JsonValue("test")
   @serialize var serializable: SerializableValue = SerializableValue("")
-
 }
 
 case class SerializableValue(name: String) extends Serializable

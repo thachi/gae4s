@@ -120,29 +120,43 @@ $query.copy(sorts = Seq(meta.$s.desc))
                             json: Boolean,
                             transient: Boolean,
                             indexed: Boolean,
-                            javaEnum: Boolean,
-                            scalaEnum: Boolean,
                             version: Boolean,
                             creationDate: Boolean,
                             modificationDate: Boolean,
                             readonly: Boolean,
                             listener: Seq[Type]) {
+
+
+      val isOption: Boolean = tpe.typeSymbol.fullName == "scala.Option"
+      val isSeq: Boolean = tpe.typeSymbol.fullName == "scala.collection.Seq"
+
+      val storeType = if (isOption && tpe.typeArgs.nonEmpty) tpe.typeArgs.head else tpe
+      val isScalaEnum = storeType.typeSymbol.fullName == "scala.Enumeration.Value"
+      val isJavaEnum = 1 < storeType.baseClasses.size && storeType.baseClasses.drop(1).head.fullName == "java.lang.Enum"
+
+      val scalaEnumName = storeType.toString.split('.').dropRight(1).mkString(".")
+
       override def toString = {
         s"""PropertyInfo(
           name: $name,
           tpe: $tpe,
+          storeType: $storeType,
           bases: $bases,
           serializable: $serializable,
           json: $json,
           transient: $transient,
           indexed: $indexed,
-          javaEnum: $javaEnum,
-          scalaEnum: $scalaEnum,
+          javaEnum: $isJavaEnum,
+          scalaEnum: $isScalaEnum,
+          scalaEnumName: $scalaEnumName,
           version: $version,
           creationDate: $creationDate,
           modificationDate: $modificationDate,
           readonly: $readonly,
-          listener: $listener)
+          listener: $listener,
+          isOption: $isOption
+          isSeq: $isSeq
+          )
         """
       }
     }
@@ -208,8 +222,6 @@ $query.copy(sorts = Seq(meta.$s.desc))
         serializable = hasSerialize && tpe <:< typeOf[Serializable],
         json = hasJson,
         transient = hasTransient,
-        javaEnum = 1 < tpe.baseClasses.size && tpe.baseClasses.drop(1).head.fullName == "java.lang.Enum",
-        scalaEnum = tpe.typeSymbol.fullName == "scala.Enumeration.Value",
         indexed = hasIndexed,
         version = existsVersionEntityAnnotation || hasVersion,
         creationDate = existsCreationDateEntityAnnotation || hasCreationDate,
@@ -280,8 +292,8 @@ $query.copy(sorts = Seq(meta.$s.desc))
           q"""new com.xhachi.gae4s.datastore.ModificationDateProperty($propertyName)"""
         }
         else {
-          val option = memberType.typeSymbol.fullName == "scala.Option"
-          val seq = memberType.typeSymbol.fullName == "scala.collection.Seq"
+          val option = info.isOption
+          val seq = info.isSeq
           val indexed = info.indexed
 
           val (baseType, keyType): (Type, Type) = memberType match {
@@ -294,7 +306,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
           def createBaseProperty(t: Type): Tree = if (isValueType(t)) {
             val propertyTypeName = TypeName(t.typeSymbol.asType.name.toTypeName + "Property")
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName($propertyName)"""
-          } else if (t =:= typeOf[Array[Byte]]) {
+          } else if (info.storeType =:= typeOf[Array[Byte]]) {
             q"""new com.xhachi.gae4s.datastore.ByteArrayProperty($propertyName)"""
           } else if (t =:= typeOf[String]) {
             q"""new com.xhachi.gae4s.datastore.StringProperty($propertyName)"""
@@ -306,10 +318,9 @@ $query.copy(sorts = Seq(meta.$s.desc))
             q"""new com.xhachi.gae4s.datastore.LongProperty($propertyName)"""
           } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
             q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName)"""
-          } else if (info.scalaEnum) {
+          } else if (info.isScalaEnum) {
 
-            val enumName = baseType.toString.split('.').dropRight(1).mkString(".")
-            val enum = c.mirror.staticModule(enumName)
+            val enum = c.mirror.staticModule(info.scalaEnumName)
 
             q"""
 new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
@@ -317,9 +328,9 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
   override def toString(value: $enum.Value): String = value.toString
 }
 """
-          } else if (info.javaEnum) {
+          } else if (info.isJavaEnum) {
             //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.EnumProperty[$baseType]($propertyName)"""
+            q"""new com.xhachi.gae4s.datastore.EnumProperty[${info.storeType}]($propertyName)"""
           } else if (info.json) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName)"""
@@ -327,7 +338,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName)"""
           } else {
-            c.abort(c.enclosingPosition, s"${info.name} cannot be property")
+            c.abort(c.enclosingPosition, s"${info.name} as $baseType cannot be property\n\n" + info)
             //            throw new RuntimeException(s"${info.name} cannot be property")
           }
 
@@ -336,7 +347,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t =:= typeOf[String]) {
             q"""new com.xhachi.gae4s.datastore.StringProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
-          } else if (t =:= typeOf[Array[Byte]]) {
+          } else if (info.storeType =:= typeOf[Array[Byte]]) {
             q"""new com.xhachi.gae4s.datastore.ByteArrayProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t =:= typeOf[Double]) {
             q"""new com.xhachi.gae4s.datastore.DoubleProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
@@ -346,10 +357,9 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
             q"""new com.xhachi.gae4s.datastore.LongProperty($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key") {
             q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
-          } else if (info.scalaEnum) {
+          } else if (info.isScalaEnum) {
 
-            val enumName = baseType.toString.split('.').dropRight(1).mkString(".")
-            val enum = c.mirror.staticModule(enumName)
+            val enum = c.mirror.staticModule(info.scalaEnumName)
 
             q"""
 new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$enum.Value] {
@@ -357,9 +367,9 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
   override def toString(value: $enum.Value): String = value.toString
 }
 """
-          } else if (info.javaEnum) {
+          } else if (info.isJavaEnum) {
             //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.EnumProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+            q"""new com.xhachi.gae4s.datastore.EnumProperty[${info.storeType}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (info.json) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
@@ -367,7 +377,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else {
-            c.abort(c.enclosingPosition, s"${info.name} cannot be property")
+            c.abort(c.enclosingPosition, s"${info.name} as $baseType cannot be property\n\n" + info)
             //            throw new RuntimeException(s"${info.name} cannot be property")
           }
 

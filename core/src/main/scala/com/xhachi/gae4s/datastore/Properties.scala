@@ -93,7 +93,7 @@ class ValueProperty[T: ClassTag](val name: String) extends Property[T] {
   override def fromStoreProperty(value: Any): T = value.asInstanceOf[T]
 }
 
-class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
+class OptionProperty[T](val property: Property[T]) extends Property[Option[T]] {
 
   def name = property.name
 
