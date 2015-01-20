@@ -130,7 +130,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
       val isOption: Boolean = tpe.typeSymbol.fullName == "scala.Option"
       val isSeq: Boolean = tpe.typeSymbol.fullName == "scala.collection.Seq"
 
-      val storeType = if (isOption && tpe.typeArgs.nonEmpty) tpe.typeArgs.head else tpe
+      val storeType = if ((isOption || isSeq) && tpe.typeArgs.nonEmpty) tpe.typeArgs.head else tpe
       val isScalaEnum = storeType.typeSymbol.fullName == "scala.Enumeration.Value"
       val isJavaEnum = 1 < storeType.baseClasses.size && storeType.baseClasses.drop(1).head.fullName == "java.lang.Enum"
 
@@ -489,7 +489,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
   }
 }
 """
-    //    println(tree)
+//        println(tree)
     tree
   }
 

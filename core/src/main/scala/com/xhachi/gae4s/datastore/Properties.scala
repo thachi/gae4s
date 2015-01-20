@@ -7,9 +7,11 @@ import com.google.appengine.api.datastore.Query.FilterOperator._
 import com.google.appengine.api.datastore.Query.SortDirection._
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, _}
 import com.google.appengine.api.users.User
+import com.xhachi.gae4s.common.Logger
 import com.xhachi.gae4s.json.Json
 
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 object Property {
   val ShortLimit = 500
@@ -24,11 +26,36 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   def name: String
 
-  def getValueFromLLEntity(entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
+  final def getValueFromLLEntity(entity: LLEntity): T = {
+    val storedValue = entity.getProperty(name)
+    try {
+      fromStoreProperty(storedValue)
+    } catch {
+      case NonFatal(e) =>
+        val v = storedValue match {
+          case a: java.util.List[_] => a.toArray.map(i => s"$i: ${i.getClass}").mkString("(", ",", ")")
+          case a => a
+        }
+        Logger.error(s"$name cannot restored. value is $v: ${storedValue.getClass}")
+        throw e
+    }
+  }
 
-  def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
+  final def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
     case p: IndexedProperty[_] => entity.setProperty(name, toStoreProperty(value))
-    case _ => entity.setUnindexedProperty(name, toStoreProperty(value))
+    case _ =>
+      val storeValue = toStoreProperty(value)
+      try {
+        entity.setUnindexedProperty(name, storeValue)
+      } catch {
+        case NonFatal(e) =>
+          val v = storeValue match {
+            case a: Array[_] => a.toSeq.map(i => s"$i: ${i.getClass}")
+            case o => o
+          }
+          Logger.error(s"$name is not stored. value is ($v): ${v.getClass}")
+          throw e
+      }
   }
 
   protected[datastore] def toStoreProperty(value: T): Any
@@ -108,18 +135,20 @@ class OptionProperty[T](val property: Property[T]) extends Property[Option[T]] {
   }
 }
 
-class SeqProperty[T](property: Property[T]) extends Property[Seq[T]] {
+class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
+
+  import scala.collection.JavaConverters._
 
   def name = property.name
 
-  override protected[datastore] def fromStoreProperty(value: Any): Seq[T] = property.fromStoreProperty(value) match {
+  override protected[datastore] def fromStoreProperty(value: Any): Seq[T] = value match {
     case null => Nil
-    case v: Array[T] => v.toSeq
+    case v: java.util.List[_] => v.toArray.toSeq.map(property.fromStoreProperty)
   }
 
   override protected[datastore] def toStoreProperty(value: Seq[T]): Any = value match {
     case Nil => null
-    case v: Seq[T] => v.map(property.toStoreProperty).toArray
+    case v: Seq[T] => v.map(property.toStoreProperty).asJava
   }
 }
 

@@ -2,8 +2,9 @@ package com.xhachi.gae4s.common
 
 import java.util.logging.{Level, Logger => JLogger}
 
-trait Logger {
+trait Logger extends Serializable {
 
+  @transient
   lazy val logger = JLogger.getLogger(this.getClass.toString)
 
   def trace(message: => String): Unit = if (logger.isLoggable(Level.FINER)) logger.finer(message)
