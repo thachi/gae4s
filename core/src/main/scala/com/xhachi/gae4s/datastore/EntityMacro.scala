@@ -62,6 +62,7 @@ $query.copy(filterOption = Some(f))
 
   private def _sort[E <: Entity[E] : c.WeakTypeTag](c: BContext)(sort: c.Expr[E => Any], asc: Boolean): c.Expr[Query[E]] = {
     import c.universe._
+    //    println(s"---- SORT ----\n\n$sort\n\n--------------")
 
     val query = c.prefix.tree
     val entityType = c.weakTypeOf[E]
@@ -161,40 +162,17 @@ $query.copy(sorts = Seq(meta.$s.desc))
       }
     }
 
-    def hasSerializeAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[serialize])
-    def hasSerializeAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
-      case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
-        o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
-          .paramLists.flatMap(_.filter(_.name == member.name))
-          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[serialize]))
-      case _ => false
+    def hasAnnotation(member: Symbol, tpe: Type): Boolean = {
+      member.annotations.exists(_.tree.tpe =:= tpe) || hasAnnotationInConstructorParam(member, tpe)
     }
-    def hasJsonAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[json])
-    def hasJsonAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
+    def hasAnnotationInConstructorParam(member: Symbol, tpe: Type): Boolean = member.owner match {
       case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
         o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
           .paramLists.flatMap(_.filter(_.name == member.name))
-          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[json]))
+          .exists(_.annotations.exists(_.tree.tpe =:= tpe))
       case _ => false
     }
 
-    def hasIndexedAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[indexed])
-    def hasIndexedAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
-      case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
-        o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
-          .paramLists.flatMap(_.filter(_.name == member.name))
-          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[indexed]))
-      case _ => false
-    }
-
-    def hasTransientAnnotation(member: Symbol): Boolean = member.annotations.exists(_.tree.tpe =:= typeOf[transient])
-    def hasTransientAnnotationInConstructorParam(member: Symbol): Boolean = member.owner match {
-      case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
-        o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
-          .paramLists.flatMap(_.filter(_.name == member.name))
-          .exists(_.annotations.exists(_.tree.tpe =:= typeOf[transient]))
-      case _ => false
-    }
 
     def toPropertyInfo(name: TermName): PropertyInfo = {
       val member0 = entityType.member(name)
@@ -202,10 +180,10 @@ $query.copy(sorts = Seq(meta.$s.desc))
       val member2 = entityType.member(TermName(name + " "))
       assert(member0.isMethod)
 
-      val hasTransient = (member2.isTerm && member2.asTerm.isVar && hasTransientAnnotation(member2)) || hasTransientAnnotation(member0) || hasTransientAnnotationInConstructorParam(member0)
-      val hasJson = (member2.isTerm && member2.asTerm.isVar && hasJsonAnnotation(member2)) || hasJsonAnnotation(member0) || hasJsonAnnotationInConstructorParam(member0)
-      val hasSerialize = (member2.isTerm && member2.asTerm.isVar && hasSerializeAnnotation(member2)) || hasSerializeAnnotation(member0) || hasSerializeAnnotationInConstructorParam(member0)
-      val hasIndexed = (member2.isTerm && member2.asTerm.isVar && hasIndexedAnnotation(member2)) || hasIndexedAnnotation(member0) || hasIndexedAnnotationInConstructorParam(member0)
+      val hasTransient = (member2.isTerm && member2.asTerm.isVar && hasAnnotation(member2, typeOf[transient])) || hasAnnotation(member0, typeOf[transient])
+      val hasJson = (member2.isTerm && member2.asTerm.isVar && hasAnnotation(member2, typeOf[json])) || hasAnnotation(member0, typeOf[json])
+      val hasSerialize = (member2.isTerm && member2.asTerm.isVar && hasAnnotation(member2, typeOf[serialize])) || hasAnnotation(member0, typeOf[serialize])
+      val hasIndexed = (member2.isTerm && member2.asTerm.isVar && hasAnnotation(member2, typeOf[indexed])) || hasAnnotation(member0, typeOf[indexed])
       val hasVersion = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[version])
       val hasCreationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[creationDate])
       val hasModificationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[modificationDate])
@@ -489,7 +467,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
   }
 }
 """
-//        println(tree)
+    //        println(tree)
     tree
   }
 
