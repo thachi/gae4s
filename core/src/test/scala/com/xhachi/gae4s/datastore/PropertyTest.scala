@@ -63,13 +63,13 @@ class KeyPropertyTest extends FunSuite with AppEngineTestSuite {
 class EnumPropertyTest extends FunSuite {
 
   test("fromStorePropertyが正しいこと") {
-    val actual = new EnumProperty[SampleEnum]("name").fromStoreProperty("A")
-    assert(actual == SampleEnum.A)
+    val actual = new EnumProperty[JavaEnum]("name").fromStoreProperty("JAVA_ENUM1")
+    assert(actual == JavaEnum.JAVA_ENUM1)
   }
 
   test("toStorePropertyが正しいこと") {
-    val actual = new EnumProperty[SampleEnum]("name").toStoreProperty(SampleEnum.A)
-    assert(actual == "A")
+    val actual = new EnumProperty[JavaEnum]("name").toStoreProperty(JavaEnum.JAVA_ENUM1)
+    assert(actual == "JAVA_ENUM1")
   }
 
 }
