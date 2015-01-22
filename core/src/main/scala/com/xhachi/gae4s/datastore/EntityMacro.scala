@@ -130,8 +130,9 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
       val isOption: Boolean = tpe.typeSymbol.fullName == "scala.Option"
       val isSeq: Boolean = tpe.typeSymbol.fullName == "scala.collection.Seq"
+      val isContainer: Boolean = isOption || isSeq
 
-      val storeType = if ((isOption || isSeq) && tpe.typeArgs.nonEmpty) tpe.typeArgs.head else tpe
+      val storeType = if ((isOption || (isSeq && !json)) && tpe.typeArgs.nonEmpty) tpe.typeArgs.head else tpe
       val isScalaEnum = storeType.typeSymbol.fullName == "scala.Enumeration.Value"
       val isJavaEnum = 1 < storeType.baseClasses.size && storeType.baseClasses.drop(1).head.fullName == "java.lang.Enum"
 
@@ -207,7 +208,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
         readonly = !member1.isMethod,
         listener = Nil
       )
-      //            println("PropertyInfo: " + p)
+      //            println("PropiertyInfo: " + p)
       p
     }
 
@@ -270,24 +271,26 @@ $query.copy(sorts = Seq(meta.$s.desc))
           q"""new com.xhachi.gae4s.datastore.ModificationDateProperty($propertyName)"""
         }
         else {
-          val option = info.isOption
-          val seq = info.isSeq
           val indexed = info.indexed
 
           val (baseType, keyType): (Type, Type) = memberType match {
-            case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) if (option || seq) && t.fullName == "com.xhachi.gae4s.datastore.Key" => (t.asType.toType, t2.asType.toType)
-            case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if (option || seq) => (t.asType.toType, NoType)
+            case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) if info.isContainer && t.fullName == "com.xhachi.gae4s.datastore.Key" => (t.asType.toType, t2.asType.toType)
+            case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if info.isContainer => (t.asType.toType, NoType)
             case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if memberType.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" => (memberType, t.asType.toType)
             case _ => (memberType, NoType)
           }
 
-          def createBaseProperty(t: Type): Tree = if (isValueType(t)) {
+          def createBaseProperty(t: Type): Tree = if (info.json) {
+            q"""new com.xhachi.gae4s.datastore.JsonProperty[${info.storeType}]($propertyName)"""
+          } else if (info.serializable) {
+            q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName)"""
+          } else if (isValueType(t)) {
             val propertyTypeName = TypeName(t.typeSymbol.asType.name.toTypeName + "Property")
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName($propertyName)"""
-          } else if (info.storeType =:= typeOf[Array[Byte]]) {
-            q"""new com.xhachi.gae4s.datastore.ByteArrayProperty($propertyName)"""
           } else if (t =:= typeOf[String]) {
             q"""new com.xhachi.gae4s.datastore.StringProperty($propertyName)"""
+          } else if (info.storeType =:= typeOf[Array[Byte]]) {
+            q"""new com.xhachi.gae4s.datastore.ByteArrayProperty($propertyName)"""
           } else if (t =:= typeOf[Double]) {
             q"""new com.xhachi.gae4s.datastore.DoubleProperty($propertyName)"""
           } else if (t =:= typeOf[Int]) {
@@ -309,18 +312,16 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) {
           } else if (info.isJavaEnum) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.EnumProperty[${info.storeType}]($propertyName)"""
-          } else if (info.json) {
-            //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName)"""
-          } else if (info.serializable) {
-            //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName)"""
           } else {
             c.abort(c.enclosingPosition, s"${info.name} as $baseType cannot be property\n\n" + info)
             //            throw new RuntimeException(s"${info.name} cannot be property")
           }
 
-          def createBasePropertyWithIndex(t: Type): Tree = if (isValueType(t)) {
+          def createBasePropertyWithIndex(t: Type): Tree = if (info.json) {
+            q"""new com.xhachi.gae4s.datastore.JsonProperty[${info.storeType}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else if (info.serializable) {
+            q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
+          } else if (isValueType(t)) {
             val propertyTypeName = TypeName(t.typeSymbol.asType.name + "Property")
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else if (t =:= typeOf[String]) {
@@ -348,18 +349,12 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
           } else if (info.isJavaEnum) {
             //          println("jsonp: " + t)
             q"""new com.xhachi.gae4s.datastore.EnumProperty[${info.storeType}]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
-          } else if (info.json) {
-            //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.JsonProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
-          } else if (info.serializable) {
-            //          println("jsonp: " + t)
-            q"""new com.xhachi.gae4s.datastore.SerializableProperty[$baseType]($propertyName) with com.xhachi.gae4s.datastore.IndexedProperty[$baseType]"""
           } else {
             c.abort(c.enclosingPosition, s"${info.name} as $baseType cannot be property\n\n" + info)
             //            throw new RuntimeException(s"${info.name} cannot be property")
           }
 
-          if (option && indexed) {
+          if (info.isOption && indexed) {
             val p0 = createBaseProperty(baseType)
             baseType match {
               case b if b.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" =>
@@ -368,10 +363,10 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
                 q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[$baseType]]"""
             }
 
-          } else if (option) {
+          } else if (info.isOption) {
             val p0 = createBaseProperty(baseType)
             q"""new com.xhachi.gae4s.datastore.OptionProperty($p0)"""
-          } else if (seq && indexed) {
+          } else if (info.isSeq && !info.json && indexed) {
             val p0 = createBaseProperty(baseType)
             baseType match {
               case b if b.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" =>
@@ -380,7 +375,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value]($propertyName) w
                 q"""new com.xhachi.gae4s.datastore.SeqProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Seq[$baseType]]"""
             }
 
-          } else if (seq) {
+          } else if (info.isSeq && !info.json) {
             val p0 = createBaseProperty(baseType)
             q"""new com.xhachi.gae4s.datastore.SeqProperty($p0)"""
           } else if (indexed) {
@@ -467,7 +462,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
   }
 }
 """
-    //        println(tree)
+    //    println(tree)
     tree
   }
 
