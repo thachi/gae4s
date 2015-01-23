@@ -143,6 +143,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
       val storeType = if ((isOption || (isSeq && !json)) && tpe.typeArgs.nonEmpty) tpe.typeArgs.head else tpe
       val isKey = storeType.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key"
+      val keyType: Type = storeType.typeArgs.headOption.getOrElse(NoType)
       val isScalaEnum = storeType.typeSymbol.fullName == "scala.Enumeration.Value"
       val isJavaEnum = 1 < storeType.baseClasses.size && storeType.baseClasses.drop(1).head.fullName == "java.lang.Enum"
 
@@ -267,14 +268,6 @@ $query.copy(sorts = Seq(meta.$s.desc))
           q"""new com.xhachi.gae4s.datastore.ModificationDateProperty(${info.stringName})"""
         }
         else {
-          val keyType: Type = memberType match {
-            case TypeRef(_, _, TypeRef(_, t, TypeRef(_, t2, _) :: Nil) :: Nil) if info.isContainer && t.fullName == "com.xhachi.gae4s.datastore.Key" => t2.asType.toType
-            case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if info.isContainer => NoType
-            case TypeRef(_, _, TypeRef(_, t, _) :: Nil) if memberType.typeSymbol.fullName == "com.xhachi.gae4s.datastore.Key" => t.asType.toType
-            case _ => NoType
-          }
-
-
 
           def createBaseProperty(t: Type): Tree = if (info.json) {
             q"""new com.xhachi.gae4s.datastore.JsonProperty[${info.storeType}](${info.stringName})"""
@@ -294,7 +287,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
           } else if (t =:= typeOf[Long]) {
             q"""new com.xhachi.gae4s.datastore.LongProperty(${info.stringName})"""
           } else if (info.isKey) {
-            q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType](${info.stringName})"""
+            q"""new com.xhachi.gae4s.datastore.KeyProperty[${info.keyType}](${info.stringName})"""
           } else if (info.isScalaEnum) {
 
             val enum = c.mirror.staticModule(info.scalaEnumName)
@@ -331,7 +324,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value](${info.stringNam
           } else if (t =:= typeOf[Long]) {
             q"""new com.xhachi.gae4s.datastore.LongProperty(${info.stringName}) with com.xhachi.gae4s.datastore.IndexedProperty[${info.storeType}]"""
           } else if (info.isKey) {
-            q"""new com.xhachi.gae4s.datastore.KeyProperty[$keyType](${info.stringName}) with com.xhachi.gae4s.datastore.IndexedProperty[${info.storeType}]"""
+            q"""new com.xhachi.gae4s.datastore.KeyProperty[${info.keyType}](${info.stringName}) with com.xhachi.gae4s.datastore.IndexedProperty[${info.storeType}]"""
           } else if (info.isScalaEnum) {
 
             val enum = c.mirror.staticModule(info.scalaEnumName)
@@ -354,7 +347,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value](${info.stringNam
             val p0 = createBaseProperty(info.storeType)
             info.storeType match {
               case b if info.isKey =>
-                q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[com.xhachi.gae4s.datastore.Key[$keyType]]]"""
+                q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[com.xhachi.gae4s.datastore.Key[${info.keyType}]]]"""
               case _ =>
                 q"""new com.xhachi.gae4s.datastore.OptionProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Option[${info.storeType}]]"""
             }
@@ -366,7 +359,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value](${info.stringNam
             val p0 = createBaseProperty(info.storeType)
             info.storeType match {
               case b if info.isKey =>
-                q"""new com.xhachi.gae4s.datastore.SeqProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Seq[com.xhachi.gae4s.datastore.Key[$keyType]]]"""
+                q"""new com.xhachi.gae4s.datastore.SeqProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Seq[com.xhachi.gae4s.datastore.Key[${info.keyType}]]]"""
               case _ =>
                 q"""new com.xhachi.gae4s.datastore.SeqProperty($p0) with com.xhachi.gae4s.datastore.IndexedProperty[Seq[${info.storeType}]]"""
             }
