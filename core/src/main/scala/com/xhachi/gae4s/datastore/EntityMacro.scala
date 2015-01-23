@@ -23,20 +23,23 @@ object EntityMacro {
   def filter[E <: Entity[E] : c.WeakTypeTag](c: BContext)(filter: c.Expr[E => Boolean]): c.Expr[Query[E]] = {
     import c.universe._
 
+    val h = new Helper[c.type](c)
+
+
     val query = c.prefix.tree
     val entityType = c.weakTypeOf[E]
     val metaName = TypeName(entityType.typeSymbol.name.decodedName + "MetaForFilter")
-    val name = findValueTermName(c)(filter.tree)
+    val name = h.findValueTermName(c)(filter.tree)
 
     name.map { n =>
-      val replacing = replaceAllIdent(c)(filter.tree, n, TermName("meta"))
-      val replacing1 = replaceAllSelectTermName(c)(replacing, TermName("$eq$eq"), TermName("isEqual"))
-      val replacing2 = replaceAllSelectTermName(c)(replacing1, TermName("$greater$eq"), TermName("isGreaterThanOrEqual"))
-      val replacing3 = replaceAllSelectTermName(c)(replacing2, TermName("$less$eq"), TermName("isLessThanOrEqual"))
-      val replacing4 = replaceAllSelectTermName(c)(replacing3, TermName("$greater"), TermName("isGreaterThan"))
-      val replacing5 = replaceAllSelectTermName(c)(replacing4, TermName("$less"), TermName("isLessThan"))
-      val replacing6 = replaceAllSelectTermName(c)(replacing5, TermName("$bang$eq"), TermName("isNotEqual"))
-      val replaced = findTopFunctionBody(c)(replacing6).map(replaceAll(c)(_))
+      val replacing = h.replaceAllIdent(c)(filter.tree, n, TermName("meta"))
+      val replacing1 = h.replaceAllSelectTermName(c)(replacing, TermName("$eq$eq"), TermName("isEqual"))
+      val replacing2 = h.replaceAllSelectTermName(c)(replacing1, TermName("$greater$eq"), TermName("isGreaterThanOrEqual"))
+      val replacing3 = h.replaceAllSelectTermName(c)(replacing2, TermName("$less$eq"), TermName("isLessThanOrEqual"))
+      val replacing4 = h.replaceAllSelectTermName(c)(replacing3, TermName("$greater"), TermName("isGreaterThan"))
+      val replacing5 = h.replaceAllSelectTermName(c)(replacing4, TermName("$less"), TermName("isLessThan"))
+      val replacing6 = h.replaceAllSelectTermName(c)(replacing5, TermName("$bang$eq"), TermName("isNotEqual"))
+      val replaced = h.findTopFunctionBody(c)(replacing6).map(h.replaceAll(c)(_))
 
       replaced.map {
         r =>
@@ -62,13 +65,14 @@ $query.copy(filterOption = Some(f))
 
   private def _sort[E <: Entity[E] : c.WeakTypeTag](c: BContext)(sort: c.Expr[E => Any], asc: Boolean): c.Expr[Query[E]] = {
     import c.universe._
+    val h = new Helper[c.type](c)
     //    println(s"---- SORT ----\n\n$sort\n\n--------------")
 
     val query = c.prefix.tree
     val entityType = c.weakTypeOf[E]
     val metaName = TypeName(entityType.typeSymbol.name.decodedName + "MetaForSort")
 
-    val names = findValueTermName(c)(sort.tree)
+    val names = h.findValueTermName(c)(sort.tree)
 
     names.map {
       valName =>
@@ -468,6 +472,11 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
     tree
   }
 
+}
+
+
+class Helper[C <: BContext](val c: C) {
+
 
   def findValueTermName[E <: Entity[E] : c.WeakTypeTag](c: BContext)(tree: c.Tree): Option[c.TermName] = {
     import c.universe._
@@ -587,5 +596,6 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
       }
     }.transform(tree)
   }
+
 
 }
