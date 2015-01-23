@@ -19,7 +19,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
 
   def kind: String = implicitly[ClassTag[E]].runtimeClass.getName
 
-  val key = new KeyProperty[Entity]("__key__")
+  val key = new KeyProperty[Entity]("__key__") with IndexedProperty[Key[Entity]]
 
   def properties: Seq[Property[_]] = Seq(key)
 

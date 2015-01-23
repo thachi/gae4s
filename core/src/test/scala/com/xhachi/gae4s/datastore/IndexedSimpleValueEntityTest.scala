@@ -19,13 +19,14 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[IndexedSimpleValueEntity]
 
-    assert(meta.properties.size == 25)
+    assert(meta.properties.size == 26)
 
     for (p <- meta.properties) {
       assert(p.isInstanceOf[IndexedProperty[_]], p.name)
       assert(!p.isInstanceOf[OptionProperty[_]], p.name)
     }
 
+    assert(meta.property("userKey").get.isInstanceOf[KeyProperty[_]])
     assert(meta.property("string").get.isInstanceOf[StringProperty])
     assert(meta.property("int").get.isInstanceOf[IntProperty])
     assert(meta.property("long").get.isInstanceOf[LongProperty])
@@ -60,7 +61,10 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val key = Datastore.allocateKey[IndexedSimpleValueEntity]
     val key2 = Datastore.allocateKey[IndexedSimpleValueEntity]
+
+    val userKey = Datastore.allocateKey[User]
     val e = new IndexedSimpleValueEntity(key)
+    e.userKey = userKey
     e.string = "test_string"
     e.int = 1
     e.long = 2
@@ -89,6 +93,7 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     Datastore.put(e)
 
     val a = Datastore.get(key)
+    assert(e.userKey == a.userKey)
     assert(e.string == a.string)
     assert(e.int == a.int)
     assert(e.long == a.long)
@@ -141,6 +146,7 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class IndexedSimpleValueEntity(val key: Key[IndexedSimpleValueEntity]) extends Entity[IndexedSimpleValueEntity] {
+  @indexed var userKey: Key[User] = Datastore.allocateKey[User]
   @indexed var string: String = ""
   @indexed var int: Int = 0
   @indexed var long: Long = 0
@@ -173,8 +179,6 @@ class IndexedSimpleValueEntity(val key: Key[IndexedSimpleValueEntity]) extends E
   @serialize
   var serializable: SerializableValue = SerializableValue("")
 }
-
-
 
 
 

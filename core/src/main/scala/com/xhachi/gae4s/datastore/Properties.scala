@@ -152,7 +152,7 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
   }
 }
 
-class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] with IndexedProperty[Key[E]] {
+class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] {
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
     case k: LLKey => Key[E](k)
@@ -163,8 +163,6 @@ class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] wit
     case v: Key[E] => value.key
     case _ => null
   }
-
-  override val compare: (Key[E], Key[E]) => Int = (v1, v2) => v1.key.compareTo(v2.key)
 }
 
 class LongProperty(name: String) extends ValueProperty[Long](name) {

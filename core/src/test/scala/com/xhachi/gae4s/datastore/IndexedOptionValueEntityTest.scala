@@ -1,28 +1,27 @@
 package com.xhachi.gae4s.datastore
 
-import java.math
 import java.math.BigInteger
 import java.util.Date
 
 import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.{json, serialize}
+import com.xhachi.gae4s.datastore.annotations.indexed
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
-class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
+class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  test("OptionValueEntityのMetaが正しく生成されること") {
+  test("IndexedOptionValueEntityのMetaが正しく生成されること") {
 
-    val meta = EntityMeta.createMeta[OptionValueEntity]
+    val meta = EntityMeta.createMeta[IndexedOptionValueEntity]
 
-    assert(meta.properties.size == 26)
+    assert(meta.properties.size == 22)
 
     for (p <- meta.properties) {
-      assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
+      assert(p.isInstanceOf[IndexedProperty[_]], p.name)
       assert(p.isInstanceOf[OptionProperty[_]], p.name)
     }
 
@@ -49,18 +48,13 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(meta.property("bigInt").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BigIntProperty])
     assert(meta.property("bigDecimal").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BigDecimalProperty])
     assert(meta.property("javaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
-    assert(meta.property("scalaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
-    assert(meta.property("byteArray").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[ByteArrayProperty])
-    assert(meta.property("json").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[JsonProperty[_]])
-    assert(meta.property("json").get.asInstanceOf[OptionProperty[_]].property.propertyType == classOf[JsonValue])
-    assert(meta.property("serializable").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[SerializableProperty[_]])
-    assert(meta.property("serializable").get.asInstanceOf[OptionProperty[_]].property.propertyType == classOf[SerializableValue])
+//    assert(meta.property("scalaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
   }
 
   test("保存して読み込めること") {
 
-    val key = Datastore.allocateKey[OptionValueEntity]
-    val e = new OptionValueEntity(key)
+    val key = Datastore.allocateKey[IndexedOptionValueEntity]
+    val e = new IndexedOptionValueEntity(key)
     e.userKey = Some(Datastore.allocateKey)
     e.string = Some("test_string")
     e.int = Some(1)
@@ -81,12 +75,9 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.rating = Some(new Rating(99))
     e.blobKey = Some(new BlobKey("123"))
     e.bigInt = Some(new BigInt(new BigInteger("12345678")))
-    e.bigDecimal = Some(new BigDecimal(new math.BigDecimal("12345678")))
+    e.bigDecimal = Some(new BigDecimal(new java.math.BigDecimal("12345678")))
     e.javaEnum = Some(JavaEnum.JAVA_ENUM2)
-    e.scalaEnum = Some(ScalaEnum.ScalaEnum2)
-    e.byteArray = Some("test_byte_array".getBytes("UTF-8"))
-    e.json = Some(JsonValue("hoge"))
-    e.serializable = Some(SerializableValue("fuga"))
+//    e.scalaEnum = Some(ScalaEnum.ScalaEnum2)
     Datastore.put(e)
 
     val a = Datastore.get(key)
@@ -112,41 +103,34 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bigInt == a.bigInt)
     assert(e.bigDecimal == a.bigDecimal)
     assert(e.javaEnum == a.javaEnum)
-    assert(e.scalaEnum == a.scalaEnum)
-    assert(e.byteArray.get.zip(a.byteArray.get).filterNot(b => b._1 == b._2).isEmpty)
-    assert(e.json == a.json)
-    assert(e.serializable == a.serializable)
-
+//    assert(e.scalaEnum == a.scalaEnum)
   }
 }
 
-class OptionValueEntity(val key: Key[OptionValueEntity]) extends Entity[OptionValueEntity] {
-  var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
-  var string: Option[String] = Some("")
-  var int: Option[Int] = Some(0)
-  var long: Option[Long] = Some(0)
-  var double: Option[Double] = Some(0)
-  var bool: Option[Boolean] = Some(false)
-  var date: Option[Date] = Some(new Date(0))
-  var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
-  var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
-  var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
-  var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
-  var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
-  var email: Option[Email] = Some(new Email("eample@example.com"))
-  var user: Option[com.google.appengine.api.users.User] = Some(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
-  var imHandle: Option[IMHandle] = Some(null)
-  var link: Option[Link] = Some(new Link("http://google.com"))
-  var category: Option[Category] = Some(new Category("category"))
-  var rating: Option[Rating] = Some(new Rating(0))
-  var blobKey: Option[BlobKey] = Some(new BlobKey(""))
-  var bigInt: Option[BigInt] = Some(BigInt(0))
-  var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
-  var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
-  var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
-  var byteArray: Option[Array[Byte]] = Some("byte_array".getBytes("UTF-8"))
-  @json var json: Option[JsonValue] = Some(JsonValue("test"))
-  @serialize var serializable: Option[SerializableValue] = Some(SerializableValue(""))
+class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends Entity[IndexedOptionValueEntity] {
+  @indexed var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
+  @indexed var string: Option[String] = Some("")
+  @indexed var int: Option[Int] = Some(0)
+  @indexed var long: Option[Long] = Some(0)
+  @indexed var double: Option[Double] = Some(0)
+  @indexed var bool: Option[Boolean] = Some(false)
+  @indexed var date: Option[Date] = Some(new Date(0))
+  @indexed var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
+  @indexed var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
+  @indexed var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
+  @indexed var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
+  @indexed var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
+  @indexed var email: Option[Email] = Some(new Email("eample@example.com"))
+  @indexed var user: Option[com.google.appengine.api.users.User] = Some(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
+  @indexed var imHandle: Option[IMHandle] = Some(null)
+  @indexed var link: Option[Link] = Some(new Link("http://google.com"))
+  @indexed var category: Option[Category] = Some(new Category("category"))
+  @indexed var rating: Option[Rating] = Some(new Rating(0))
+  @indexed var blobKey: Option[BlobKey] = Some(new BlobKey(""))
+  @indexed var bigInt: Option[BigInt] = Some(BigInt(0))
+  @indexed var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
+  @indexed var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
+//  @indexed var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
 }
 
 
