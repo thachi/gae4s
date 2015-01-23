@@ -83,8 +83,8 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.javaEnum = JavaEnum.JAVA_ENUM2
     e.scalaEnum = ScalaEnum.ScalaEnum2
     e.byteArray = "test_byte_array".getBytes("UTF-8")
-    e.json = new JsonValue("hoge")
-    e.serializable = new SerializableValue("fuga")
+    e.json = JsonValue("hoge")
+    e.serializable = SerializableValue("fuga")
     Datastore.put(e)
 
     val a = Datastore.get(key)

@@ -83,8 +83,8 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.javaEnum = Some(JavaEnum.JAVA_ENUM2)
     e.scalaEnum = Some(ScalaEnum.ScalaEnum2)
     e.byteArray = Some("test_byte_array".getBytes("UTF-8"))
-    e.json = Some(new JsonValue("hoge"))
-    e.serializable = Some(new SerializableValue("fuga"))
+    e.json = Some(JsonValue("hoge"))
+    e.serializable = Some(SerializableValue("fuga"))
     Datastore.put(e)
 
     val a = Datastore.get(key)

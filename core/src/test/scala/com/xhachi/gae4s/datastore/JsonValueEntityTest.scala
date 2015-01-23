@@ -9,7 +9,7 @@ class JsonValueEntityTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  test("SimpleValueEntityのMetaが正しく生成されること") {
+  test("JsonValueEntityのMetaが正しく生成されること") {
 
     val meta = EntityMeta.createMeta[JsonValueEntity]
 
@@ -32,14 +32,15 @@ class JsonValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val key = Datastore.allocateKey[JsonValueEntity]
     val e = new JsonValueEntity(key)
-    e.json = new JsonValue("hoge")
-    e.jsonOption = Some(new JsonValue("hoge"))
+    e.json = JsonValue("hoge")
+    e.jsonOption = Some(JsonValue("hoge1"))
+    e.jsonSeq = Seq(JsonValue("hoge2"), JsonValue("hoge3"))
     Datastore.put(e)
 
     val a = Datastore.get(key)
     assert(e.json == a.json)
     assert(e.jsonOption == a.jsonOption)
-//    assert(e.jsonSeq == a.jsonSeq)
+    assert(e.jsonSeq == a.jsonSeq)
 
   }
 }
