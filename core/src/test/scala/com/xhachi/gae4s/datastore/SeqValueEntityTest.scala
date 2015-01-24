@@ -6,6 +6,7 @@ import java.util.Date
 
 import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
+import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
@@ -18,34 +19,42 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[SeqValueEntity]
 
-    assert(meta.properties.size == 22)
+    assert(meta.properties.size == 23)
 
     for (p <- meta.properties) {
       assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
       assert(p.isInstanceOf[SeqProperty[_]], p.name)
     }
 
-    assert(meta.property("string").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[StringProperty])
-    assert(meta.property("int").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[IntProperty])
-    assert(meta.property("long").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[LongProperty])
-    assert(meta.property("double").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[DoubleProperty])
-    assert(meta.property("bool").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[BooleanProperty])
-    assert(meta.property("date").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[DateProperty])
-    assert(meta.property("geoPt").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[GeoPtProperty])
-    assert(meta.property("shortBlob").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[ShortBlobProperty])
-    assert(meta.property("blob").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[BlobProperty])
-    assert(meta.property("postalAddress").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[PostalAddressProperty])
-    assert(meta.property("phoneNumber").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[PhoneNumberProperty])
-    assert(meta.property("email").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[EmailProperty])
-    assert(meta.property("user").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[UserProperty])
-    assert(meta.property("imHandle").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[IMHandleProperty])
-    assert(meta.property("link").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[LinkProperty])
-    assert(meta.property("category").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[CategoryProperty])
-    assert(meta.property("rating").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[RatingProperty])
-    assert(meta.property("blobKey").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[BlobKeyProperty])
+    def assertProperty(name: String, propertyType: Class[_]) = {
+      assert(meta.property(name).isDefined)
+      assert(meta.property(name).get.isInstanceOf[SeqProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[ValueProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[SeqProperty[_]].property.asInstanceOf[ValueProperty[_]].propertyType == propertyType)
+    }
 
-    assert(meta.property("bigInt").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[BigIntProperty])
-    assert(meta.property("bigDecimal").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[BigDecimalProperty])
+    assert(meta.property("userKey").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[KeyProperty[_]])
+    assertProperty("string", classOf[String])
+    assertProperty("int", classOf[Int])
+    assertProperty("long", classOf[Long])
+    assertProperty("double", classOf[Double])
+    assertProperty("bool", classOf[Boolean])
+    assertProperty("date", classOf[Date])
+    assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("shortBlob", classOf[ShortBlob])
+    assertProperty("blob", classOf[Blob])
+    assertProperty("postalAddress", classOf[PostalAddress])
+    assertProperty("phoneNumber", classOf[PhoneNumber])
+    assertProperty("email", classOf[Email])
+    assertProperty("user", classOf[users.User])
+    assertProperty("imHandle", classOf[IMHandle])
+    assertProperty("link", classOf[Link])
+    assertProperty("category", classOf[Category])
+    assertProperty("rating", classOf[Rating])
+    assertProperty("blobKey", classOf[BlobKey])
+    assertProperty("bigInt", classOf[BigInt])
+    assertProperty("bigDecimal", classOf[BigDecimal])
+
     assert(meta.property("javaEnum").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
     assert(meta.property("scalaEnum").get.asInstanceOf[SeqProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
   }
@@ -54,6 +63,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val key = Datastore.allocateKey[SeqValueEntity]
     val e = new SeqValueEntity(key)
+    e.userKey = Seq(Datastore.allocateKey[User], Datastore.allocateKey[User])
     e.string = Seq("test_string")
     e.int = Seq(1)
     e.long = Seq(2)
@@ -79,6 +89,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
     Datastore.put(e)
 
     val a = Datastore.get(key)
+    assert(e.userKey == a.userKey)
     assert(e.string == a.string)
     assert(e.int == a.int)
     assert(e.long == a.long)
@@ -106,6 +117,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SeqValueEntity(val key: Key[SeqValueEntity]) extends Entity[SeqValueEntity] {
+  var userKey: Seq[Key[User]] = Seq(Datastore.allocateKey[User])
   var string: Seq[String] = Seq("")
   var int: Seq[Int] = Seq(0)
   var long: Seq[Long] = Seq(0)

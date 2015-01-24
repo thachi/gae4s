@@ -6,8 +6,9 @@ import java.util.Date
 
 import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
+import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.{serialize, json}
+import com.xhachi.gae4s.datastore.annotations.{json, serialize}
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -19,34 +20,41 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[SimpleValueEntity]
 
-    assert(meta.properties.size == 25)
+    assert(meta.properties.size == 26)
 
     for (p <- meta.properties) {
       assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
       assert(!p.isInstanceOf[OptionProperty[_]], p.name)
     }
 
-    assert(meta.property("string").get.isInstanceOf[StringProperty])
-    assert(meta.property("int").get.isInstanceOf[IntProperty])
-    assert(meta.property("long").get.isInstanceOf[LongProperty])
-    assert(meta.property("double").get.isInstanceOf[DoubleProperty])
-    assert(meta.property("bool").get.isInstanceOf[BooleanProperty])
-    assert(meta.property("date").get.isInstanceOf[DateProperty])
-    assert(meta.property("geoPt").get.isInstanceOf[GeoPtProperty])
-    assert(meta.property("shortBlob").get.isInstanceOf[ShortBlobProperty])
-    assert(meta.property("blob").get.isInstanceOf[BlobProperty])
-    assert(meta.property("postalAddress").get.isInstanceOf[PostalAddressProperty])
-    assert(meta.property("phoneNumber").get.isInstanceOf[PhoneNumberProperty])
-    assert(meta.property("email").get.isInstanceOf[EmailProperty])
-    assert(meta.property("user").get.isInstanceOf[UserProperty])
-    assert(meta.property("imHandle").get.isInstanceOf[IMHandleProperty])
-    assert(meta.property("link").get.isInstanceOf[LinkProperty])
-    assert(meta.property("category").get.isInstanceOf[CategoryProperty])
-    assert(meta.property("rating").get.isInstanceOf[RatingProperty])
-    assert(meta.property("blobKey").get.isInstanceOf[BlobKeyProperty])
+    def assertProperty(name: String, propertyType: Class[_]) = {
+      assert(meta.property(name).isDefined)
+      assert(meta.property(name).get.isInstanceOf[ValueProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[ValueProperty[_]].propertyType == propertyType)
+    }
 
-    assert(meta.property("bigInt").get.isInstanceOf[BigIntProperty])
-    assert(meta.property("bigDecimal").get.isInstanceOf[BigDecimalProperty])
+    assert(meta.property("userKey").get.isInstanceOf[KeyProperty[_]])
+    assertProperty("string", classOf[String])
+    assertProperty("int", classOf[Int])
+    assertProperty("long", classOf[Long])
+    assertProperty("double", classOf[Double])
+    assertProperty("bool", classOf[Boolean])
+    assertProperty("date", classOf[Date])
+    assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("shortBlob", classOf[ShortBlob])
+    assertProperty("blob", classOf[Blob])
+    assertProperty("postalAddress", classOf[PostalAddress])
+    assertProperty("phoneNumber", classOf[PhoneNumber])
+    assertProperty("email", classOf[Email])
+    assertProperty("user", classOf[users.User])
+    assertProperty("imHandle", classOf[IMHandle])
+    assertProperty("link", classOf[Link])
+    assertProperty("category", classOf[Category])
+    assertProperty("rating", classOf[Rating])
+    assertProperty("blobKey", classOf[BlobKey])
+    assertProperty("bigInt", classOf[BigInt])
+    assertProperty("bigDecimal", classOf[BigDecimal])
+
     assert(meta.property("javaEnum").get.isInstanceOf[StringStoreProperty[_]])
     assert(meta.property("scalaEnum").get.isInstanceOf[StringStoreProperty[_]])
     assert(meta.property("byteArray").get.isInstanceOf[ByteArrayProperty])
@@ -60,6 +68,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val key = Datastore.allocateKey[SimpleValueEntity]
     val e = new SimpleValueEntity(key)
+    e.userKey = Datastore.allocateKey[User]
     e.string = "test_string"
     e.int = 1
     e.long = 2
@@ -88,6 +97,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     Datastore.put(e)
 
     val a = Datastore.get(key)
+    assert(e.userKey == a.userKey)
     assert(e.string == a.string)
     assert(e.int == a.int)
     assert(e.long == a.long)
@@ -118,6 +128,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleValueEntity] {
+  var userKey: Key[User] = Datastore.allocateKey[User]
   var string: String = ""
   var int: Int = 0
   var long: Long = 0

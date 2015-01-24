@@ -5,6 +5,7 @@ import java.util.Date
 
 import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
+import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.xhachi.gae4s.datastore.annotations.indexed
 import com.xhachi.gae4s.tests.AppEngineTestSuite
@@ -19,34 +20,38 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     val meta = EntityMeta.createMeta[IndexedOptionValueEntity]
 
     assert(meta.properties.size == 22)
+    assert(meta.property("userKey").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[KeyProperty[_]])
 
-    for (p <- meta.properties) {
-      assert(p.isInstanceOf[IndexedProperty[_]], p.name)
-      assert(p.isInstanceOf[OptionProperty[_]], p.name)
+    def assertProperty(name: String, propertyType: Class[_]) = {
+      assert(meta.property(name).isDefined)
+      assert(meta.property(name).get.isInstanceOf[IndexedProperty[_]])
+      assert(meta.property(name).get.isInstanceOf[OptionProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[ValueProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.asInstanceOf[ValueProperty[_]].propertyType == propertyType)
     }
 
-    assert(meta.property("userKey").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[KeyProperty[_]])
-    assert(meta.property("string").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringProperty])
-    assert(meta.property("int").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[IntProperty])
-    assert(meta.property("long").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[LongProperty])
-    assert(meta.property("double").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[DoubleProperty])
-    assert(meta.property("bool").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BooleanProperty])
-    assert(meta.property("date").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[DateProperty])
-    assert(meta.property("geoPt").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[GeoPtProperty])
-    assert(meta.property("shortBlob").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[ShortBlobProperty])
-    assert(meta.property("blob").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BlobProperty])
-    assert(meta.property("postalAddress").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[PostalAddressProperty])
-    assert(meta.property("phoneNumber").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[PhoneNumberProperty])
-    assert(meta.property("email").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[EmailProperty])
-    assert(meta.property("user").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[UserProperty])
-    assert(meta.property("imHandle").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[IMHandleProperty])
-    assert(meta.property("link").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[LinkProperty])
-    assert(meta.property("category").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[CategoryProperty])
-    assert(meta.property("rating").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[RatingProperty])
-    assert(meta.property("blobKey").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BlobKeyProperty])
+    assertProperty("string", classOf[String])
+    assertProperty("int", classOf[Int])
+    assertProperty("long", classOf[Long])
+    assertProperty("double", classOf[Double])
+    assertProperty("bool", classOf[Boolean])
+    assertProperty("date", classOf[Date])
+    assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("shortBlob", classOf[ShortBlob])
+    assertProperty("blob", classOf[Blob])
+    assertProperty("postalAddress", classOf[PostalAddress])
+    assertProperty("phoneNumber", classOf[PhoneNumber])
+    assertProperty("email", classOf[Email])
+    assertProperty("user", classOf[users.User])
+    assertProperty("imHandle", classOf[IMHandle])
+    assertProperty("link", classOf[Link])
+    assertProperty("category", classOf[Category])
+    assertProperty("rating", classOf[Rating])
+    assertProperty("blobKey", classOf[BlobKey])
 
-    assert(meta.property("bigInt").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BigIntProperty])
-    assert(meta.property("bigDecimal").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[BigDecimalProperty])
+    assertProperty("bigInt", classOf[BigInt])
+    assertProperty("bigDecimal", classOf[BigDecimal])
+
     assert(meta.property("javaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
 //    assert(meta.property("scalaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
   }
