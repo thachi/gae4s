@@ -244,7 +244,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
       if (!info.transient) {
 
         def isValueType(memberType: Type): Boolean = Seq(
-          //              typeOf[String],
+          //      typeOf[String],
           //      typeOf[Short], typeOf[Int], typeOf[Integer], typeOf[Long], typeOf[Float], typeOf[Double],
           typeOf[BigInt], typeOf[BigDecimal],
           typeOf[Boolean],
@@ -257,8 +257,6 @@ $query.copy(sorts = Seq(meta.$s.desc))
           typeOf[IMHandle], typeOf[Link], typeOf[Category], typeOf[Rating],
           typeOf[EmbeddedEntity]
         ).exists(_ =:= memberType)
-
-        val memberType = info.tpe
 
         val propertyTree = if (info.version) {
           q"""new com.xhachi.gae4s.datastore.VersionProperty(${info.stringName})"""
@@ -311,7 +309,7 @@ new com.xhachi.gae4s.datastore.StringStoreProperty[$enum.Value](${info.stringNam
           } else if (info.serializable) {
             q"""new com.xhachi.gae4s.datastore.SerializableProperty[${info.storeType}](${info.stringName}) with com.xhachi.gae4s.datastore.IndexedProperty[${info.storeType}]"""
           } else if (isValueType(t)) {
-            val propertyTypeName = TypeName(t.typeSymbol.asType.name + "Property")
+            val propertyTypeName = TypeName(t.typeSymbol.asType.name.toTypeName + "Property")
             q"""new com.xhachi.gae4s.datastore.$propertyTypeName(${info.stringName}) with com.xhachi.gae4s.datastore.IndexedProperty[${info.storeType}]"""
           } else if (t =:= typeOf[String]) {
             q"""new com.xhachi.gae4s.datastore.StringProperty(${info.stringName}) with com.xhachi.gae4s.datastore.IndexedProperty[${info.storeType}]"""
@@ -583,6 +581,7 @@ class Helper[C <: BContext](val c: C) {
   def hasAnnotation(member: c.Symbol, tpe: c.Type): Boolean = {
     member.annotations.exists(_.tree.tpe =:= tpe) || hasAnnotationInConstructorParam(member, tpe)
   }
+
   def hasAnnotationInConstructorParam(member: c.Symbol, tpe: c.Type): Boolean = {
     import c.universe._
 
