@@ -268,20 +268,20 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
           def toTypeDesc(typeName: String, typeArg: Option[Type] = None) = TypeDesc(c.mirror.staticClass(typeName), typeArg)
 
-          case class PropertyDesc(base: TypeDesc, arg: Tree, withTrait: Option[TypeDesc] = None, body: Seq[Tree] = Nil) {
+          case class PropertyDesc(base: TypeDesc, arg: Tree, withTrait: Seq[TypeDesc] = Nil, body: Seq[Tree] = Nil) {
 
             def treeAsInstance = (base.typeArg, withTrait) match {
-              case (None, None) =>
+              case (None, Nil) =>
                 q"""new ${base.tpe}($arg) {..$body}"""
-              case (None, Some(TypeDesc(t, None))) =>
+              case (None, TypeDesc(t, None) :: Nil) =>
                 q"""new ${base.tpe}($arg) with $t {..$body}"""
-              case (None, Some(TypeDesc(t, Some(traitTypeArg)))) =>
+              case (None, TypeDesc(t, Some(traitTypeArg)) :: Nil) =>
                 q"""new ${base.tpe}($arg) with $t[$traitTypeArg] {..$body}"""
-              case (Some(typeArg), None) =>
+              case (Some(typeArg), Nil) =>
                 q"""new ${base.tpe}[$typeArg]($arg) {..$body}"""
-              case (Some(typeArg), Some(TypeDesc(t, None))) =>
+              case (Some(typeArg), TypeDesc(t, None) :: Nil) =>
                 q"""new ${base.tpe}[$typeArg]($arg) with $t {..$body}"""
-              case (Some(typeArg), Some(TypeDesc(t, Some(traitTypeArg)))) =>
+              case (Some(typeArg), TypeDesc(t, Some(traitTypeArg)) :: Nil) =>
                 q"""new ${base.tpe}[$typeArg]($arg) with $t[$traitTypeArg] {..$body}"""
             }
           }
@@ -329,7 +329,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
           }
 
           val p2 = if (info.indexed) {
-            p1.copy(withTrait = Some(toTypeDesc("com.xhachi.gae4s.datastore.IndexedProperty", Some(info.tpe))))
+            p1.copy(withTrait = Seq(toTypeDesc("com.xhachi.gae4s.datastore.IndexedProperty", Some(info.tpe))))
           } else {
             p1
           }
