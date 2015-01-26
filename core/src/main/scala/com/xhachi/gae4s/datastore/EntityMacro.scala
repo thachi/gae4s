@@ -264,25 +264,25 @@ $query.copy(sorts = Seq(meta.$s.desc))
         }
         else {
 
-          case class TypeDesc(tpe: Symbol, typeArgs: Seq[Type] = Nil)
+          case class TypeDesc(tpe: Symbol, ta: Seq[Type] = Nil)
 
           def toTypeDesc(typeName: String, typeArg: Seq[Type] = Nil) = TypeDesc(c.mirror.staticClass(typeName), typeArg)
 
           case class PropertyDesc(base: TypeDesc, arg: Tree, withTrait: Seq[TypeDesc] = Nil, body: Seq[Tree] = Nil) {
 
-            def treeAsInstance = (base.typeArgs, withTrait) match {
+            def treeAsInstance = (base.ta, withTrait) match {
               case (Nil, Nil) =>
                 q"""new ${base.tpe}($arg) {..$body}"""
               case (Nil, TypeDesc(t, Nil) :: Nil) =>
                 q"""new ${base.tpe}($arg) with $t {..$body}"""
-              case (Nil, TypeDesc(t, Seq(traitTypeArg)) :: Nil) =>
-                q"""new ${base.tpe}($arg) with $t[$traitTypeArg] {..$body}"""
-              case (Seq(typeArg), Nil) =>
-                q"""new ${base.tpe}[$typeArg]($arg) {..$body}"""
-              case (Seq(typeArg), TypeDesc(t, Nil) :: Nil) =>
-                q"""new ${base.tpe}[$typeArg]($arg) with $t {..$body}"""
-              case (Seq(typeArg), TypeDesc(t, Seq(traitTypeArg)) :: Nil) =>
-                q"""new ${base.tpe}[$typeArg]($arg) with $t[$traitTypeArg] {..$body}"""
+              case (Nil, TypeDesc(t, tas) :: Nil) =>
+                q"""new ${base.tpe}($arg) with $t[..$tas] {..$body}"""
+              case (_, Nil) =>
+                q"""new ${base.tpe}[..${base.ta}]($arg) {..$body}"""
+              case (_, TypeDesc(t, Nil) :: Nil) =>
+                q"""new ${base.tpe}[..${base.ta}]($arg) with $t {..$body}"""
+              case (_, TypeDesc(t, tas) :: Nil) =>
+                q"""new ${base.tpe}[..${base.ta}]($arg) with $t[..$tas] {..$body}"""
             }
           }
 
