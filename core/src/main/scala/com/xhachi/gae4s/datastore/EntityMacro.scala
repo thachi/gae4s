@@ -264,32 +264,32 @@ $query.copy(sorts = Seq(meta.$s.desc))
         }
         else {
 
-          case class TypeDesc(tpe: Symbol, typeArg: Option[Type] = None)
+          case class TypeDesc(tpe: Symbol, typeArgs: Seq[Type] = Nil)
 
-          def toTypeDesc(typeName: String, typeArg: Option[Type] = None) = TypeDesc(c.mirror.staticClass(typeName), typeArg)
+          def toTypeDesc(typeName: String, typeArg: Seq[Type] = Nil) = TypeDesc(c.mirror.staticClass(typeName), typeArg)
 
           case class PropertyDesc(base: TypeDesc, arg: Tree, withTrait: Seq[TypeDesc] = Nil, body: Seq[Tree] = Nil) {
 
-            def treeAsInstance = (base.typeArg, withTrait) match {
-              case (None, Nil) =>
+            def treeAsInstance = (base.typeArgs, withTrait) match {
+              case (Nil, Nil) =>
                 q"""new ${base.tpe}($arg) {..$body}"""
-              case (None, TypeDesc(t, None) :: Nil) =>
+              case (Nil, TypeDesc(t, Nil) :: Nil) =>
                 q"""new ${base.tpe}($arg) with $t {..$body}"""
-              case (None, TypeDesc(t, Some(traitTypeArg)) :: Nil) =>
+              case (Nil, TypeDesc(t, Seq(traitTypeArg)) :: Nil) =>
                 q"""new ${base.tpe}($arg) with $t[$traitTypeArg] {..$body}"""
-              case (Some(typeArg), Nil) =>
+              case (Seq(typeArg), Nil) =>
                 q"""new ${base.tpe}[$typeArg]($arg) {..$body}"""
-              case (Some(typeArg), TypeDesc(t, None) :: Nil) =>
+              case (Seq(typeArg), TypeDesc(t, Nil) :: Nil) =>
                 q"""new ${base.tpe}[$typeArg]($arg) with $t {..$body}"""
-              case (Some(typeArg), TypeDesc(t, Some(traitTypeArg)) :: Nil) =>
+              case (Seq(typeArg), TypeDesc(t, Seq(traitTypeArg)) :: Nil) =>
                 q"""new ${base.tpe}[$typeArg]($arg) with $t[$traitTypeArg] {..$body}"""
             }
           }
 
           def getPropertyDesc(t: Type): PropertyDesc = if (info.json) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.JsonProperty", Some(info.storeType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.JsonProperty", Seq(info.storeType)), q"""${info.stringName}""")
           } else if (info.serializable) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SerializableProperty", Some(info.storeType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SerializableProperty", Seq(info.storeType)), q"""${info.stringName}""")
           } else if (isValueType(t)) {
             val propertyTypeName = TypeName(t.typeSymbol.asType.name.toTypeName + "Property")
             PropertyDesc(toTypeDesc(s"com.xhachi.gae4s.datastore.$propertyTypeName"), q"""${info.stringName}""")
@@ -304,12 +304,12 @@ $query.copy(sorts = Seq(meta.$s.desc))
           } else if (t =:= typeOf[Long]) {
             PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.LongProperty"), q"""${info.stringName}""")
           } else if (info.isKey) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.KeyProperty", Some(info.keyType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.KeyProperty", Seq(info.keyType)), q"""${info.stringName}""")
           } else if (info.isJavaEnum) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumProperty", Some(info.storeType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumProperty", Seq(info.storeType)), q"""${info.stringName}""")
           } else if (info.isScalaEnum) {
             val enum = c.mirror.staticModule(info.scalaEnumName)
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.StringStoreProperty", Some(info.storeType)),
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.StringStoreProperty", Seq(info.storeType)),
               q"""${info.stringName}""",
               body = Seq(
                 q"override def fromString(value: String): $enum.Value = $enum.withName(value)",
@@ -321,15 +321,15 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
           val p0 = getPropertyDesc(info.storeType)
           val p1 = if (info.isOption) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.OptionProperty", Some(info.storeType)), p0.treeAsInstance)
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.OptionProperty", Seq(info.storeType)), p0.treeAsInstance)
           } else if (info.isSeq && !info.json) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SeqProperty", Some(info.storeType)), p0.treeAsInstance)
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SeqProperty", Seq(info.storeType)), p0.treeAsInstance)
           } else {
             p0
           }
 
           val p2 = if (info.indexed) {
-            p1.copy(withTrait = Seq(toTypeDesc("com.xhachi.gae4s.datastore.IndexedProperty", Some(info.tpe))))
+            p1.copy(withTrait = Seq(toTypeDesc("com.xhachi.gae4s.datastore.IndexedProperty", Seq(info.tpe))))
           } else {
             p1
           }
