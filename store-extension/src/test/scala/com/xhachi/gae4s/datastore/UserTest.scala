@@ -381,6 +381,31 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     assert(filter4.asSeq.size == 2)
     assert(filter4.asSeq(all).size == 2)
   }
+
+  test("filterでnullでの検索を試す") {
+    createTaroJiroSaburo()
+    val all = UserStore.query.asSeq
+
+    val filter1 = UserStore.query.filter(_.mobilePhone == None)
+    assert(filter1.asSeq.size == 1)
+    //FIXME: 今はまだOptionはフィルタできないです
+    //    assert(filter1.asSeq(all).size == 1)
+
+    val filter2 = UserStore.query.filter(_.mobilePhone != None)
+    assert(filter2.asSeq.size == 2)
+    //FIXME: 今はまだOptionはフィルタできないです
+    //    assert(filter2.asSeq(all).size == 2)
+
+    val filter3 = UserStore.query.filter(_.mobilePhone == null)
+    assert(filter3.asSeq.size == 1)
+    //FIXME: 今はまだOptionはフィルタできないです
+    //    assert(filter3.asSeq(all).size == 1)
+
+    val filter4 = UserStore.query.filter(_.mobilePhone != null)
+    assert(filter4.asSeq.size == 2)
+    //FIXME: 今はまだOptionはフィルタできないです
+    //    assert(filter4.asSeq(all).size == 2)
+  }
   //
   //  test("sortを試す") {
   //    createTaroJiroSaburo()

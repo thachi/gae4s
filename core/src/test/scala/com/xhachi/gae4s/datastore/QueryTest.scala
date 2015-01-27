@@ -91,10 +91,6 @@ class QueryTest extends FunSuite with AppEngineTestSuite {
     assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == true)
   }
 
-
-
-
-
   test("User#deletedで==falseのフィルタができること") {
     val q = Datastore.query[User].filter(_.deleted == false)
     assert(q != null)
@@ -106,13 +102,53 @@ class QueryTest extends FunSuite with AppEngineTestSuite {
   }
 
   ignore("User#deletedで!のフィルタができること") {
-//    val q = Datastore.query[User].filter(!_.deleted)
-//    assert(q != null)
-//    assert(q.filterOption.isDefined)
-//    assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
-//    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.EQUAL)
-//    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "deleted")
-//    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == false)
+    //    val q = Datastore.query[User].filter(!_.deleted)
+    //    assert(q != null)
+    //    assert(q.filterOption.isDefined)
+    //    assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
+    //    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.EQUAL)
+    //    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "deleted")
+    //    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == false)
+  }
+
+  test("User#spouseでNoneフィルタができること") {
+    val q = Datastore.query[User].filter(_.spouse == None)
+    assert(q != null)
+    assert(q.filterOption.isDefined)
+    assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.EQUAL)
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "spouse")
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == null)
+  }
+
+  test("User#spouseで非Noneフィルタができること") {
+    val q = Datastore.query[User].filter(_.spouse != None)
+    assert(q != null)
+    assert(q.filterOption.isDefined)
+    assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.NOT_EQUAL)
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "spouse")
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == null)
+  }
+
+  test("User#spouseでnullのフィルタができること") {
+    val q = Datastore.query[User].filter(_.spouse == null)
+    assert(q != null)
+    assert(q.filterOption.isDefined)
+    assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.EQUAL)
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "spouse")
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == null)
+  }
+
+  test("User#spouseで非nullのフィルタができること") {
+    val q = Datastore.query[User].filter(_.spouse != null)
+    assert(q != null)
+    assert(q.filterOption.isDefined)
+    assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.NOT_EQUAL)
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "spouse")
+    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == null)
   }
 
   test("User#heightでソートできること") {
@@ -145,6 +181,7 @@ class QueryTest extends FunSuite with AppEngineTestSuite {
     assert(s.head.name == "twitter")
     assert(s.head.direction == SortDirection.DESCENDING)
   }
+
 
 }
 

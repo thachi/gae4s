@@ -67,13 +67,13 @@ abstract class Property[T: ClassTag] extends Serializable {
 }
 
 trait Getter[E, T] {
-  self : Property[T] =>
+  self: Property[T] =>
 
   def getValueFromEntity(e: E): T
 }
 
 trait Setter[E, T] {
-  self : Property[T] =>
+  self: Property[T] =>
 
   def setValueToEntity(e: E, value: T): Unit
 }
@@ -82,20 +82,26 @@ trait IndexedProperty[T] extends Property[T] {
 
   def name: String
 
-  val compare: (T, T) => Int = (v1, v2) => v1.asInstanceOf[Comparable[T]].compareTo(v2)
+  def compare(value1: T, value2: T): Int = {
+    value1.asInstanceOf[Comparable[T]].compareTo(value2)
+  }
 
+  private def valueConverter(value: T): T = value match {
+    case v: Option[_] if v == None => null.asInstanceOf[T]
+    case v => value
+  }
 
-  def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
+  def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, valueConverter(value))
 
-  def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
+  def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, valueConverter(value))
 
-  def isGreaterThan(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, value)
+  def isGreaterThan(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, valueConverter(value))
 
-  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, value)
+  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, valueConverter(value))
 
-  def isLessThan(value: T): Filter = FilterPredicate(name, LESS_THAN, this, value)
+  def isLessThan(value: T): Filter = FilterPredicate(name, LESS_THAN, this, valueConverter(value))
 
-  def isLessThanOrEqual(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, value)
+  def isLessThanOrEqual(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, valueConverter(value))
 
   def #==(value: T): Filter = isEqual(value)
 
@@ -109,7 +115,7 @@ trait IndexedProperty[T] extends Property[T] {
 
   def #<=(value: T): Filter = isLessThanOrEqual(value)
 
-  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, value, values)
+  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, valueConverter(value), values.map(valueConverter))
 
   def asc = SortPredicate(name, ASCENDING, this)
 

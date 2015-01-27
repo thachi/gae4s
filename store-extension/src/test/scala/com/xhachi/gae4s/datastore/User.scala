@@ -13,6 +13,8 @@ class User(val key: Key[User], @indexed var name: String = "")
 
   @indexed
   var weight: Int = 0
+
+  @indexed
   var mobilePhone: Option[String] = None
 
   @json
