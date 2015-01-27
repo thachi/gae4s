@@ -66,6 +66,18 @@ abstract class Property[T: ClassTag] extends Serializable {
 
 }
 
+trait Getter[E, T] {
+  self : Property[T] =>
+
+  def getValueFromEntity(e: E): T
+}
+
+trait Setter[E, T] {
+  self : Property[T] =>
+
+  def setValueToEntity(e: E, value: T): Unit
+}
+
 trait IndexedProperty[T] extends Property[T] {
 
   def name: String
@@ -347,12 +359,12 @@ class JsonProperty[E <: AnyRef : Manifest](name: String) extends StringStoreProp
   override def toString(value: E): String = Json.stringify(value)
 }
 
-final class VersionProperty(name: String) extends ValueProperty[Long](name) with IndexedProperty[Long] {
+class VersionProperty(name: String) extends ValueProperty[Long](name) with IndexedProperty[Long] {
 
   override def toStoreProperty(value: Long): Any = value + 1
 }
 
-final class CreationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+class CreationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
 
   override def toStoreProperty(value: Date): Any = value match {
     case d: Date => d
@@ -361,6 +373,6 @@ final class CreationDateProperty(name: String) extends ValueProperty[Date](name)
 
 }
 
-final class ModificationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+class ModificationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
   override def toStoreProperty(value: Date): Any = new Date
 }

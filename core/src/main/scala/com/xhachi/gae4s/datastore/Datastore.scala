@@ -1,6 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore._
+import com.google.appengine.api.datastore.{Entity => LLEntity}
 
 import scala.collection.JavaConversions._
 
@@ -325,13 +326,16 @@ sealed private[datastore] trait DatastoreQueryMethods {
   }
 
   def asSingle[E <: Entity[E]](query: Query[E]): E = {
-    query.meta.toEntity(prepare(query, keysOnly = false).asSingleEntity())
+    prepare(query, keysOnly = false).asSingleEntity() match {
+      case singleEntity: LLEntity => query.meta.toEntity(singleEntity)
+      case null => throw new IllegalArgumentException(s"Entity not found for query $query.")
+    }
   }
 
   def asSingleOption[E <: Entity[E]](query: Query[E]): Option[E] = {
-    query.meta.toEntity(prepare(query, keysOnly = false).asSingleEntity()) match {
-      case null => None
-      case e => Some(e)
+    prepare(query, keysOnly = false).asSingleEntity() match {
+      case s: LLEntity => Some(query.meta.toEntity(s))
+      case e => None
     }
   }
 

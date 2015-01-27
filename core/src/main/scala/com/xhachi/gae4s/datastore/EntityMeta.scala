@@ -33,9 +33,25 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
 
   def createEntity(key: Key[Entity]): Entity
 
-  def toEntity(entity: com.google.appengine.api.datastore.Entity): Entity
+  final def toEntity(from: com.google.appengine.api.datastore.Entity): Entity = {
+    val to = createEntity(createKey(from.getKey))
+    for (p <- properties if p.isInstanceOf[Setter[_, _]]) {
+      val value = p.getValueFromLLEntity(from).asInstanceOf[p.PropertyType]
+      val setter:Setter[E, p.PropertyType] = p.asInstanceOf[Setter[E, p.PropertyType]]
+      setter.setValueToEntity(to, value.asInstanceOf[p.PropertyType])
+    }
+    to
+  }
 
-  def toLLEntity(entity: Entity): com.google.appengine.api.datastore.Entity
+  final def toLLEntity(from: Entity): com.google.appengine.api.datastore.Entity = {
+    val to = new com.google.appengine.api.datastore.Entity(from.key.key)
+    for (p <- properties if p.isInstanceOf[Getter[_, _]]) {
+      val getter = p.asInstanceOf[Getter[E, p.PropertyType]]
+      val value = getter.getValueFromEntity(from)
+      p.asInstanceOf[Property[p.PropertyType]].setValueToLLEntity(to)(value.asInstanceOf[p.PropertyType])
+    }
+    to
+  }
 
   def createKey(key: LLKey) = Key[Entity](key)
 

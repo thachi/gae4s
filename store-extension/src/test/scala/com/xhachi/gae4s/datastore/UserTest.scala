@@ -89,7 +89,7 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     assert(actual.name == expected.name)
     assert(actual.height == expected.height)
     assert(actual.deleted == expected.deleted)
-    assert(actual.createdAt  != null)
+    assert(actual.createdAt != null)
   }
 
   test("2つputしてgetで一度に取得できること") {
@@ -124,7 +124,7 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     tato.mobilePhone = Some("090-xxxx-xxxx")
 
     val jiro = new User(UserStore.createKeyWithName("key_name_2"))
-      jiro.name = "Jiro"
+    jiro.name = "Jiro"
     jiro.height = 200
     jiro.weight = 90
     jiro.deleted = true
@@ -210,7 +210,7 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
   test("createしてgetしてcreatedAtと設定され、updateしてcreatedAtが変更されないこと") {
     val key: Key[User] = UserStore.createKeyWithName("key_name")
     val u1 = new User(key, "Hoge")
-    u1.createdAt should be (null)
+    u1.createdAt should be(null)
 
     UserStore.create(u1)
     val u2 = UserStore.get(key)
@@ -227,7 +227,7 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
   test("createしてgetしてupdatedAtと設定され、updateしてupdatedAtが変更されること") {
     val key: Key[User] = UserStore.createKeyWithName("key_name")
     val u1 = new User(key, "Hoge")
-    u1.updatedAt should be (null)
+    u1.updatedAt should be(null)
 
     UserStore.create(u1)
     val u2 = UserStore.get(key)
@@ -278,10 +278,12 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
   test("asSingleでヒットしない場合") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
-
     val filter = UserStore.query.filter(m => m.name == "hogehoge")
-    filter.asSingle should be (null)
-    filter.asSingle(all) should be (null)
+
+    filter.asSingle(all) should be(null)
+    intercept[IllegalArgumentException] {
+      filter.asSingle should be(null)
+    }
   }
 
   test("asSingleOptionで見つかった場合") {
@@ -346,17 +348,17 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-//    val filter1 = UserStore.query.filter(_.name in("Taro", "Jiro", "Saburo"))
-//    assert(filter1.asSeq.size == 3)
-//    assert(filter1.asSeq(all).size == 3)
-//
-//    val filter2 = UserStore.query.filter(_.name in("Jiro", "Taro"))
-//    assert(filter2.asSeq.size == 2)
-//    assert(filter2.asSeq(all).size == 2)
-//
-//    val filter3 = UserStore.query.filter(_.name in("Jiro", "Goro"))
-//    assert(filter3.asSeq.size == 1)
-//    assert(filter3.asSeq(all).size == 1)
+    //    val filter1 = UserStore.query.filter(_.name in("Taro", "Jiro", "Saburo"))
+    //    assert(filter1.asSeq.size == 3)
+    //    assert(filter1.asSeq(all).size == 3)
+    //
+    //    val filter2 = UserStore.query.filter(_.name in("Jiro", "Taro"))
+    //    assert(filter2.asSeq.size == 2)
+    //    assert(filter2.asSeq(all).size == 2)
+    //
+    //    val filter3 = UserStore.query.filter(_.name in("Jiro", "Goro"))
+    //    assert(filter3.asSeq.size == 1)
+    //    assert(filter3.asSeq(all).size == 1)
   }
 
   test("filterで大小比較を試す") {
@@ -379,76 +381,76 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     assert(filter4.asSeq.size == 2)
     assert(filter4.asSeq(all).size == 2)
   }
-//
-//  test("sortを試す") {
-//    createTaroJiroSaburo()
-//    val all = UserStore.query.asSeq
-//
-//
-//    val sort1 = UserStore.query.sort(_.height)
-//    val seq11 = sort1.asSeq
-//    assert(seq11.size == 3)
-//    assert(seq11(0).name == "Saburo")
-//    assert(seq11(1).name == "Taro")
-//    assert(seq11(2).name == "Jiro")
-//    val seq12 = sort1.asSeq(all)
-//    assert(seq12.size == 3)
-//    assert(seq12(0).name == "Saburo")
-//    assert(seq12(1).name == "Taro")
-//    assert(seq12(2).name == "Jiro")
-//
-//    val seq2 = UserStore.query.sort(_.height.desc, _.weight.desc).asSeq
-//    assert(seq2.size == 3)
-//    assert(seq2(0).name == "Jiro")
-//    assert(seq2(1).name == "Taro")
-//    assert(seq2(2).name == "Saburo")
-//
-//    val seq3 = UserStore.query.sort(_.weight.asc, _.height.desc).asSeq
-//    assert(seq3.size == 3)
-//    assert(seq3(0).name == "Jiro")
-//    assert(seq3(1).name == "Taro")
-//    assert(seq3(2).name == "Saburo")
-//
-//  }
-//
-//  test("offsetを試す") {
-//    createTaroJiroSaburo()
-//
-//    //基本は三郎、太郎、次郎の順。
-//    val all = UserStore.query.sort(_.height.asc).asSeq
-//    assert(all.size == 3)
-//    assert(all(0).name == "Saburo")
-//    assert(all(1).name == "Taro")
-//    assert(all(2).name == "Jiro")
-//
-//
-//    val sort1 = UserStore.query.sort(_.height.asc).offset(1)
-//    val seq11 = sort1.asSeq
-//    assert(seq11.size == 2)
-//    assert(seq11(0).name == "Taro")
-//    assert(seq11(1).name == "Jiro")
-//  }
-//
-//  test("limitを試す") {
-//    createTaroJiroSaburo()
-//    val all = UserStore.query.asSeq
-//
-//    val sort1 = UserStore.query.sort(_.height.asc).limit(2)
-//    val seq11 = sort1.asSeq
-//    assert(seq11.size == 2)
-//    assert(seq11(0).name == "Saburo")
-//    assert(seq11(1).name == "Taro")
-//  }
-//
-//  test("offsetとlimitを試す") {
-//    createTaroJiroSaburo()
-//    val all = UserStore.query.asSeq
-//
-//    val sort1 = UserStore.query.sort(_.height.asc).offset(1).limit(1)
-//    val seq11 = sort1.asSeq
-//    assert(seq11.size == 1)
-//    assert(seq11(0).name == "Taro")
-//  }
+  //
+  //  test("sortを試す") {
+  //    createTaroJiroSaburo()
+  //    val all = UserStore.query.asSeq
+  //
+  //
+  //    val sort1 = UserStore.query.sort(_.height)
+  //    val seq11 = sort1.asSeq
+  //    assert(seq11.size == 3)
+  //    assert(seq11(0).name == "Saburo")
+  //    assert(seq11(1).name == "Taro")
+  //    assert(seq11(2).name == "Jiro")
+  //    val seq12 = sort1.asSeq(all)
+  //    assert(seq12.size == 3)
+  //    assert(seq12(0).name == "Saburo")
+  //    assert(seq12(1).name == "Taro")
+  //    assert(seq12(2).name == "Jiro")
+  //
+  //    val seq2 = UserStore.query.sort(_.height.desc, _.weight.desc).asSeq
+  //    assert(seq2.size == 3)
+  //    assert(seq2(0).name == "Jiro")
+  //    assert(seq2(1).name == "Taro")
+  //    assert(seq2(2).name == "Saburo")
+  //
+  //    val seq3 = UserStore.query.sort(_.weight.asc, _.height.desc).asSeq
+  //    assert(seq3.size == 3)
+  //    assert(seq3(0).name == "Jiro")
+  //    assert(seq3(1).name == "Taro")
+  //    assert(seq3(2).name == "Saburo")
+  //
+  //  }
+  //
+  //  test("offsetを試す") {
+  //    createTaroJiroSaburo()
+  //
+  //    //基本は三郎、太郎、次郎の順。
+  //    val all = UserStore.query.sort(_.height.asc).asSeq
+  //    assert(all.size == 3)
+  //    assert(all(0).name == "Saburo")
+  //    assert(all(1).name == "Taro")
+  //    assert(all(2).name == "Jiro")
+  //
+  //
+  //    val sort1 = UserStore.query.sort(_.height.asc).offset(1)
+  //    val seq11 = sort1.asSeq
+  //    assert(seq11.size == 2)
+  //    assert(seq11(0).name == "Taro")
+  //    assert(seq11(1).name == "Jiro")
+  //  }
+  //
+  //  test("limitを試す") {
+  //    createTaroJiroSaburo()
+  //    val all = UserStore.query.asSeq
+  //
+  //    val sort1 = UserStore.query.sort(_.height.asc).limit(2)
+  //    val seq11 = sort1.asSeq
+  //    assert(seq11.size == 2)
+  //    assert(seq11(0).name == "Saburo")
+  //    assert(seq11(1).name == "Taro")
+  //  }
+  //
+  //  test("offsetとlimitを試す") {
+  //    createTaroJiroSaburo()
+  //    val all = UserStore.query.asSeq
+  //
+  //    val sort1 = UserStore.query.sort(_.height.asc).offset(1).limit(1)
+  //    val seq11 = sort1.asSeq
+  //    assert(seq11.size == 1)
+  //    assert(seq11(0).name == "Taro")
+  //  }
 
 }
 

@@ -8,7 +8,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.{indexed, serialize, json}
+import com.xhachi.gae4s.datastore.annotations.indexed
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -20,7 +20,7 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[IndexedSimpleValueEntity]
 
-    assert(meta.properties.size == 26)
+    assert(meta.properties.size == 24)
 
     for (p <- meta.properties) {
       assert(p.isInstanceOf[IndexedProperty[_]], p.name)
@@ -58,10 +58,6 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(meta.property("javaEnum").get.isInstanceOf[EnumProperty[_]])
     assert(meta.property("scalaEnum").get.isInstanceOf[StringStoreProperty[_]])
     assert(meta.property("byteArray").get.isInstanceOf[ByteArrayProperty])
-    assert(meta.property("json").get.isInstanceOf[JsonProperty[_]])
-    assert(meta.property("json").get.propertyType == classOf[JsonValue])
-    assert(meta.property("serializable").get.isInstanceOf[SerializableProperty[_]])
-    assert(meta.property("serializable").get.propertyType == classOf[SerializableValue])
   }
 
   test("保存して読み込めて検索できること") {
@@ -94,8 +90,6 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.javaEnum = JavaEnum.JAVA_ENUM2
     e.scalaEnum = ScalaEnum.ScalaEnum2
     e.byteArray = "test_byte_array".getBytes("UTF-8")
-    e.json = JsonValue("hoge")
-    e.serializable = SerializableValue("fuga")
     Datastore.put(e)
 
     val a = Datastore.get(key)
@@ -123,8 +117,6 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.javaEnum == a.javaEnum)
     assert(e.scalaEnum == a.scalaEnum)
     assert(e.byteArray.zip(a.byteArray).filterNot(b => b._1 == b._2).isEmpty)
-    assert(e.json == a.json)
-    assert(e.serializable == a.serializable)
 
     val q = Datastore.query[IndexedSimpleValueEntity]
     assert(q.filter(_.key == key).asSingleOption.nonEmpty)
@@ -177,13 +169,6 @@ class IndexedSimpleValueEntity(val key: Key[IndexedSimpleValueEntity]) extends E
   @indexed var scalaEnum: ScalaEnum.Value = ScalaEnum.ScalaEnum1
   @indexed var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
 
-  @indexed
-  @json
-  var json: JsonValue = JsonValue("test")
-
-  @indexed
-  @serialize
-  var serializable: SerializableValue = SerializableValue("")
 }
 
 
