@@ -1,12 +1,11 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.Query.{FilterOperator, SortDirection}
+import com.google.appengine.api.datastore.Query.{FilterOperator, FilterPredicate => LLFilterPredicate, SortDirection}
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.xhachi.gae4s.tests.AppEngineTestSuite
-import org.scalatest.FunSuite
+import org.scalatest.{FunSuite, Matchers}
 
-
-class QueryTest extends FunSuite with AppEngineTestSuite {
+class QueryTest extends FunSuite with AppEngineTestSuite with Matchers {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
@@ -112,13 +111,18 @@ class QueryTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("User#spouseでNoneフィルタができること") {
+
+    val meta = EntityMeta.createMeta[User]
+
     val q = Datastore.query[User].filter(_.spouse == None)
     assert(q != null)
     assert(q.filterOption.isDefined)
     assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
     assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.EQUAL)
     assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "spouse")
-    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == null)
+
+    val value = q.filterOption.get.asInstanceOf[FilterPredicate[_]].toLLFilter.asInstanceOf[LLFilterPredicate].getValue
+    value should be (null)
   }
 
   test("User#spouseで非Noneフィルタができること") {
@@ -128,7 +132,9 @@ class QueryTest extends FunSuite with AppEngineTestSuite {
     assert(q.filterOption.get.isInstanceOf[FilterPredicate[_]])
     assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].operator == FilterOperator.NOT_EQUAL)
     assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].name == "spouse")
-    assert(q.filterOption.get.asInstanceOf[FilterPredicate[_]].value == null)
+
+    val value = q.filterOption.get.asInstanceOf[FilterPredicate[_]].toLLFilter.asInstanceOf[LLFilterPredicate].getValue
+    value should be (null)
   }
 
   test("User#spouseでnullのフィルタができること") {
