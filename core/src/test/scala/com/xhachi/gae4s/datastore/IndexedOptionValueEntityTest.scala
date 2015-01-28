@@ -19,7 +19,7 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[IndexedOptionValueEntity]
 
-    assert(meta.properties.size == 22)
+    assert(meta.properties.size == 23)
     assert(meta.property("userKey").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[KeyProperty[_]])
 
     def assertProperty(name: String, propertyType: Class[_]) = {
@@ -53,7 +53,7 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bigDecimal", classOf[BigDecimal])
 
     assert(meta.property("javaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
-//    assert(meta.property("scalaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
+    assert(meta.property("scalaEnum").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[StringStoreProperty[_]])
   }
 
   test("保存して読み込めること") {
@@ -82,7 +82,7 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.bigInt = Some(new BigInt(new BigInteger("12345678")))
     e.bigDecimal = Some(new BigDecimal(new java.math.BigDecimal("12345678")))
     e.javaEnum = Some(JavaEnum.JAVA_ENUM2)
-//    e.scalaEnum = Some(ScalaEnum.ScalaEnum2)
+    e.scalaEnum = Some(ScalaEnum.ScalaEnum2)
     Datastore.put(e)
 
     val a = Datastore.get(key)
@@ -108,9 +108,15 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bigInt == a.bigInt)
     assert(e.bigDecimal == a.bigDecimal)
     assert(e.javaEnum == a.javaEnum)
-//    assert(e.scalaEnum == a.scalaEnum)
+    assert(e.scalaEnum == a.scalaEnum)
+  }
+
+  test("クエリできること") {
+    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == None).count
+//    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == Some(ScalaEnum.ScalaEnum1)).count
   }
 }
+
 
 class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends Entity[IndexedOptionValueEntity] {
   @indexed var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
@@ -135,7 +141,7 @@ class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends E
   @indexed var bigInt: Option[BigInt] = Some(BigInt(0))
   @indexed var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
   @indexed var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
-//  @indexed var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
+  @indexed var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
 }
 
 

@@ -50,7 +50,7 @@ $query.copy(filterOption = Some(f))
           c.Expr[Query[E]](tree)
       }
     }.flatten.getOrElse {
-      c.Expr[Query[E]](q"null")
+      c.abort(c.enclosingPosition, "Unsupported format for filter. ")
     }
   }
 

@@ -85,23 +85,18 @@ trait IndexedProperty[T] extends Property[T] {
   def compare(value1: T, value2: T): Int = {
     value1.asInstanceOf[Comparable[T]].compareTo(value2)
   }
+  
+  def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
 
-  private def valueConverter(value: T): T = value match {
-    case v: Option[_] if v == None => null.asInstanceOf[T]
-    case v => value
-  }
+  def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
 
-  def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, valueConverter(value))
+  def isGreaterThan(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, value)
 
-  def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, valueConverter(value))
+  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, value)
 
-  def isGreaterThan(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, valueConverter(value))
+  def isLessThan(value: T): Filter = FilterPredicate(name, LESS_THAN, this, value)
 
-  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, valueConverter(value))
-
-  def isLessThan(value: T): Filter = FilterPredicate(name, LESS_THAN, this, valueConverter(value))
-
-  def isLessThanOrEqual(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, valueConverter(value))
+  def isLessThanOrEqual(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, value)
 
   def #==(value: T): Filter = isEqual(value)
 
@@ -115,7 +110,7 @@ trait IndexedProperty[T] extends Property[T] {
 
   def #<=(value: T): Filter = isLessThanOrEqual(value)
 
-  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, valueConverter(value), values.map(valueConverter))
+  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, value, values)
 
   def asc = SortPredicate(name, ASCENDING, this)
 
@@ -245,11 +240,15 @@ abstract class StringStoreProperty[P: ClassTag](name: String) extends ValuePrope
   def fromString(value: String): P
 
   final override def toStoreProperty(p: P): Any = {
-    toString(p) match {
-      case value: String if value.length < Property.ShortLimit => value
-      case value: String if value.length < Property.LongLimit => new Text(value)
-      case value: String => throw new PropertyConversionException(name + " property is too long")
-      case _ => null
+    p match {
+      case null => null
+      case _ =>
+        toString(p) match {
+          case value: String if value.length < Property.ShortLimit => value
+          case value: String if value.length < Property.LongLimit => new Text(value)
+          case value: String => throw new PropertyConversionException(name + " property is too long")
+          case _ => null
+        }
     }
   }
 

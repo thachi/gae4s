@@ -141,6 +141,13 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     // assert(q.filter(_.email == new Email("test@hoge.example.com")).asSingleOption.isEmpty)
 
   }
+
+
+  test("クエリできること") {
+    Datastore.query[IndexedSimpleValueEntity].filter(_.scalaEnum == null).count
+    Datastore.query[IndexedSimpleValueEntity].filter(_.scalaEnum == ScalaEnum.ScalaEnum1).count
+  }
+
 }
 
 class IndexedSimpleValueEntity(val key: Key[IndexedSimpleValueEntity]) extends Entity[IndexedSimpleValueEntity] {
