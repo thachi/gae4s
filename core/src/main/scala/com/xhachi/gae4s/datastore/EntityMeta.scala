@@ -15,6 +15,8 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
 
   type EntityType = E
 
+  def ancestorType: Option[Class[_ <: Entity[_]]]
+
   def entityType: Class[E] = implicitly[ClassTag[E]].runtimeClass.asInstanceOf[Class[E]]
 
   def kind: String = implicitly[ClassTag[E]].runtimeClass.getName

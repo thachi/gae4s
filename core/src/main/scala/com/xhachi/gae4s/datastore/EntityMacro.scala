@@ -111,6 +111,10 @@ $query.copy(sorts = Seq(meta.$s.desc))
     val h = new Helper[c.type](c)
 
     val entityType = c.weakTypeOf[E]
+    val ancestorType = entityType.typeSymbol.typeSignature.baseType(typeOf[Ancestor[_]].typeSymbol) match {
+      case NoType => None
+      case a => a.typeArgs.headOption
+    }
 
     case class PropertyInfo(name: TermName,
                             tpe: Type,
@@ -448,8 +452,15 @@ $query.copy(sorts = Seq(meta.$s.desc))
     val names = properties.map(_._1)
     val versionName = versionProperty.map(_._1)
 
+    val ancestorTypeTree = ancestorType match {
+      case Some(a) => q"val ancestorType = Some(classOf[$a])"
+      case None => q"val ancestorType = None"
+    }
+
     val tree = q"""
 class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
+
+  $ancestorTypeTree
 
   ..$fields
 
