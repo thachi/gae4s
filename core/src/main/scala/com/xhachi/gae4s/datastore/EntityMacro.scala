@@ -460,6 +460,8 @@ $query.copy(sorts = Seq(meta.$s.desc))
     val tree = q"""
 class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
 
+  def entityType = classOf[$entityType]
+
   $ancestorTypeTree
 
   ..$fields
