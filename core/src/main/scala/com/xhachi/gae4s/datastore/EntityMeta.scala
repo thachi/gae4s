@@ -1,6 +1,6 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.{KeyFactory, Key => LLKey}
+import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
 import scala.reflect.ClassTag
 
@@ -13,13 +13,13 @@ object EntityMeta {
 
 abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
 
-  type Entity = E
+  type EntityType = E
 
-  def entityType: Class[_] = implicitly[ClassTag[E]].runtimeClass
+  def entityType: Class[E] = implicitly[ClassTag[E]].runtimeClass.asInstanceOf[Class[E]]
 
   def kind: String = implicitly[ClassTag[E]].runtimeClass.getName
 
-  val key = new KeyProperty[Entity]("__key__") with IndexedProperty[Key[Entity]]
+  val key = new KeyProperty[EntityType]("__key__") with IndexedProperty[Key[EntityType]]
 
   def properties: Seq[Property[_]] = Seq(key)
 
@@ -29,11 +29,11 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
 
   def versionEnabled: Boolean = versionProperty.isDefined
 
-  def version(e: Entity): Option[Long] = versionProperty.map(_.getValueFromLLEntity(toLLEntity(e)))
+  def version(e: EntityType): Option[Long] = versionProperty.map(_.getValueFromLLEntity(toLLEntity(e)))
 
-  def createEntity(key: Key[Entity]): Entity
+  def createEntity(key: Key[EntityType]): EntityType
 
-  final def toEntity(from: com.google.appengine.api.datastore.Entity): Entity = {
+  final def toEntity(from: com.google.appengine.api.datastore.Entity): EntityType = {
     val to = createEntity(createKey(from.getKey))
     for (p <- properties if p.isInstanceOf[Setter[_, _]]) {
       val value = p.getValueFromLLEntity(from).asInstanceOf[p.PropertyType]
@@ -43,7 +43,7 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
     to
   }
 
-  final def toLLEntity(from: Entity): com.google.appengine.api.datastore.Entity = {
+  final def toLLEntity(from: EntityType): com.google.appengine.api.datastore.Entity = {
     val to = new com.google.appengine.api.datastore.Entity(from.key.key)
     for (p <- properties if p.isInstanceOf[Getter[_, _]]) {
       val getter = p.asInstanceOf[Getter[E, p.PropertyType]]
@@ -53,29 +53,29 @@ abstract class EntityMeta[E <: Entity[E] : ClassTag] extends Serializable {
     to
   }
 
-  def createKey(key: LLKey) = Key[Entity](key)
+  def createKey(key: LLKey) = Key[EntityType](key)
 
   def createKeyWithName(name: String) = {
     val key = KeyFactory.createKey(kind, name)
-    Key[Entity](key)
+    Key[EntityType](key)
   }
 
   def createKeyWithId(id: Long) = {
-    Key[Entity](KeyFactory.createKey(kind, id))
+    Key[EntityType](KeyFactory.createKey(kind, id))
   }
 
   def createKeyWithName(parent: Key[_], name: String) = {
     val key = KeyFactory.createKey(parent.key, kind, name)
-    Key[Entity](key)
+    Key[EntityType](key)
   }
 
   def createKeyWithId(parent: Key[_], id: Long) = {
     val key = KeyFactory.createKey(parent.key, kind, id)
-    Key[Entity](key)
+    Key[EntityType](key)
   }
 
-  def fromKeyStrong(keyString: String): Key[Entity] = {
-    val key = Key[Entity](KeyFactory.stringToKey(keyString))
+  def fromKeyStrong(keyString: String): Key[EntityType] = {
+    val key = Key[EntityType](KeyFactory.stringToKey(keyString))
     assert(key.kind == kind)
     key
   }
