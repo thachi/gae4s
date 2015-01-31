@@ -300,6 +300,12 @@ class EnumProperty[E <: Enum[E] : ClassTag](name: String) extends StringStorePro
   override def toString(value: E): String = value.name()
 }
 
+abstract class EnumerationProperty[E : ClassTag](name: String) extends StringStoreProperty[E](name) {
+
+  def values: Seq[E]
+
+}
+
 
 abstract class ByteProperty[B: ClassTag](name: String) extends ValueProperty[B](name) {
 

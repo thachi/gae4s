@@ -368,11 +368,12 @@ $query.copy(sorts = Seq(meta.$s.desc))
             PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumProperty", Seq(info.storeType)), q"""${info.stringName}""")
           } else if (info.isScalaEnum) {
             val enum = c.mirror.staticModule(info.scalaEnumName)
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.StringStoreProperty", Seq(info.storeType)),
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumerationProperty", Seq(info.storeType)),
               q"""${info.stringName}""",
               body = Seq(
-                q"override def fromString(value: String): $enum.Value = $enum.withName(value)",
-                q"override def toString(value: $enum.Value): String = value.toString"
+                q"def values: Seq[$enum.Value] = $enum.values.toSeq",
+                q"def fromString(value: String): $enum.Value = $enum.withName(value)",
+                q"def toString(value: $enum.Value): String = value.toString"
               ))
           } else {
             c.abort(c.enclosingPosition, s"${info.name} as ${info.storeType} cannot be property\n\n" + info)
