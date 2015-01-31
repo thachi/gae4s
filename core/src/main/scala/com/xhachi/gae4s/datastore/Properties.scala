@@ -302,6 +302,7 @@ class EnumProperty[E <: Enum[E] : ClassTag](name: String) extends StringStorePro
 
 abstract class EnumerationProperty[E : ClassTag](name: String) extends StringStoreProperty[E](name) {
 
+  def withName(name: String): E
   def values: Seq[E]
 
 }

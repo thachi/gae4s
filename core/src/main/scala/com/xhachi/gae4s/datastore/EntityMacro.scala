@@ -371,6 +371,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
             PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumerationProperty", Seq(info.storeType)),
               q"""${info.stringName}""",
               body = Seq(
+                q"def withName(name: String): $enum.Value = $enum.withName(name)",
                 q"def values: Seq[$enum.Value] = $enum.values.toSeq",
                 q"def fromString(value: String): $enum.Value = $enum.withName(value)",
                 q"def toString(value: $enum.Value): String = value.toString"
