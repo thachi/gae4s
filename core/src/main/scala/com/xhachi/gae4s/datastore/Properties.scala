@@ -22,7 +22,7 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   type PropertyType = T
 
-  def propertyType: Class[_] = implicitly[ClassTag[T]].runtimeClass
+  def propertyType: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
 
   def name: String
 
