@@ -373,8 +373,18 @@ $query.copy(sorts = Seq(meta.$s.desc))
               body = Seq(
                 q"def withName(name: String): $enum.Value = $enum.withName(name)",
                 q"def values: Seq[$enum.Value] = $enum.values.toSeq",
-                q"def fromString(value: String): $enum.Value = $enum.withName(value)",
-                q"def toString(value: $enum.Value): String = value.toString"
+                q"""
+def fromString(value: String): $enum.Value = value match {
+  case v: String => $enum.withName(value)
+  case _ => null.asInstanceOf[$enum.Value]
+}
+                   """,
+                q"""
+def toString(value: $enum.Value): String = value match {
+  case v: $enum.Value => value.toString
+  case _ => null.asInstanceOf[String]
+}
+"""
               ))
           } else {
             c.abort(c.enclosingPosition, s"${info.name} as ${info.storeType} cannot be property\n\n" + info)
