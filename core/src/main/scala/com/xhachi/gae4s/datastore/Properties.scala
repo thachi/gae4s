@@ -36,7 +36,7 @@ abstract class Property[T: ClassTag] extends Serializable {
           case a: java.util.List[_] => a.toArray.map(i => s"$i: ${i.getClass}").mkString("(", ",", ")")
           case a => a
         }
-        Logger.error(s"$name cannot restored. value is $v: ${storedValue.getClass}")
+        Logger.error(s"$name cannot restored. value is $v")
         throw e
     }
   }
