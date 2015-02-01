@@ -37,8 +37,14 @@ abstract class EntityMeta[E <: Entity[E]] extends Serializable {
     val to = createEntity(createKey(from.getKey))
     for (p <- properties if p.isInstanceOf[Setter[_, _]]) {
       val value = p.getValueFromLLEntity(from).asInstanceOf[p.PropertyType]
-      val setter:Setter[E, p.PropertyType] = p.asInstanceOf[Setter[E, p.PropertyType]]
-      setter.setValueToEntity(to, value.asInstanceOf[p.PropertyType])
+      val setter: Setter[E, p.PropertyType] = p.asInstanceOf[Setter[E, p.PropertyType]]
+      value match {
+        case null =>
+          setter.setValueToEntity(to, null.asInstanceOf[p.PropertyType])
+        case v: p.PropertyType =>
+          setter.setValueToEntity(to, value.asInstanceOf[p.PropertyType])
+        case v => throw new IllegalStateException("Stored value type is invalid: " + v.getClass)
+      }
     }
     to
   }
@@ -48,7 +54,13 @@ abstract class EntityMeta[E <: Entity[E]] extends Serializable {
     for (p <- properties if p.isInstanceOf[Getter[_, _]]) {
       val getter = p.asInstanceOf[Getter[E, p.PropertyType]]
       val value = getter.getValueFromEntity(from)
-      p.asInstanceOf[Property[p.PropertyType]].setValueToLLEntity(to)(value.asInstanceOf[p.PropertyType])
+      value match {
+        case null =>
+          p.asInstanceOf[Property[p.PropertyType]].setValueToLLEntity(to)(null.asInstanceOf[p.PropertyType])
+        case v: p.PropertyType =>
+          p.asInstanceOf[Property[p.PropertyType]].setValueToLLEntity(to)(v.asInstanceOf[p.PropertyType])
+        case v => throw new IllegalStateException("Store value type is invalid: " + v.getClass)
+      }
     }
     to
   }
