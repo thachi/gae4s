@@ -16,7 +16,7 @@ object Mail extends Mail(MailServiceFactory.getMailService)
  * @author Takashi Hachinohe
  * @param service the MailService instance
  */
-class Mail(service: MailService) {
+class Mail private[mail](service: MailService) {
 
   /**
    * Send message.

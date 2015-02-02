@@ -11,13 +11,6 @@ import org.json4s.native.Serialization
 
 object CloudStorage extends Logger {
 
-  def apply(bucketName: String) = new CloudStorage(defaultService, bucketName)
-
-  def defaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
-}
-
-class CloudStorage(service: GcsService, bucketName: String) extends Logger {
-
   object MimeType {
     val HTML = "text/html"
     val TEXT = "text/plain"
@@ -47,7 +40,15 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
     ".png" -> MimeType.PNG
   )
 
-  info("CloudStorage[" + bucketName + "] created")
+  def apply(bucketName: String): CloudStorage = CloudStorage(defaultService, bucketName)
+
+  def apply(service: GcsService, bucketName: String): CloudStorage = new CloudStorage(service, bucketName)
+
+  def defaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
+}
+
+class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends Logger {
+
 
   def pathToFilename(path: String) = new GcsFilename(bucketName, path)
 
@@ -90,7 +91,7 @@ class CloudStorage(service: GcsService, bucketName: String) extends Logger {
       val option: GcsFileOptions = mimeType match {
         case Some(m) => new GcsFileOptions.Builder().mimeType(m).build()
         case None =>
-          Ext2MimeType.map {
+          CloudStorage.Ext2MimeType.map {
             case (e, m) => path.endsWith(e) match {
               case true => Some(m)
               case false => None

@@ -1,10 +1,9 @@
 package com.xhachi.gae4s.datastore
 
 
-import com.google.appengine.api.datastore.{KeyFactory, Key => LLKey}
+import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
-// TODO: valを取ってcase classにする
-class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
+case class Key[E](key: LLKey) extends Ordered[Key[E]] with Serializable {
 
   val kind: String = key.getKind
 
@@ -23,8 +22,7 @@ class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
   }
 
   def parent[P <: Entity[P]]: Option[Key[P]] = key.getParent match {
-      //TODO: new Keyじゃなくする
-    case p: LLKey => Some(new Key[P](p))
+    case p: LLKey => Some(Key[P](p))
     case _ => None
   }
 
@@ -43,31 +41,5 @@ class Key[E](val key: LLKey) extends Ordered[Key[E]] with Serializable {
 }
 
 object Key {
-  def fromWebSafeString[E](string: String) = new Key[E](KeyFactory.stringToKey(string))
+  def fromWebSafeString[E](string: String) = Key[E](KeyFactory.stringToKey(string))
 }
-//  def apply[E <: Entity[E]](key: LLKey) = new Key[E](key)
-//
-//  def apply[E <: Entity[E]](name: String)(implicit meta: EntityMeta[E]) = {
-//    val key = createKey(meta.kind, name)
-//    new Key[E](key)
-//  }
-//
-//  def apply[E <: Entity[E]](id: Long)(implicit meta: EntityMeta[E]) = {
-//    new Key[E](createKey(meta.kind, id))
-//  }
-//
-//  def apply[E <: Entity[E]](parent: Key[_], name: String)(implicit meta: EntityMeta[E]) = {
-//    val key = createKey(parent.key, meta.kind, name)
-//    new Key[E](key)
-//  }
-//
-//  def apply[E <: Entity[E]](parent: Key[_], id: Long)(implicit meta: EntityMeta[E]) = {
-//    val key = createKey(parent.key, meta.kind, id)
-//    new Key[E](key)
-//  }
-//
-//  def fromKeyStrong[E <: Entity[E]](keyString: String): Key[E] = Key[E](stringToKey(keyString))
-//
-//  def toKeyStrong(key: Key[_]): String = keyToString(key.key)
-//
-//}

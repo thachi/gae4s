@@ -2,14 +2,16 @@ package com.xhachi.gae4s.datastore
 
 import java.util.Date
 
-import com.google.appengine.api.blobstore._
+import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore.Query.FilterOperator._
 import com.google.appengine.api.datastore.Query.SortDirection._
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, _}
-import com.google.appengine.api.users._
+import com.google.appengine.api.users.User
+import com.xhachi.gae4s.common.Logger
 import com.xhachi.gae4s.json.Json
 
 import scala.reflect.ClassTag
+import scala.util.control.NonFatal
 
 object Property {
   val ShortLimit = 500
@@ -20,42 +22,96 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   type PropertyType = T
 
-  def propertyType: Class[_] = implicitly[ClassTag[T]].runtimeClass
+  def propertyType: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+  def storeType: Class[_]
 
   def name: String
 
-  def getValueFromLLEntity(entity: LLEntity): T = fromStoreProperty(entity.getProperty(name))
+  final def getValueFromLLEntity(entity: LLEntity): T = {
+    val storedValue = entity.getProperty(name)
+    try {
+      fromStoreProperty(storedValue)
+    } catch {
+      case NonFatal(e) =>
+        val v = storedValue match {
+          case a: java.util.List[_] => a.toArray.map(i => s"$i: ${i.getClass}").mkString("(", ",", ")")
+          case a => a
+        }
+        Logger.error(s"$name cannot restored. value is $v")
+        throw e
+    }
+  }
 
-  def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
+  final def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
     case p: IndexedProperty[_] => entity.setProperty(name, toStoreProperty(value))
-    case _ => entity.setUnindexedProperty(name, toStoreProperty(value))
+    case _ =>
+      val storeValue = toStoreProperty(value)
+      try {
+        entity.setUnindexedProperty(name, storeValue)
+      } catch {
+        case NonFatal(e) =>
+          val v = storeValue match {
+            case a: Array[_] => a.toSeq.map(i => s"$i: ${i.getClass}")
+            case o => o
+          }
+          Logger.error(s"$name is not stored. value is ($v): ${v.getClass}")
+          throw e
+      }
   }
 
   protected[datastore] def toStoreProperty(value: T): Any
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
+  override def toString = s"(${getClass.getName}($name)})"
+
+}
+
+trait Getter[E, T] {
+  self: Property[T] =>
+
+  def getValueFromEntity(e: E): T
+}
+
+trait Setter[E, T] {
+  self: Property[T] =>
+
+  def setValueToEntity(e: E, value: T): Unit
 }
 
 trait IndexedProperty[T] extends Property[T] {
 
   def name: String
 
-  val compare: (T, T) => Int = (v1, v2) => v1.asInstanceOf[Comparable[T]].compareTo(v2)
+  def compare(value1: T, value2: T): Int = {
+    value1.asInstanceOf[Comparable[T]].compareTo(value2)
+  }
+  
+  def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
 
-  def #==(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
+  def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
 
-  def #!=(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
+  def isGreaterThan(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, value)
+
+  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, value)
+
+  def isLessThan(value: T): Filter = FilterPredicate(name, LESS_THAN, this, value)
+
+  def isLessThanOrEqual(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, value)
+
+  def #==(value: T): Filter = isEqual(value)
+
+  def #!=(value: T): Filter = isNotEqual(value)
+
+  def #>(value: T): Filter = isGreaterThan(value)
+
+  def #>=(value: T): Filter = isGreaterThanOrEqual(value)
+
+  def #<(value: T): Filter = isLessThan(value)
+
+  def #<=(value: T): Filter = isLessThanOrEqual(value)
 
   def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, value, values)
-
-  def #>(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, value)
-
-  def #>=(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, value)
-
-  def #<(value: T): Filter = FilterPredicate(name, LESS_THAN, this, value)
-
-  def #<=(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, value)
 
   def asc = SortPredicate(name, ASCENDING, this)
 
@@ -65,22 +121,26 @@ trait IndexedProperty[T] extends Property[T] {
 class PropertyConversionException(message: String) extends Exception(message)
 
 class PropertyConvertFromLLPropertyException(name: String, value: Any)
-  extends PropertyConversionException( s"""$name "$value" can not converte from stored property""")
+  extends PropertyConversionException( s"""$name "$value" can not convert from stored property""")
 
 class PropertyConvertToLLPropertyException(name: String, value: Any)
-  extends PropertyConversionException( s"""$name "$value" can not converte to store property""")
+  extends PropertyConversionException( s"""$name "$value" can not convert to store property""")
 
 
-trait SimpleProperty[T] extends Property[T] {
+class ValueProperty[T: ClassTag](val name: String) extends Property[T] {
+
+  def storeType: Class[T] = propertyType
 
   override def toStoreProperty(value: T): Any = value
 
   override def fromStoreProperty(value: Any): T = value.asInstanceOf[T]
 }
 
-class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
+class OptionProperty[T](val property: Property[T]) extends Property[Option[T]] {
 
   def name = property.name
+
+  def storeType: Class[_] = property.propertyType
 
   override protected[datastore] def fromStoreProperty(value: Any): Option[T] = property.fromStoreProperty(value) match {
     case null => None
@@ -93,11 +153,31 @@ class OptionProperty[T](property: Property[T]) extends Property[Option[T]] {
   }
 }
 
-class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] with IndexedProperty[Key[E]] {
+class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
+
+  import scala.collection.JavaConverters._
+
+  def storeType: Class[_] = property.storeType
+
+  def name = property.name
+
+  override protected[datastore] def fromStoreProperty(value: Any): Seq[T] = value match {
+    case null => Nil
+    case v: java.util.List[_] => v.toArray.toSeq.map(property.fromStoreProperty)
+  }
+
+  override protected[datastore] def toStoreProperty(value: Seq[T]): Any = value match {
+    case Nil => null
+    case v: Seq[T] => v.map(property.toStoreProperty).asJava
+  }
+}
+
+class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] {
+
+  def storeType: Class[Key[E]] = propertyType
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
-    //TODO: あとで
-    case k: LLKey => new Key[E](k)
+    case k: LLKey => Key[E](k)
     case _ => null
   }
 
@@ -105,11 +185,9 @@ class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] wit
     case v: Key[E] => value.key
     case _ => null
   }
-
-  override val compare: (Key[E], Key[E]) => Int = (v1, v2) => v1.key.compareTo(v2.key)
 }
 
-class LongProperty(val name: String) extends SimpleProperty[Long] {
+class LongProperty(name: String) extends ValueProperty[Long](name) {
   override def toStoreProperty(value: Long): Any = value
 
   override def fromStoreProperty(value: Any): Long = value match {
@@ -121,61 +199,65 @@ class LongProperty(val name: String) extends SimpleProperty[Long] {
   }
 }
 
-class IntProperty(val name: String) extends SimpleProperty[Int] {
+class IntProperty(name: String) extends ValueProperty[Int](name) {
   override def toStoreProperty(value: Int): Any = value
 
   override def fromStoreProperty(value: Any): Int = value match {
     case v: Int => v
     case v: Long => v.toInt
-    case v: Double => v.toInt
     case null => 0
     case v => throw new PropertyConvertFromLLPropertyException(name, v)
   }
 }
 
-class DoubleProperty(val name: String) extends SimpleProperty[Double]
 
-class BooleanProperty(val name: String) extends SimpleProperty[Boolean]
+class DoubleProperty(name: String) extends ValueProperty[Double](name)
 
-class DateProperty(val name: String) extends SimpleProperty[Date]
+class BooleanProperty(name: String) extends ValueProperty[Boolean](name)
 
-class GeoPtProperty(val name: String) extends SimpleProperty[GeoPt]
+class DateProperty(name: String) extends ValueProperty[Date](name)
 
-class ShortBlobProperty(val name: String) extends SimpleProperty[ShortBlob]
+class GeoPtProperty(name: String) extends ValueProperty[GeoPt](name)
 
-class BlobProperty(val name: String) extends SimpleProperty[Blob]
+class ShortBlobProperty(name: String) extends ValueProperty[ShortBlob](name)
 
-class PostalAddressProperty(val name: String) extends SimpleProperty[PostalAddress]
+class BlobProperty(name: String) extends ValueProperty[Blob](name)
 
-class PhoneNumberProperty(val name: String) extends SimpleProperty[PhoneNumber]
+class PostalAddressProperty(name: String) extends ValueProperty[PostalAddress](name)
 
-class EmailProperty(val name: String) extends SimpleProperty[Email]
+class PhoneNumberProperty(name: String) extends ValueProperty[PhoneNumber](name)
 
-class UserProperty(val name: String) extends SimpleProperty[User]
+class EmailProperty(name: String) extends ValueProperty[Email](name)
 
-class IMHandleProperty(val name: String) extends SimpleProperty[IMHandle]
+class UserProperty(name: String) extends ValueProperty[User](name)
 
-class LinkProperty(val name: String) extends SimpleProperty[Link]
+class IMHandleProperty(name: String) extends ValueProperty[IMHandle](name)
 
-class CategoryProperty(val name: String) extends SimpleProperty[Category]
+class LinkProperty(name: String) extends ValueProperty[Link](name)
 
-class RatingProperty(val name: String) extends SimpleProperty[Rating]
+class CategoryProperty(name: String) extends ValueProperty[Category](name)
 
-class BlobKeyProperty(val name: String) extends SimpleProperty[BlobKey]
+class RatingProperty(name: String) extends ValueProperty[Rating](name)
+
+class BlobKeyProperty(name: String) extends ValueProperty[BlobKey](name)
 
 
-trait StringStoreProperty[P] extends SimpleProperty[P] {
+abstract class StringStoreProperty[P: ClassTag](name: String) extends ValueProperty[P](name) {
 
   def toString(value: P): String
 
   def fromString(value: String): P
 
   final override def toStoreProperty(p: P): Any = {
-    toString(p) match {
-      case value: String if value.length < Property.ShortLimit => value
-      case value: String if value.length < Property.LongLimit => new Text(value)
-      case value: String => throw new PropertyConversionException(name + " property is too long")
-      case _ => null
+    p match {
+      case null => null
+      case _ =>
+        toString(p) match {
+          case value: String if value.length < Property.ShortLimit => value
+          case value: String if value.length < Property.LongLimit => new Text(value)
+          case value: String => throw new PropertyConversionException(name + " property is too long")
+          case _ => null
+        }
     }
   }
 
@@ -190,21 +272,21 @@ trait StringStoreProperty[P] extends SimpleProperty[P] {
   }
 }
 
-class StringProperty(val name: String) extends StringStoreProperty[String] {
+class StringProperty(name: String) extends StringStoreProperty[String](name) {
 
   override def fromString(value: String): String = value
 
   override def toString(value: String): String = value
 }
 
-class BigIntProperty(val name: String) extends StringStoreProperty[BigInt] {
+class BigIntProperty(name: String) extends StringStoreProperty[BigInt](name) {
 
   override def fromString(value: String): BigInt = BigInt(value)
 
   override def toString(value: BigInt): String = value.toString()
 }
 
-class BigDecimalProperty(val name: String) extends StringStoreProperty[BigDecimal] {
+class BigDecimalProperty(name: String) extends StringStoreProperty[BigDecimal](name) {
 
   override def fromString(value: String): BigDecimal = BigDecimal(value)
 
@@ -212,7 +294,7 @@ class BigDecimalProperty(val name: String) extends StringStoreProperty[BigDecima
 }
 
 
-class EnumProperty[E <: Enum[E] : ClassTag](val name: String) extends StringStoreProperty[E] {
+class EnumProperty[E <: Enum[E] : ClassTag](name: String) extends StringStoreProperty[E](name) {
   private def enumValueOf[T <: Enum[T]](cls: Class[_], stringValue: String): Enum[_] =
     Enum.valueOf(cls.asInstanceOf[Class[T]], stringValue).asInstanceOf[Enum[_]]
 
@@ -227,8 +309,15 @@ class EnumProperty[E <: Enum[E] : ClassTag](val name: String) extends StringStor
   override def toString(value: E): String = value.name()
 }
 
+abstract class EnumerationProperty[E : ClassTag](name: String) extends StringStoreProperty[E](name) {
 
-trait ByteProperty[B] extends SimpleProperty[B] {
+  def withName(name: String): E
+  def values: Seq[E]
+
+}
+
+
+abstract class ByteProperty[B: ClassTag](name: String) extends ValueProperty[B](name) {
 
   protected def toByte(value: B): Array[Byte]
 
@@ -253,14 +342,14 @@ trait ByteProperty[B] extends SimpleProperty[B] {
 }
 
 
-class ByteArrayProperty(val name: String) extends ByteProperty[Array[Byte]] {
+class ByteArrayProperty(name: String) extends ByteProperty[Array[Byte]](name) {
 
   override def fromByte(value: Array[Byte]): Array[Byte] = value
 
   override def toByte(value: Array[Byte]): Array[Byte] = value
 }
 
-class SerializableProperty[E <: Serializable: ClassTag](val name: String) extends ByteProperty[E] {
+class SerializableProperty[E <: Serializable : ClassTag](name: String) extends ByteProperty[E](name) {
 
   import java.io._
 
@@ -284,9 +373,27 @@ class SerializableProperty[E <: Serializable: ClassTag](val name: String) extend
   }
 }
 
-class JsonProperty[E <: AnyRef : Manifest](val name: String) extends StringStoreProperty[E] {
+class JsonProperty[E <: AnyRef : Manifest](name: String) extends StringStoreProperty[E](name) {
 
   override def fromString(value: String): E = Json.parseAs[E](value)
 
   override def toString(value: E): String = Json.stringify(value)
+}
+
+class VersionProperty(name: String) extends ValueProperty[Long](name) with IndexedProperty[Long] {
+
+  override def toStoreProperty(value: Long): Any = value + 1
+}
+
+class CreationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+
+  override def toStoreProperty(value: Date): Any = value match {
+    case d: Date => d
+    case _ => new Date
+  }
+
+}
+
+class ModificationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+  override def toStoreProperty(value: Date): Any = new Date
 }
