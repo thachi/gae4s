@@ -430,7 +430,9 @@ def toString(value: $enum.Value): String = value match {
       .filter(m => m.isMethod && m.asMethod.paramLists.isEmpty)
       .filter(_.name.encodedName.toString != "key")
       .filter(isMemberOfEntity)
-      .map(m => toPropertyInfo(m.name.toTermName))
+      .map(_.name.toTermName)
+      .toSet
+      .map(toPropertyInfo)
 
     val normalProperties = propertyInfos.filterNot(_.version)
       .map(i => toProperty(i))
