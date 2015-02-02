@@ -5,7 +5,7 @@ import java.util.Date
 import com.xhachi.gae4s.datastore.annotations.{creationDate, entity, modificationDate, version}
 
 @entity
-trait Mutable extends Version with CreatedAt with UpdatedAt {
+trait Mutable extends Version with UpdatedAt with CreatedAt {
   self: Entity[_] =>
 }
 

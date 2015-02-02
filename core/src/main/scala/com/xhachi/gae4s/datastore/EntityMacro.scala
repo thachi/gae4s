@@ -426,18 +426,13 @@ def toString(value: $enum.Value): String = value match {
       }
     }
 
-    val propertyInfos = entityType.members
+    val propertyInfos = entityType.baseClasses.map(entityType.baseType(_).decls).flatten
       .filter(m => m.isMethod && m.asMethod.paramLists.isEmpty)
       .filter(_.name.encodedName.toString != "key")
       .filter(isMemberOfEntity)
       .map(m => toPropertyInfo(m.name.toTermName))
 
-    val readableProperties = propertyInfos.filterNot(_.version).filterNot(_.readonly)
-      .map(i => toProperty(i))
-      .toSeq
-      .filter(_.isDefined).map(_.get)
-
-    val readonlyProperties = propertyInfos.filterNot(_.version).filter(_.readonly)
+    val normalProperties = propertyInfos.filterNot(_.version)
       .map(i => toProperty(i))
       .toSeq
       .filter(_.isDefined).map(_.get)
@@ -448,17 +443,10 @@ def toString(value: $enum.Value): String = value match {
       .filter(_.isDefined).map(_.get)
       .headOption
 
-    val properties = readableProperties ++ readonlyProperties ++ versionProperty.toSeq
+    val properties = normalProperties ++ versionProperty.toSeq
 
     val fields = properties.map {
       case (n, v) => q"""val $n = $v"""
-    }
-
-    val toEntities = (readableProperties ++ versionProperty.toSeq).map {
-      case (n, v) => q"""to.$n = $n.getValueFromLLEntity(from)"""
-    }
-    val toLLEntities = properties.map {
-      case (n, v) => q"""$n.setValueToLLEntity(to)(from.$n)"""
     }
 
     val names = properties.map(_._1)
