@@ -399,7 +399,7 @@ class VersionProperty(name: String) extends ValueProperty[Long](name) with Index
   override def toStoreProperty(value: Long): Any = value + 1
 }
 
-class CreationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+class CreationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
 
   override def toStoreProperty(value: Date): Any = value match {
     case d: Date => d
@@ -408,6 +408,6 @@ class CreationDateProperty(name: String) extends ValueProperty[Date](name) with 
 
 }
 
-class ModificationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+class ModificationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
   override def toStoreProperty(value: Date): Any = new Date
 }
