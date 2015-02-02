@@ -23,6 +23,7 @@ abstract class Property[T: ClassTag] extends Serializable {
   type PropertyType = T
 
   def propertyType: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+  def storeType: Class[_]
 
   def name: String
 
@@ -128,6 +129,8 @@ class PropertyConvertToLLPropertyException(name: String, value: Any)
 
 class ValueProperty[T: ClassTag](val name: String) extends Property[T] {
 
+  def storeType: Class[T] = propertyType
+
   override def toStoreProperty(value: T): Any = value
 
   override def fromStoreProperty(value: Any): T = value.asInstanceOf[T]
@@ -136,6 +139,8 @@ class ValueProperty[T: ClassTag](val name: String) extends Property[T] {
 class OptionProperty[T](val property: Property[T]) extends Property[Option[T]] {
 
   def name = property.name
+
+  def storeType: Class[_] = property.propertyType
 
   override protected[datastore] def fromStoreProperty(value: Any): Option[T] = property.fromStoreProperty(value) match {
     case null => None
@@ -152,6 +157,8 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
 
   import scala.collection.JavaConverters._
 
+  def storeType: Class[_] = property.storeType
+
   def name = property.name
 
   override protected[datastore] def fromStoreProperty(value: Any): Seq[T] = value match {
@@ -166,6 +173,8 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
 }
 
 class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] {
+
+  def storeType: Class[Key[E]] = propertyType
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
     case k: LLKey => Key[E](k)
