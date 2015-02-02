@@ -35,7 +35,7 @@ abstract class EntityMeta[E <: Entity[E]] extends Serializable {
 
   final def toEntity(from: com.google.appengine.api.datastore.Entity): EntityType = {
     val to = createEntity(createKey(from.getKey))
-    for (p <- properties if p.isInstanceOf[Setter[_, _]]) {
+    for (p <- properties if p.isInstanceOf[Setter[_, _]] && from.hasProperty(p.name)) {
       val value = p.getValueFromLLEntity(from).asInstanceOf[p.PropertyType]
       val setter: Setter[E, p.PropertyType] = p.asInstanceOf[Setter[E, p.PropertyType]]
       value match {
