@@ -23,6 +23,7 @@ abstract class Property[T: ClassTag] extends Serializable {
   type PropertyType = T
 
   def propertyType: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+
   def storeType: Class[_]
 
   def name: String
@@ -37,33 +38,45 @@ abstract class Property[T: ClassTag] extends Serializable {
           case a: java.util.List[_] => a.toArray.map(i => s"$i: ${i.getClass}").mkString("(", ",", ")")
           case a => a
         }
-        Logger.error(s"$name cannot restored. value is $v")
+        Logger.error(s"$name couldn't restore. value is $v")
         throw e
     }
   }
 
-  final def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
-    case p: IndexedProperty[_] => entity.setProperty(name, toStoreProperty(value))
-    case _ =>
-      val storeValue = toStoreProperty(value)
-      try {
-        entity.setUnindexedProperty(name, storeValue)
-      } catch {
-        case NonFatal(e) =>
-          val v = storeValue match {
-            case a: Array[_] => a.toSeq.map(i => s"$i: ${i.getClass}")
-            case o => o
-          }
-          Logger.error(s"$name is not stored. value is ($v): ${v.getClass}")
-          throw e
+  final def setValueToLLEntity(entity: LLEntity)(value: T) = {
+    val storeValue = try {
+      toStoreProperty(value)
+    } catch {
+      case NonFatal(e) =>
+        throw new IllegalStateException( s"""$name couldn't convert from entity value "$value" to store value""", e)
+    }
+
+    try {
+      this match {
+        case p: IndexedProperty[_] =>
+          entity.setProperty(name, storeValue)
+        case _ =>
+          entity.setUnindexedProperty(name, storeValue)
       }
+    } catch {
+      case NonFatal(e) =>
+        val v = storeValue match {
+          case a: Array[_] => a.toSeq.map(i => s"$i: ${i.getClass}")
+          case o => o
+        }
+        Logger.error(s"$name is not stored. value is ($v): ${v.getClass}")
+        throw e
+    }
   }
+
 
   protected[datastore] def toStoreProperty(value: T): Any
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
-  override def toString = s"(${getClass.getName}($name)})"
+  override def toString = s"(${
+    getClass.getName
+  }($name)})"
 
 }
 
@@ -86,7 +99,7 @@ trait IndexedProperty[T] extends Property[T] {
   def compare(value1: T, value2: T): Int = {
     value1.asInstanceOf[Comparable[T]].compareTo(value2)
   }
-  
+
   def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
 
   def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
@@ -309,9 +322,10 @@ class EnumProperty[E <: Enum[E] : ClassTag](name: String) extends StringStorePro
   override def toString(value: E): String = value.name()
 }
 
-abstract class EnumerationProperty[E : ClassTag](name: String) extends StringStoreProperty[E](name) {
+abstract class EnumerationProperty[E: ClassTag](name: String) extends StringStoreProperty[E](name) {
 
   def withName(name: String): E
+
   def values: Seq[E]
 
 }
