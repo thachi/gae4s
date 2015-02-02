@@ -67,7 +67,7 @@ object Settings {
       //      crossScalaVersions := Seq("2.11.4"),
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
-      version := "0.6-SNAPSHOT",
+      version := "0.6",
       parallelExecution in Test := false,
       publishTo <<= version { (v: String) =>
         val base = "/Users/takashi/Documents/xhachi/repository"
