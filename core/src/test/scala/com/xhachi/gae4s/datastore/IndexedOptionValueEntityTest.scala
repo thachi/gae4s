@@ -7,7 +7,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.indexed
+import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -121,29 +121,29 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 
 
 class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends Entity[IndexedOptionValueEntity] {
-  @indexed var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
-  @indexed var string: Option[String] = Some("")
-  @indexed var int: Option[Int] = Some(0)
-  @indexed var long: Option[Long] = Some(0)
-  @indexed var double: Option[Double] = Some(0)
-  @indexed var bool: Option[Boolean] = Some(false)
-  @indexed var date: Option[Date] = Some(new Date(0))
-  @indexed var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
-  @indexed var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
-  @indexed var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
-  @indexed var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
-  @indexed var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
-  @indexed var email: Option[Email] = Some(new Email("eample@example.com"))
-  @indexed var user: Option[com.google.appengine.api.users.User] = Some(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
-  @indexed var imHandle: Option[IMHandle] = Some(null)
-  @indexed var link: Option[Link] = Some(new Link("http://google.com"))
-  @indexed var category: Option[Category] = Some(new Category("category"))
-  @indexed var rating: Option[Rating] = Some(new Rating(0))
-  @indexed var blobKey: Option[BlobKey] = Some(new BlobKey(""))
-  @indexed var bigInt: Option[BigInt] = Some(BigInt(0))
-  @indexed var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
-  @indexed var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
-  @indexed var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
+  @property(indexed = true) var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
+  @property(indexed = true) var string: Option[String] = Some("")
+  @property(indexed = true) var int: Option[Int] = Some(0)
+  @property(indexed = true) var long: Option[Long] = Some(0)
+  @property(indexed = true) var double: Option[Double] = Some(0)
+  @property(indexed = true) var bool: Option[Boolean] = Some(false)
+  @property(indexed = true) var date: Option[Date] = Some(new Date(0))
+  @property(indexed = true) var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
+  @property(indexed = true) var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
+  @property(indexed = true) var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
+  @property(indexed = true) var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
+  @property(indexed = true) var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
+  @property(indexed = true) var email: Option[Email] = Some(new Email("eample@example.com"))
+  @property(indexed = true) var user: Option[com.google.appengine.api.users.User] = Some(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
+  @property(indexed = true) var imHandle: Option[IMHandle] = Some(null)
+  @property(indexed = true) var link: Option[Link] = Some(new Link("http://google.com"))
+  @property(indexed = true) var category: Option[Category] = Some(new Category("category"))
+  @property(indexed = true) var rating: Option[Rating] = Some(new Rating(0))
+  @property(indexed = true) var blobKey: Option[BlobKey] = Some(new BlobKey(""))
+  @property(indexed = true) var bigInt: Option[BigInt] = Some(BigInt(0))
+  @property(indexed = true) var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
+  @property(indexed = true) var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
+  @property(indexed = true) var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
 }
 
 

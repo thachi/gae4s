@@ -8,7 +8,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.indexed
+import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -151,33 +151,29 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class IndexedSimpleValueEntity(val key: Key[IndexedSimpleValueEntity]) extends Entity[IndexedSimpleValueEntity] {
-  @indexed var userKey: Key[User] = Datastore.allocateKey[User]
-  @indexed var string: String = ""
-  @indexed var int: Int = 0
-  @indexed var long: Long = 0
-  @indexed var double: Double = 0
-  @indexed var bool: Boolean = false
-  @indexed var date: Date = new Date(0)
-  @indexed var geoPt: GeoPt = new GeoPt(0, 0)
-  @indexed var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
-  @indexed var blob: Blob = new Blob("blob".getBytes("UTF-8"))
-  @indexed var postalAddress: PostalAddress = new PostalAddress("060-0806")
-  @indexed var phoneNumber: PhoneNumber = new PhoneNumber("0120-501353")
-  @indexed var email: Email = new Email("eample@example.com")
-  @indexed var user: com.google.appengine.api.users.User = new com.google.appengine.api.users.User("sample@example.com", "example.com")
-  @indexed var imHandle: IMHandle = null
-  @indexed var link: Link = new Link("http://google.com")
-  @indexed var category: Category = new Category("category")
-  @indexed var rating: Rating = new Rating(0)
-  @indexed var blobKey: BlobKey = new BlobKey("")
-  @indexed var bigInt: BigInt = BigInt(0)
-  @indexed var bigDecimal: BigDecimal = BigDecimal(0)
-  @indexed var javaEnum: JavaEnum = JavaEnum.JAVA_ENUM1
-  @indexed var scalaEnum: ScalaEnum.Value = ScalaEnum.ScalaEnum1
-  @indexed var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
+  @property(indexed = true) var userKey: Key[User] = Datastore.allocateKey[User]
+  @property(indexed = true) var string: String = ""
+  @property(indexed = true) var int: Int = 0
+  @property(indexed = true) var long: Long = 0
+  @property(indexed = true) var double: Double = 0
+  @property(indexed = true) var bool: Boolean = false
+  @property(indexed = true) var date: Date = new Date(0)
+  @property(indexed = true) var geoPt: GeoPt = new GeoPt(0, 0)
+  @property(indexed = true) var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
+  @property(indexed = true) var blob: Blob = new Blob("blob".getBytes("UTF-8"))
+  @property(indexed = true) var postalAddress: PostalAddress = new PostalAddress("060-0806")
+  @property(indexed = true) var phoneNumber: PhoneNumber = new PhoneNumber("0120-501353")
+  @property(indexed = true) var email: Email = new Email("eample@example.com")
+  @property(indexed = true) var user: com.google.appengine.api.users.User = new com.google.appengine.api.users.User("sample@example.com", "example.com")
+  @property(indexed = true) var imHandle: IMHandle = null
+  @property(indexed = true) var link: Link = new Link("http://google.com")
+  @property(indexed = true) var category: Category = new Category("category")
+  @property(indexed = true) var rating: Rating = new Rating(0)
+  @property(indexed = true) var blobKey: BlobKey = new BlobKey("")
+  @property(indexed = true) var bigInt: BigInt = BigInt(0)
+  @property(indexed = true) var bigDecimal: BigDecimal = BigDecimal(0)
+  @property(indexed = true) var javaEnum: JavaEnum = JavaEnum.JAVA_ENUM1
+  @property(indexed = true) var scalaEnum: ScalaEnum.Value = ScalaEnum.ScalaEnum1
+  @property(indexed = true) var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
 
 }
-
-
-
-

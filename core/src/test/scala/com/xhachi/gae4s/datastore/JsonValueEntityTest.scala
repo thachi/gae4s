@@ -1,7 +1,7 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.json
+import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -46,8 +46,8 @@ class JsonValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class JsonValueEntity(val key: Key[JsonValueEntity]) extends Entity[JsonValueEntity] {
-  @json var json: JsonValue = JsonValue("test")
-  @json var jsonOption: Option[JsonValue] = None
-  @json var jsonSeq: Seq[JsonValue] = Nil
+  @property(json = true) var json: JsonValue = JsonValue("test")
+  @property(json = true) var jsonOption: Option[JsonValue] = None
+  @property(json = true) var jsonSeq: Seq[JsonValue] = Nil
 }
 

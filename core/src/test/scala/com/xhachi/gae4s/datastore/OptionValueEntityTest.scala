@@ -8,7 +8,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.{json, serialize}
+import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -130,32 +130,32 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class OptionValueEntity(val key: Key[OptionValueEntity]) extends Entity[OptionValueEntity] {
-  var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
-  var string: Option[String] = Some("")
-  var int: Option[Int] = Some(0)
-  var long: Option[Long] = Some(0)
-  var double: Option[Double] = Some(0)
-  var bool: Option[Boolean] = Some(false)
-  var date: Option[Date] = Some(new Date(0))
-  var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
-  var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
-  var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
-  var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
-  var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
-  var email: Option[Email] = Some(new Email("eample@example.com"))
-  var user: Option[com.google.appengine.api.users.User] = Some(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
-  var imHandle: Option[IMHandle] = Some(null)
-  var link: Option[Link] = Some(new Link("http://google.com"))
-  var category: Option[Category] = Some(new Category("category"))
-  var rating: Option[Rating] = Some(new Rating(0))
-  var blobKey: Option[BlobKey] = Some(new BlobKey(""))
-  var bigInt: Option[BigInt] = Some(BigInt(0))
-  var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
-  var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
-  var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
-  var byteArray: Option[Array[Byte]] = Some("byte_array".getBytes("UTF-8"))
-  @json var json: Option[JsonValue] = Some(JsonValue("test"))
-  @serialize var serializable: Option[SerializableValue] = Some(SerializableValue(""))
+  @property var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
+  @property var string: Option[String] = Some("")
+  @property var int: Option[Int] = Some(0)
+  @property var long: Option[Long] = Some(0)
+  @property var double: Option[Double] = Some(0)
+  @property var bool: Option[Boolean] = Some(false)
+  @property var date: Option[Date] = Some(new Date(0))
+  @property var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
+  @property var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
+  @property var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
+  @property var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
+  @property var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
+  @property var email: Option[Email] = Some(new Email("eample@example.com"))
+  @property var user: Option[com.google.appengine.api.users.User] = Some(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
+  @property var imHandle: Option[IMHandle] = Some(null)
+  @property var link: Option[Link] = Some(new Link("http://google.com"))
+  @property var category: Option[Category] = Some(new Category("category"))
+  @property var rating: Option[Rating] = Some(new Rating(0))
+  @property var blobKey: Option[BlobKey] = Some(new BlobKey(""))
+  @property var bigInt: Option[BigInt] = Some(BigInt(0))
+  @property var bigDecimal: Option[BigDecimal] = Some(BigDecimal(0))
+  @property var javaEnum: Option[JavaEnum] = Some(JavaEnum.JAVA_ENUM1)
+  @property var scalaEnum: Option[ScalaEnum.Value] = Some(ScalaEnum.ScalaEnum1)
+  @property var byteArray: Option[Array[Byte]] = Some("byte_array".getBytes("UTF-8"))
+  @property(json = true) var json: Option[JsonValue] = Some(JsonValue("test"))
+  @property(serialize = true) var serializable: Option[SerializableValue] = Some(SerializableValue(""))
 }
 
 

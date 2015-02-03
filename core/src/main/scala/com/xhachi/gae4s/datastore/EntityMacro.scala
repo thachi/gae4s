@@ -2,7 +2,7 @@ package com.xhachi.gae4s.datastore
 
 import java.util.Date
 
-import com.xhachi.gae4s.datastore.annotations._
+import com.xhachi.gae4s.datastore.meta._
 
 import scala.reflect.macros.blackbox.{Context => BContext}
 
@@ -173,57 +173,62 @@ $query.copy(sorts = Seq(meta.$s.desc))
       }
     }
 
-    def toPropertyInfo(name: TermName): PropertyInfo = {
-      val member0 = entityType.member(name)
-      val member1 = entityType.member(TermName(name + "_$eq"))
-      val member2 = entityType.member(TermName(name + " "))
+    def toPropertyInfo(name0: TermName): Option[PropertyInfo] = {
+      val name1 = TermName(name0 + "_$eq")
+      val name2 = TermName(name0 + " ")
+      val member0 = entityType.member(name0)
+      val member1 = entityType.member(name1)
+      val member2 = entityType.member(name2)
       assert(member0.isMethod)
 
-      val hasTransient = (member2.isTerm && member2.asTerm.isVar && h.hasAnnotation(member2, typeOf[transient])) || h.hasAnnotation(member0, typeOf[transient])
-      val hasJson = (member2.isTerm && member2.asTerm.isVar && h.hasAnnotation(member2, typeOf[json])) || h.hasAnnotation(member0, typeOf[json])
-      val hasSerialize = (member2.isTerm && member2.asTerm.isVar && h.hasAnnotation(member2, typeOf[serialize])) || h.hasAnnotation(member0, typeOf[serialize])
-      val hasIndexed = (member2.isTerm && member2.asTerm.isVar && h.hasAnnotation(member2, typeOf[indexed])) || h.hasAnnotation(member0, typeOf[indexed])
-      val hasVersion = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[version])
-      val hasCreationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[creationDate])
-      val hasModificationDate = member2.isTerm && member2.asTerm.isVar && member2.annotations.exists(_.tree.tpe =:= typeOf[modificationDate])
+      h.getAnnotation(entityType, Seq(name0, name1, name2), typeOf[property]) match {
+        case Nil => None
+        case annotations =>
 
-      val existsVersionEntityAnnotation = findAnnotationValue("version").contains(name.toString)
-      val existsCreationDateEntityAnnotation = findAnnotationValue("creationDate").contains(name.toString)
-      val existsModificationDateEntityAnnotation = findAnnotationValue("modificationDate").contains(name.toString)
 
-      val tpe = member0.asMethod.returnType
-      val p = PropertyInfo(
-        name,
-        tpe,
-        tpe.baseClasses.map(_.asType.fullName).toSeq,
-        serializable = hasSerialize && tpe <:< typeOf[Serializable],
-        json = hasJson,
-        transient = hasTransient,
-        indexed = hasIndexed,
-        version = existsVersionEntityAnnotation || hasVersion,
-        creationDate = existsCreationDateEntityAnnotation || hasCreationDate,
-        modificationDate = existsModificationDateEntityAnnotation || hasModificationDate,
-        readonly = !member1.isMethod,
-        listener = Nil
-      )
-      //      println("PropiertyInfo: " + p)
-      p
+          def getAnnotationValueOrElse[T](name: String, default: T): T = {
+            val value = annotations.flatMap { a =>
+              val param = a.tree.children.tail
+              param.flatMap {
+                case AssignOrNamedArg(Ident(TermName(n)), v) if n == name => Some(c.eval(c.Expr[T](v)))
+                case _ => None
+              }
+            }
+            value.headOption.getOrElse(default)
+          }
+
+
+          val hasTransient = h.getAnnotation(member0.owner.typeSignature, Seq(name0, name1, name2), typeOf[transient]).nonEmpty
+          val hasJson = getAnnotationValueOrElse("json", false)
+          val hasSerialize = getAnnotationValueOrElse("serialize", false)
+          val hasIndexed = getAnnotationValueOrElse("indexed", false)
+          val hasVersion = getAnnotationValueOrElse("version", false)
+          val hasCreationDate = getAnnotationValueOrElse("creationDate", false)
+          val hasModificationDate = getAnnotationValueOrElse("modificationDate", false)
+
+          val tpe = member0.asMethod.returnType
+          val p = PropertyInfo(
+            name0,
+            tpe,
+            tpe.baseClasses.map(_.asType.fullName).toSeq,
+            serializable = hasSerialize && tpe <:< typeOf[Serializable],
+            json = hasJson,
+            transient = hasTransient,
+            indexed = hasIndexed,
+            version = hasVersion,
+            creationDate = hasCreationDate,
+            modificationDate = hasModificationDate,
+            readonly = !member1.isMethod,
+            listener = Nil
+          )
+          //      println("PropertyInfo: " + p)
+          Some(p)
+      }
     }
 
     def isMemberOfEntity(member: c.Symbol): Boolean = {
-      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) || member.owner.asType.typeSignature.baseClasses.tail.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
-    }
-
-    def findAnnotationValue(name: String): Seq[String] = {
-      val symbols = entityType.typeSymbol :: entityType.baseClasses
-      val annotations = symbols.map(_.annotations.filter(_.tree.tpe =:= typeOf[entity])).flatten
-
-      //      println(s"Annotations($name)\n" + symbols.map(s => s"${s.name} : ${s.annotations.filter(_.tree.tpe =:= typeOf[entity])}").mkString("\n"))
-      annotations.map(_.tree) collect {
-        case Apply(a, List(Literal(Constant(v: String)), _, _)) if name == "version" => v
-        case Apply(a, List(_, Literal(Constant(v: String)), _)) if name == "creationDate" => v
-        case Apply(a, List(_, _, Literal(Constant(v: String)))) if name == "modificationDate" => v
-      }
+      //      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) ||
+      member.owner.asType.typeSignature.baseClasses.tail.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
     }
 
     // TODO: Listenerの仕組みはtraitのフィールドのアノテーションを取得できるようになってから
@@ -429,10 +434,10 @@ def toString(value: $enum.Value): String = value match {
     val propertyInfos = entityType.baseClasses.map(entityType.baseType(_).decls).flatten
       .filter(m => m.isMethod && m.asMethod.paramLists.isEmpty)
       .filter(_.name.encodedName.toString != "key")
-      .filter(isMemberOfEntity)
+//      .filter(isMemberOfEntity)
       .map(_.name.toTermName)
       .toSet
-      .map(toPropertyInfo)
+      .flatMap(toPropertyInfo)
 
     val normalProperties = propertyInfos.filterNot(_.version)
       .map(i => toProperty(i))
@@ -478,7 +483,7 @@ class $metaName extends com.xhachi.gae4s.datastore.EntityMeta[$entityType] {
 
 }
 """
-//    println(tree)
+    //    println(tree)
     tree
   }
 
@@ -509,7 +514,7 @@ class Helper[C <: BContext](val c: C) {
   /**
    * デバッグのための出力を行います。
    */
-  def printDebug(c: BContext)(tree: c.Tree): Unit = {
+  def printDebug(tree: c.Tree): Unit = {
     import c.universe._
 
     var depth = 0
@@ -607,20 +612,31 @@ class Helper[C <: BContext](val c: C) {
     }.transform(tree)
   }
 
-  def hasAnnotation(member: c.Symbol, tpe: c.Type): Boolean = {
-    member.annotations.exists(_.tree.tpe =:= tpe) || hasAnnotationInConstructorParam(member, tpe)
+
+  def getAnnotation(target: c.Type, names: Seq[c.TermName], tpe: c.Type): Seq[c.universe.Annotation] = {
+    target
+      .baseClasses
+      .flatMap(b => getAnnotationInConstructorParam(b, names, tpe) ++ getAnnotationInMember(b, names, tpe))
   }
 
-  def hasAnnotationInConstructorParam(member: c.Symbol, tpe: c.Type): Boolean = {
+  private def getAnnotationInMember(target: c.Symbol, names: Seq[c.TermName], tpe: c.Type): Seq[c.universe.Annotation] = {
+    names
+      .map(target.typeSignature.decl)
+      .flatMap(m => m.annotations.filter(_.tree.tpe =:= tpe))
+  }
+
+  private def getAnnotationInConstructorParam(target: c.Symbol, names: Seq[c.TermName], tpe: c.Type): Seq[c.universe.Annotation] = {
     import c.universe._
 
-    member.owner match {
+    target match {
       case o: TypeSymbol if o.typeSignature.member(termNames.CONSTRUCTOR).isMethod =>
         o.typeSignature.member(termNames.CONSTRUCTOR).asMethod
-          .paramLists.flatMap(_.filter(_.name == member.name))
-          .exists(_.annotations.exists(_.tree.tpe =:= tpe))
-      case _ => false
+          .paramLists
+          .flatMap(p => p.filter(s => names.contains(s.name)))
+          .flatMap(_.annotations.filter(_.tree.tpe =:= tpe))
+      case _ => Nil
     }
   }
+
 
 }
