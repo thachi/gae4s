@@ -63,8 +63,7 @@ object Settings {
 
   lazy val defaultSetting = Defaults.defaultSettings ++
     Seq(
-      scalaVersion := "2.11.4",
-      //      crossScalaVersions := Seq("2.11.4"),
+      scalaVersion := "2.11.5",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       version := "0.7-SNAPSHOT",
@@ -78,20 +77,18 @@ object Settings {
       }
     )
 
-  val defaultDependency = {
-    Seq(
+  val defaultDependency = Seq(
       "org.json4s" %% "json4s-native" % "3.2.11",
       "org.json4s" %% "json4s-ext" % "3.2.11",
       "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
-      "com.google.appengine.tools" % "appengine-gcs-client" % "0.4.3",
+      "com.google.appengine.tools" % "appengine-gcs-client" % "0.4.4",
       "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
       "com.google.appengine" % "appengine-testing" % appengineVersion % "test",
       "org.scalatest" %% "scalatest" % scalatestVersion % "test"
     )
-  }
 }
 
 object Versions {
-  val appengineVersion = "1.9.17a"
-  val scalatestVersion = "2.2.2"
+  val appengineVersion = "1.9.17"
+  val scalatestVersion = "2.2.4"
 }
