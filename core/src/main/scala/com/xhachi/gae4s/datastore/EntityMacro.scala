@@ -118,6 +118,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
     case class PropertyInfo(name: TermName,
                             tpe: Type,
+                            order: Int,
                             bases: Seq[String],
                             serializable: Boolean,
                             json: Boolean,
@@ -152,6 +153,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
           name: $name,
           stringName: $stringName,
           tpe: $tpe,
+          order: $order,
           storeType: $storeType,
           bases: $bases,
           serializable: $serializable,
@@ -197,7 +199,6 @@ $query.copy(sorts = Seq(meta.$s.desc))
             value.headOption.getOrElse(default)
           }
 
-
           val hasTransient = h.getAnnotation(member0.owner.typeSignature, Seq(name0, name1, name2), typeOf[transient]).nonEmpty
           val hasJson = getAnnotationValueOrElse("json", false)
           val hasSerialize = getAnnotationValueOrElse("serialize", false)
@@ -205,11 +206,13 @@ $query.copy(sorts = Seq(meta.$s.desc))
           val hasVersion = getAnnotationValueOrElse("version", false)
           val hasCreationDate = getAnnotationValueOrElse("creationDate", false)
           val hasModificationDate = getAnnotationValueOrElse("modificationDate", false)
+          val order = getAnnotationValueOrElse("order", (entityType.baseClasses.indexOf(member0.owner) + 1) * 1000)
 
           val tpe = member0.asMethod.returnType
           val p = PropertyInfo(
             name0,
             tpe,
+            order,
             tpe.baseClasses.map(_.asType.fullName).toSeq,
             serializable = hasSerialize && tpe <:< typeOf[Serializable],
             json = hasJson,
@@ -243,77 +246,77 @@ $query.copy(sorts = Seq(meta.$s.desc))
 
     def toTypeDesc(typeName: String, typeArg: Seq[Type] = Nil) = TypeDesc(c.mirror.staticClass(typeName), typeArg)
 
-    case class PropertyDesc(base: TypeDesc, arg: Tree, withTrait: Seq[TypeDesc] = Nil, body: Seq[Tree] = Nil) {
+    case class PropertyDesc(base: TypeDesc, args: Seq[Tree], withTrait: Seq[TypeDesc] = Nil, body: Seq[Tree] = Nil) {
 
       def treeAsInstance = (base.ta, withTrait) match {
 
         //withなし
         case (Nil, Nil) =>
-          q"""new ${base.tpe}($arg) {..$body}"""
+          q"""new ${base.tpe}(..$args) {..$body}"""
         case (_, Nil) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) {..$body}"""
 
         //withが1つ
         case (Nil, Seq(t1@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] {..$body}"""
 
         //withが2つ
         case (Nil, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} with ${t2.tpe} {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} with ${t2.tpe} {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}{..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}{..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} with ${t2.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} with ${t2.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] {..$body}"""
 
         //withが3つ
         case (Nil, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, Nil), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe} {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, Nil), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, _), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, _), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, Nil), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe} {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, Nil), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, _), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
         case (Nil, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, _), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}(..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, Nil), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, Nil), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, _), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, Nil), t2@TypeDesc(_, _), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe} with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, Nil), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, Nil), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe} with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, _), t3@TypeDesc(_, Nil))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe} {..$body}"""
         case (_, Seq(t1@TypeDesc(_, _), t2@TypeDesc(_, _), t3@TypeDesc(_, _))) =>
-          q"""new ${base.tpe}[..${base.ta}]($arg) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
+          q"""new ${base.tpe}[..${base.ta}](..$args) with ${t1.tpe}[..${t1.ta}] with ${t2.tpe}[..${t2.ta}] with ${t3.tpe}[..${t3.ta}] {..$body}"""
         case _ =>
           c.abort(c.enclosingPosition, s"Invalid TypeDesc. " + this)
       }
@@ -345,37 +348,37 @@ $query.copy(sorts = Seq(meta.$s.desc))
         ).exists(_ =:= memberType)
 
         val p = if (info.version) {
-          PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.VersionProperty"), q"""${info.stringName}""")
+          PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.VersionProperty"), Seq(q"""${info.stringName}"""))
         } else if (info.creationDate) {
-          PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.CreationDateProperty"), q"""${info.stringName}""")
+          PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.CreationDateProperty"), Seq(q"""${info.stringName}"""))
         } else if (info.modificationDate) {
-          PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.ModificationDateProperty"), q"""${info.stringName}""")
+          PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.ModificationDateProperty"), Seq(q"""${info.stringName}"""))
         } else {
           def getPropertyDesc(t: Type): PropertyDesc = if (info.json) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.JsonProperty", Seq(info.storeType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.JsonProperty", Seq(info.storeType)), Seq(q"""${info.stringName}"""))
           } else if (info.serializable) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SerializableProperty", Seq(info.storeType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SerializableProperty", Seq(info.storeType)), Seq(q"""${info.stringName}"""))
           } else if (isValueType(t)) {
             val propertyTypeName = TypeName(t.typeSymbol.asType.name.toTypeName + "Property")
-            PropertyDesc(toTypeDesc(s"com.xhachi.gae4s.datastore.$propertyTypeName"), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc(s"com.xhachi.gae4s.datastore.$propertyTypeName"), Seq(q"""${info.stringName}"""))
           } else if (t =:= typeOf[String]) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.StringProperty"), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.StringProperty"), Seq(q"""${info.stringName}"""))
           } else if (info.storeType =:= typeOf[Array[Byte]]) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.ByteArrayProperty"), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.ByteArrayProperty"), Seq(q"""${info.stringName}"""))
           } else if (t =:= typeOf[Double]) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.DoubleProperty"), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.DoubleProperty"), Seq(q"""${info.stringName}"""))
           } else if (t =:= typeOf[Int]) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.IntProperty"), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.IntProperty"), Seq(q"""${info.stringName}"""))
           } else if (t =:= typeOf[Long]) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.LongProperty"), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.LongProperty"), Seq(q"""${info.stringName}"""))
           } else if (info.isKey) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.KeyProperty", Seq(info.keyType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.KeyProperty", Seq(info.keyType)), Seq(q"""${info.stringName}"""))
           } else if (info.isJavaEnum) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumProperty", Seq(info.storeType)), q"""${info.stringName}""")
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumProperty", Seq(info.storeType)), Seq(q"""${info.stringName}"""))
           } else if (info.isScalaEnum) {
             val enum = c.mirror.staticModule(info.scalaEnumName)
             PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.EnumerationProperty", Seq(info.storeType)),
-              q"""${info.stringName}""",
+              Seq(q"""${info.stringName}"""),
               body = Seq(
                 q"def withName(name: String): $enum.Value = $enum.withName(name)",
                 q"def values: Seq[$enum.Value] = $enum.values.toSeq",
@@ -398,18 +401,19 @@ def toString(value: $enum.Value): String = value match {
 
           val p0 = getPropertyDesc(info.storeType)
           val p1 = if (info.isOption) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.OptionProperty", Seq(info.storeType)), p0.treeAsInstance)
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.OptionProperty", Seq(info.storeType)), Seq(p0.treeAsInstance))
           } else if (info.isSeq && !info.json) {
-            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SeqProperty", Seq(info.storeType)), p0.treeAsInstance)
+            PropertyDesc(toTypeDesc("com.xhachi.gae4s.datastore.SeqProperty", Seq(info.storeType)), Seq(p0.treeAsInstance))
           } else {
             p0
           }
 
-          if (info.indexed) {
+          val p2 = if (info.indexed) {
             p1.copy(withTrait = Seq(toTypeDesc("com.xhachi.gae4s.datastore.IndexedProperty", Seq(info.tpe))))
           } else {
             p1
           }
+          p2
         }
 
         val p1 = p.copy(
@@ -435,10 +439,10 @@ def toString(value: $enum.Value): String = value match {
     val propertyInfos = entityType.baseClasses.map(entityType.baseType(_).decls).flatten
       .filter(m => m.isMethod && m.asMethod.paramLists.isEmpty)
       .filter(_.name.encodedName.toString != "key")
-      //      .filter(isMemberOfEntity)
       .map(_.name.toTermName)
-      .toSet
+      .distinct
       .flatMap(toPropertyInfo)
+      .sortWith((a, b) => a.order < b.order)
 
     val normalProperties = propertyInfos.filterNot(_.version)
       .map(i => toProperty(i))

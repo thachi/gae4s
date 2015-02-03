@@ -8,7 +8,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.meta.{entity, property}
+import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 

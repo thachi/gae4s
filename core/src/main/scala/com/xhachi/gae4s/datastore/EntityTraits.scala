@@ -16,7 +16,7 @@ trait ImmutableEntity extends CreatedAt {
 trait Version {
   self: Entity[_] =>
 
-  @property(version = true)
+  @property(version = true, order = 1000003)
   var version: Long = 0L
 }
 
@@ -24,7 +24,7 @@ trait Version {
 trait CreatedAt {
   self: Entity[_] =>
 
-  @property(creationDate = true)
+  @property(creationDate = true, order = 1000002)
   var createdAt: Date = null
 }
 
@@ -32,7 +32,7 @@ trait CreatedAt {
 trait UpdatedAt {
   self: Entity[_] =>
 
-  @property(modificationDate = true)
+  @property(modificationDate = true, order = 1000001)
   var updatedAt: Date = null
 }
 

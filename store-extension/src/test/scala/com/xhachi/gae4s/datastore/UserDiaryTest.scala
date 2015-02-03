@@ -82,7 +82,7 @@ final class UserDiary(
                        ) extends Entity[UserDiary] with Ancestor[User] with MutableEntity with ParentEntity {
   var firstName: String = ""
 
-  @property(seq = 2, indexed = true, version = false)
+  @property(order = 2, indexed = true, version = false)
   var lastName: String = ""
 }
 

@@ -14,6 +14,6 @@ public @interface property {
     boolean version() default false;
     boolean creationDate() default false;
     boolean modificationDate() default false;
-    int seq() default 9999;
+    int order() default Integer.MAX_VALUE;
 
 }
