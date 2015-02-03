@@ -182,7 +182,7 @@ $query.copy(sorts = Seq(meta.$s.desc))
       assert(member0.isMethod)
 
       h.getAnnotation(entityType, Seq(name0, name1, name2), typeOf[property]) match {
-        case Nil => None
+        case Nil if !isMemberOfEntity(Seq(member0, member2, member2)) => None
         case annotations =>
 
 
@@ -226,9 +226,10 @@ $query.copy(sorts = Seq(meta.$s.desc))
       }
     }
 
-    def isMemberOfEntity(member: c.Symbol): Boolean = {
-      //      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) ||
-      member.owner.asType.typeSignature.baseClasses.tail.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
+    def isMemberOfEntity(members: Seq[c.Symbol]): Boolean = members.filterNot(_ == NoSymbol).exists(_isMemberOfEntity)
+
+    def _isMemberOfEntity(member: c.Symbol): Boolean = {
+      member.owner.annotations.exists(_.tree.tpe == typeOf[entity]) || member.owner.asType.typeSignature.baseClasses.tail.exists(_.fullName == "com.xhachi.gae4s.datastore.Entity")
     }
 
     // TODO: Listenerの仕組みはtraitのフィールドのアノテーションを取得できるようになってから
@@ -434,7 +435,7 @@ def toString(value: $enum.Value): String = value match {
     val propertyInfos = entityType.baseClasses.map(entityType.baseType(_).decls).flatten
       .filter(m => m.isMethod && m.asMethod.paramLists.isEmpty)
       .filter(_.name.encodedName.toString != "key")
-//      .filter(isMemberOfEntity)
+      //      .filter(isMemberOfEntity)
       .map(_.name.toTermName)
       .toSet
       .flatMap(toPropertyInfo)

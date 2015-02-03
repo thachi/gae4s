@@ -119,7 +119,7 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
   }
 }
 
-
+// TODO: @entity(indexed = true)で全プロパティがindex対象になったほうがいいかも
 class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends Entity[IndexedOptionValueEntity] {
   @property(indexed = true) var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
   @property(indexed = true) var string: Option[String] = Some("")

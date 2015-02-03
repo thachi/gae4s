@@ -8,7 +8,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.meta.property
+import com.xhachi.gae4s.datastore.meta.{entity, property}
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -127,31 +127,36 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
   }
 }
 
-class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleValueEntity] {
-  @property var userKey: Key[User] = Datastore.allocateKey[User]
-  @property var string: String = ""
-  @property var int: Int = 0
-  @property var long: Long = 0
-  @property var double: Double = 0
-  @property var bool: Boolean = false
-  @property var date: Date = new Date(0)
-  @property var geoPt: GeoPt = new GeoPt(0, 0)
-  @property var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
-  @property var blob: Blob = new Blob("blob".getBytes("UTF-8"))
-  @property var postalAddress: PostalAddress = new PostalAddress("060-0806")
-  @property var phoneNumber: PhoneNumber = new PhoneNumber("0120-501353")
-  @property var email: Email = new Email("eample@example.com")
-  @property var user: com.google.appengine.api.users.User = new com.google.appengine.api.users.User("sample@example.com", "example.com")
-  @property var imHandle: IMHandle = null
-  @property var link: Link = new Link("http://google.com")
-  @property var category: Category = new Category("category")
-  @property var rating: Rating = new Rating(0)
-  @property var blobKey: BlobKey = new BlobKey("")
-  @property var bigInt: BigInt = BigInt(0)
-  @property var bigDecimal: BigDecimal = BigDecimal(0)
-  @property var javaEnum: JavaEnum = JavaEnum.JAVA_ENUM1
-  @property var scalaEnum: ScalaEnum.Value = ScalaEnum.ScalaEnum1
-  @property var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
+
+trait DefaultEntityProperty {
+  var sample: String = ""
+}
+
+class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleValueEntity] with DefaultEntityProperty {
+  var userKey: Key[User] = Datastore.allocateKey[User]
+  var string: String = ""
+  var int: Int = 0
+  var long: Long = 0
+  var double: Double = 0
+  var bool: Boolean = false
+  var date: Date = new Date(0)
+  var geoPt: GeoPt = new GeoPt(0, 0)
+  var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
+  var blob: Blob = new Blob("blob".getBytes("UTF-8"))
+  var postalAddress: PostalAddress = new PostalAddress("060-0806")
+  var phoneNumber: PhoneNumber = new PhoneNumber("0120-501353")
+  var email: Email = new Email("eample@example.com")
+  var user: com.google.appengine.api.users.User = new com.google.appengine.api.users.User("sample@example.com", "example.com")
+  var imHandle: IMHandle = null
+  var link: Link = new Link("http://google.com")
+  var category: Category = new Category("category")
+  var rating: Rating = new Rating(0)
+  var blobKey: BlobKey = new BlobKey("")
+  var bigInt: BigInt = BigInt(0)
+  var bigDecimal: BigDecimal = BigDecimal(0)
+  var javaEnum: JavaEnum = JavaEnum.JAVA_ENUM1
+  var scalaEnum: ScalaEnum.Value = ScalaEnum.ScalaEnum1
+  var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
   @property(json = true)  var json: JsonValue = JsonValue("test")
   @property(serialize = true)  var serializable: SerializableValue = SerializableValue("")
 }

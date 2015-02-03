@@ -12,6 +12,7 @@ trait ImmutableEntity extends CreatedAt {
   self: Entity[_] =>
 }
 
+@entity
 trait Version {
   self: Entity[_] =>
 
@@ -19,6 +20,7 @@ trait Version {
   var version: Long = 0L
 }
 
+@entity
 trait CreatedAt {
   self: Entity[_] =>
 
@@ -26,6 +28,7 @@ trait CreatedAt {
   var createdAt: Date = null
 }
 
+@entity
 trait UpdatedAt {
   self: Entity[_] =>
 

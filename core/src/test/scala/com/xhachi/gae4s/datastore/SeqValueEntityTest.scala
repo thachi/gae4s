@@ -8,7 +8,6 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -118,29 +117,29 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SeqValueEntity(val key: Key[SeqValueEntity]) extends Entity[SeqValueEntity] {
-  @property var userKey: Seq[Key[User]] = Seq(Datastore.allocateKey[User])
-  @property var string: Seq[String] = Seq("")
-  @property var int: Seq[Int] = Seq(0)
-  @property var long: Seq[Long] = Seq(0)
-  @property var double: Seq[Double] = Seq(0)
-  @property var bool: Seq[Boolean] = Seq(false)
-  @property var date: Seq[Date] = Seq(new Date(0))
-  @property var geoPt: Seq[GeoPt] = Seq(new GeoPt(0, 0))
-  @property var shortBlob: Seq[ShortBlob] = Seq(new ShortBlob("shot_blob".getBytes("UTF-8")))
-  @property var blob: Seq[Blob] = Seq(new Blob("blob".getBytes("UTF-8")))
-  @property var postalAddress: Seq[PostalAddress] = Seq(new PostalAddress("060-0806"))
-  @property var phoneNumber: Seq[PhoneNumber] = Seq(new PhoneNumber("0120-501353"))
-  @property var email: Seq[Email] = Seq(new Email("eample@example.com"))
-  @property var user: Seq[com.google.appengine.api.users.User] = Seq(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
-  @property var imHandle: Seq[IMHandle] = Seq(null)
-  @property var link: Seq[Link] = Seq(new Link("http://google.com"))
-  @property var category: Seq[Category] = Seq(new Category("category"))
-  @property var rating: Seq[Rating] = Seq(new Rating(0))
-  @property var blobKey: Seq[BlobKey] = Seq(new BlobKey(""))
-  @property var bigInt: Seq[BigInt] = Seq(BigInt(0))
-  @property var bigDecimal: Seq[BigDecimal] = Seq(BigDecimal(0))
-  @property var javaEnum: Seq[JavaEnum] = Seq(JavaEnum.JAVA_ENUM1)
-  @property var scalaEnum: Seq[ScalaEnum.Value] = Seq(ScalaEnum.ScalaEnum1)
+  var userKey: Seq[Key[User]] = Seq(Datastore.allocateKey[User])
+  var string: Seq[String] = Seq("")
+  var int: Seq[Int] = Seq(0)
+  var long: Seq[Long] = Seq(0)
+  var double: Seq[Double] = Seq(0)
+  var bool: Seq[Boolean] = Seq(false)
+  var date: Seq[Date] = Seq(new Date(0))
+  var geoPt: Seq[GeoPt] = Seq(new GeoPt(0, 0))
+  var shortBlob: Seq[ShortBlob] = Seq(new ShortBlob("shot_blob".getBytes("UTF-8")))
+  var blob: Seq[Blob] = Seq(new Blob("blob".getBytes("UTF-8")))
+  var postalAddress: Seq[PostalAddress] = Seq(new PostalAddress("060-0806"))
+  var phoneNumber: Seq[PhoneNumber] = Seq(new PhoneNumber("0120-501353"))
+  var email: Seq[Email] = Seq(new Email("eample@example.com"))
+  var user: Seq[com.google.appengine.api.users.User] = Seq(new com.google.appengine.api.users.User("sample@example.com", "example.com"))
+  var imHandle: Seq[IMHandle] = Seq(null)
+  var link: Seq[Link] = Seq(new Link("http://google.com"))
+  var category: Seq[Category] = Seq(new Category("category"))
+  var rating: Seq[Rating] = Seq(new Rating(0))
+  var blobKey: Seq[BlobKey] = Seq(new BlobKey(""))
+  var bigInt: Seq[BigInt] = Seq(BigInt(0))
+  var bigDecimal: Seq[BigDecimal] = Seq(BigDecimal(0))
+  var javaEnum: Seq[JavaEnum] = Seq(JavaEnum.JAVA_ENUM1)
+  var scalaEnum: Seq[ScalaEnum.Value] = Seq(ScalaEnum.ScalaEnum1)
 }
 
 
