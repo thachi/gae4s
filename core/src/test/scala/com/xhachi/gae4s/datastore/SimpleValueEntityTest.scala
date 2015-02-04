@@ -20,7 +20,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[SimpleValueEntity]
 
-    assert(meta.properties.size == 26)
+    assert(meta.properties.size == 27)
 
     for (p <- meta.properties) {
       assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
@@ -41,6 +41,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bool", classOf[Boolean])
     assertProperty("date", classOf[Date])
     assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("text", classOf[Text])
     assertProperty("shortBlob", classOf[ShortBlob])
     assertProperty("blob", classOf[Blob])
     assertProperty("postalAddress", classOf[PostalAddress])
@@ -76,6 +77,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.bool = true
     e.date = new Date(5)
     e.geoPt = new GeoPt(6, 7)
+    e.text = new Text("text7")
     e.shortBlob = new ShortBlob("8".getBytes("UTF-8"))
     e.blob = new Blob("9".getBytes("UTF-8"))
     e.postalAddress = new PostalAddress("123-4567")
@@ -105,6 +107,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bool == a.bool)
     assert(e.date == a.date)
     assert(e.geoPt == a.geoPt)
+    assert(e.text == a.text)
     assert(e.shortBlob == a.shortBlob)
     assert(e.blob == a.blob)
     assert(e.postalAddress == a.postalAddress)
@@ -141,6 +144,7 @@ class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleVa
   var bool: Boolean = false
   var date: Date = new Date(0)
   var geoPt: GeoPt = new GeoPt(0, 0)
+  var text: Text = new Text(null)
   var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
   var blob: Blob = new Blob("blob".getBytes("UTF-8"))
   var postalAddress: PostalAddress = new PostalAddress("060-0806")

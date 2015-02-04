@@ -222,6 +222,8 @@ class IntProperty(name: String) extends ValueProperty[Int](name) {
 }
 
 
+class TextProperty(name: String) extends ValueProperty[Text](name)
+
 class DoubleProperty(name: String) extends ValueProperty[Double](name)
 
 class BooleanProperty(name: String) extends ValueProperty[Boolean](name)

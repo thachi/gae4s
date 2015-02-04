@@ -20,7 +20,7 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[OptionValueEntity]
 
-    assert(meta.properties.size == 26)
+    assert(meta.properties.size == 27)
 
     for (p <- meta.properties) {
       assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
@@ -42,6 +42,7 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bool", classOf[Boolean])
     assertProperty("date", classOf[Date])
     assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("text", classOf[Text])
     assertProperty("shortBlob", classOf[ShortBlob])
     assertProperty("blob", classOf[Blob])
     assertProperty("postalAddress", classOf[PostalAddress])
@@ -78,6 +79,7 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.bool = Some(true)
     e.date = Some(new Date(5))
     e.geoPt = Some(new GeoPt(6, 7))
+    e.text= Some(new Text("text7"))
     e.shortBlob = Some(new ShortBlob("8".getBytes("UTF-8")))
     e.blob = Some(new Blob("9".getBytes("UTF-8")))
     e.postalAddress = Some(new PostalAddress("123-4567"))
@@ -107,6 +109,7 @@ class OptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bool == a.bool)
     assert(e.date == a.date)
     assert(e.geoPt == a.geoPt)
+    assert(e.text == a.text)
     assert(e.shortBlob == a.shortBlob)
     assert(e.blob == a.blob)
     assert(e.postalAddress == a.postalAddress)
@@ -138,6 +141,7 @@ class OptionValueEntity(val key: Key[OptionValueEntity]) extends Entity[OptionVa
   var bool: Option[Boolean] = Some(false)
   var date: Option[Date] = Some(new Date(0))
   var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
+  var text: Option[Text] = Some(new Text(null))
   var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
   var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
   var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))

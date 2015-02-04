@@ -19,7 +19,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[SeqValueEntity]
 
-    assert(meta.properties.size == 23)
+    assert(meta.properties.size == 24)
 
     for (p <- meta.properties) {
       assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
@@ -41,6 +41,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bool", classOf[Boolean])
     assertProperty("date", classOf[Date])
     assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("text", classOf[Text])
     assertProperty("shortBlob", classOf[ShortBlob])
     assertProperty("blob", classOf[Blob])
     assertProperty("postalAddress", classOf[PostalAddress])
@@ -71,6 +72,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.bool = Seq(true)
     e.date = Seq(new Date(5))
     e.geoPt = Seq(new GeoPt(6, 7))
+    e.text = Seq(new Text("text7"))
     e.shortBlob = Seq(new ShortBlob("8".getBytes("UTF-8")))
     e.blob = Seq(new Blob("9".getBytes("UTF-8")))
     e.postalAddress = Seq(new PostalAddress("123-4567"))
@@ -97,6 +99,7 @@ class SeqValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bool == a.bool)
     assert(e.date == a.date)
     assert(e.geoPt == a.geoPt)
+    assert(e.text == a.text)
     assert(e.shortBlob == a.shortBlob)
     assert(e.blob == a.blob)
     assert(e.postalAddress == a.postalAddress)
@@ -125,6 +128,7 @@ class SeqValueEntity(val key: Key[SeqValueEntity]) extends Entity[SeqValueEntity
   var bool: Seq[Boolean] = Seq(false)
   var date: Seq[Date] = Seq(new Date(0))
   var geoPt: Seq[GeoPt] = Seq(new GeoPt(0, 0))
+  var text: Seq[Text] = Seq(new Text(null))
   var shortBlob: Seq[ShortBlob] = Seq(new ShortBlob("shot_blob".getBytes("UTF-8")))
   var blob: Seq[Blob] = Seq(new Blob("blob".getBytes("UTF-8")))
   var postalAddress: Seq[PostalAddress] = Seq(new PostalAddress("060-0806"))

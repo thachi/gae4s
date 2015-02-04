@@ -20,7 +20,7 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[IndexedSimpleValueEntity]
 
-    assert(meta.properties.size == 24)
+    assert(meta.properties.size == 11)
 
     for (p <- meta.properties) {
       assert(p.isInstanceOf[IndexedProperty[_]], p.name)
@@ -41,23 +41,10 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bool", classOf[Boolean])
     assertProperty("date", classOf[Date])
     assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("text", classOf[Text])
     assertProperty("shortBlob", classOf[ShortBlob])
     assertProperty("blob", classOf[Blob])
-    assertProperty("postalAddress", classOf[PostalAddress])
-    assertProperty("phoneNumber", classOf[PhoneNumber])
-    assertProperty("email", classOf[Email])
-    assertProperty("user", classOf[users.User])
-    assertProperty("imHandle", classOf[IMHandle])
-    assertProperty("link", classOf[Link])
-    assertProperty("category", classOf[Category])
-    assertProperty("rating", classOf[Rating])
-    assertProperty("blobKey", classOf[BlobKey])
-    assertProperty("bigInt", classOf[BigInt])
-    assertProperty("bigDecimal", classOf[BigDecimal])
 
-    assert(meta.property("javaEnum").get.isInstanceOf[EnumProperty[_]])
-    assert(meta.property("scalaEnum").get.isInstanceOf[StringStoreProperty[_]])
-    assert(meta.property("byteArray").get.isInstanceOf[ByteArrayProperty])
   }
 
   test("保存して読み込めて検索できること") {
@@ -74,22 +61,9 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.bool = true
     e.date = new Date(5)
     e.geoPt = new GeoPt(6, 7)
+    e.text = new Text("text7")
     e.shortBlob = new ShortBlob("8".getBytes("UTF-8"))
     e.blob = new Blob("9".getBytes("UTF-8"))
-    e.postalAddress = new PostalAddress("123-4567")
-    e.phoneNumber = new PhoneNumber("0120-123-456")
-    e.email = new Email("test@example.com")
-    e.user = new com.google.appengine.api.users.User("test2@example.com", "example.com")
-    e.imHandle = new IMHandle(IMHandle.Scheme.sip, "test3")
-    e.link = new Link("http://facebook.com")
-    e.category = new Category("test_category")
-    e.rating = new Rating(99)
-    e.blobKey = new BlobKey("123")
-    e.bigInt = new BigInt(new BigInteger("12345678"))
-    e.bigDecimal = new BigDecimal(new math.BigDecimal("12345678"))
-    e.javaEnum = JavaEnum.JAVA_ENUM2
-    e.scalaEnum = ScalaEnum.ScalaEnum2
-    e.byteArray = "test_byte_array".getBytes("UTF-8")
     Datastore.put(e)
 
     val a = Datastore.get(key)
@@ -101,22 +75,9 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bool == a.bool)
     assert(e.date == a.date)
     assert(e.geoPt == a.geoPt)
+    assert(e.text == a.text)
     assert(e.shortBlob == a.shortBlob)
     assert(e.blob == a.blob)
-    assert(e.postalAddress == a.postalAddress)
-    assert(e.phoneNumber == a.phoneNumber)
-    assert(e.email == a.email)
-    assert(e.user == a.user)
-    assert(e.imHandle == a.imHandle)
-    assert(e.link == a.link)
-    assert(e.category == a.category)
-    assert(e.rating == a.rating)
-    assert(e.blobKey == a.blobKey)
-    assert(e.bigInt == a.bigInt)
-    assert(e.bigDecimal == a.bigDecimal)
-    assert(e.javaEnum == a.javaEnum)
-    assert(e.scalaEnum == a.scalaEnum)
-    assert(e.byteArray.zip(a.byteArray).filterNot(b => b._1 == b._2).isEmpty)
 
     val q = Datastore.query[IndexedSimpleValueEntity]
     assert(q.filter(_.key == key).asSingleOption.nonEmpty)
@@ -144,8 +105,105 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
 
   test("クエリできること") {
-    Datastore.query[IndexedSimpleValueEntity].filter(_.scalaEnum == null).count
-    Datastore.query[IndexedSimpleValueEntity].filter(_.scalaEnum == ScalaEnum.ScalaEnum1).count
+    Datastore.query[IndexedSimpleValueEntity].filter(_.int == 0).count
+    Datastore.query[IndexedSimpleValueEntity].filter(_.int == 1).count
+  }
+
+}
+class IndexedSimpleValueEntity2Test extends FunSuite with AppEngineTestSuite {
+
+  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+
+  test("IndexedSimpleValueEntity2のMetaが正しく生成されること") {
+
+    val meta = EntityMeta.createMeta[IndexedSimpleValueEntity2]
+
+    assert(meta.properties.size == 14)
+
+    for (p <- meta.properties) {
+      assert(p.isInstanceOf[IndexedProperty[_]], p.name)
+      assert(!p.isInstanceOf[OptionProperty[_]], p.name)
+    }
+
+    def assertProperty(name: String, propertyType: Class[_]) = {
+      assert(meta.property(name).isDefined)
+      assert(meta.property(name).get.isInstanceOf[ValueProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[ValueProperty[_]].propertyType == propertyType)
+    }
+
+
+    assertProperty("postalAddress", classOf[PostalAddress])
+    assertProperty("phoneNumber", classOf[PhoneNumber])
+    assertProperty("email", classOf[Email])
+    assertProperty("user", classOf[users.User])
+    assertProperty("imHandle", classOf[IMHandle])
+    assertProperty("link", classOf[Link])
+    assertProperty("category", classOf[Category])
+    assertProperty("rating", classOf[Rating])
+    assertProperty("blobKey", classOf[BlobKey])
+    assertProperty("bigInt", classOf[BigInt])
+    assertProperty("bigDecimal", classOf[BigDecimal])
+
+    assert(meta.property("javaEnum").get.isInstanceOf[EnumProperty[_]])
+    assert(meta.property("scalaEnum").get.isInstanceOf[StringStoreProperty[_]])
+    assert(meta.property("byteArray").get.isInstanceOf[ByteArrayProperty])
+  }
+
+  test("保存して読み込めて検索できること") {
+
+    val key = Datastore.allocateKey[IndexedSimpleValueEntity2]
+    val key2 = Datastore.allocateKey[IndexedSimpleValueEntity2]
+
+    val e = new IndexedSimpleValueEntity2(key)
+
+    e.postalAddress = new PostalAddress("123-4567")
+    e.phoneNumber = new PhoneNumber("0120-123-456")
+    e.email = new Email("test@example.com")
+    e.user = new com.google.appengine.api.users.User("test2@example.com", "example.com")
+    e.imHandle = new IMHandle(IMHandle.Scheme.sip, "test3")
+    e.link = new Link("http://facebook.com")
+    e.category = new Category("test_category")
+    e.rating = new Rating(99)
+    e.blobKey = new BlobKey("123")
+    e.bigInt = new BigInt(new BigInteger("12345678"))
+    e.bigDecimal = new BigDecimal(new math.BigDecimal("12345678"))
+    e.javaEnum = JavaEnum.JAVA_ENUM2
+    e.scalaEnum = ScalaEnum.ScalaEnum2
+    e.byteArray = "test_byte_array".getBytes("UTF-8")
+    Datastore.put(e)
+
+    val a = Datastore.get(key)
+    assert(e.postalAddress == a.postalAddress)
+    assert(e.phoneNumber == a.phoneNumber)
+    assert(e.email == a.email)
+    assert(e.user == a.user)
+    assert(e.imHandle == a.imHandle)
+    assert(e.link == a.link)
+    assert(e.category == a.category)
+    assert(e.rating == a.rating)
+    assert(e.blobKey == a.blobKey)
+    assert(e.bigInt == a.bigInt)
+    assert(e.bigDecimal == a.bigDecimal)
+    assert(e.javaEnum == a.javaEnum)
+    assert(e.scalaEnum == a.scalaEnum)
+    assert(e.byteArray.zip(a.byteArray).filterNot(b => b._1 == b._2).isEmpty)
+
+    val q = Datastore.query[IndexedSimpleValueEntity2]
+
+    // FIXME: NOEが出る。
+    // assert(q.filter(_.date == new Date(5)).asSingleOption.nonEmpty)
+    // assert(q.filter(_.date == new Date(6)).asSingleOption.isEmpty)
+    // assert(q.filter(_.geoPt == new GeoPt(6, 7)).asSingleOption.nonEmpty)
+    // assert(q.filter(_.geoPt == new GeoPt(6, 8)).asSingleOption.isEmpty)
+    // assert(q.filter(_.email == new Email("test@example.com")).asSingleOption.nonEmpty)
+    // assert(q.filter(_.email == new Email("test@hoge.example.com")).asSingleOption.isEmpty)
+
+  }
+
+
+  test("クエリできること") {
+    Datastore.query[IndexedSimpleValueEntity2].filter(_.scalaEnum == null).count
+    Datastore.query[IndexedSimpleValueEntity2].filter(_.scalaEnum == ScalaEnum.ScalaEnum1).count
   }
 
 }
@@ -159,8 +217,17 @@ class IndexedSimpleValueEntity(val key: Key[IndexedSimpleValueEntity]) extends E
   @property(indexed = true) var bool: Boolean = false
   @property(indexed = true) var date: Date = new Date(0)
   @property(indexed = true) var geoPt: GeoPt = new GeoPt(0, 0)
+
+  //FIXME:インデックスは張れないのでエラーにすべき
+  @property(indexed = true) var text: Text = new Text(null)
+
   @property(indexed = true) var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
+
+  //FIXME:インデックスは張れないのでエラーにすべき
   @property(indexed = true) var blob: Blob = new Blob("blob".getBytes("UTF-8"))
+}
+
+class IndexedSimpleValueEntity2(val key: Key[IndexedSimpleValueEntity2]) extends Entity[IndexedSimpleValueEntity2] {
   @property(indexed = true) var postalAddress: PostalAddress = new PostalAddress("060-0806")
   @property(indexed = true) var phoneNumber: PhoneNumber = new PhoneNumber("0120-501353")
   @property(indexed = true) var email: Email = new Email("eample@example.com")

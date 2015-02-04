@@ -11,23 +11,23 @@ import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
-class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
+class IndexedOptionValueEntity1Test extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  test("IndexedOptionValueEntityのMetaが正しく生成されること") {
+  test("IndexedOptionValueEntity1のMetaが正しく生成されること") {
 
-    val meta = EntityMeta.createMeta[IndexedOptionValueEntity]
+    val meta = EntityMeta.createMeta[IndexedOptionValueEntity1]
 
-    assert(meta.properties.size == 23)
+    assert(meta.properties.size == 11)
     assert(meta.property("userKey").get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[KeyProperty[_]])
 
     def assertProperty(name: String, propertyType: Class[_]) = {
-      assert(meta.property(name).isDefined)
-      assert(meta.property(name).get.isInstanceOf[IndexedProperty[_]])
-      assert(meta.property(name).get.isInstanceOf[OptionProperty[_]])
-      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[ValueProperty[_]])
-      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.asInstanceOf[ValueProperty[_]].propertyType == propertyType)
+      assert(meta.property(name).isDefined, name)
+      assert(meta.property(name).get.isInstanceOf[IndexedProperty[_]], name)
+      assert(meta.property(name).get.isInstanceOf[OptionProperty[_]], name)
+      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[ValueProperty[_]], name)
+      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.asInstanceOf[ValueProperty[_]].propertyType == propertyType, name)
     }
 
     assertProperty("string", classOf[String])
@@ -37,8 +37,67 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bool", classOf[Boolean])
     assertProperty("date", classOf[Date])
     assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("text", classOf[Text])
     assertProperty("shortBlob", classOf[ShortBlob])
     assertProperty("blob", classOf[Blob])
+  }
+
+  test("保存して読み込めること") {
+
+    val key = Datastore.allocateKey[IndexedOptionValueEntity1]
+    val e = new IndexedOptionValueEntity1(key)
+    e.userKey = Some(Datastore.allocateKey)
+    e.string = Some("test_string")
+    e.int = Some(1)
+    e.long = Some(2)
+    e.double = Some(3)
+    e.bool = Some(true)
+    e.date = Some(new Date(5))
+    e.geoPt = Some(new GeoPt(6, 7))
+    e.text = Some(new Text("text7"))
+    e.shortBlob = Some(new ShortBlob("8".getBytes("UTF-8")))
+    e.blob = Some(new Blob("9".getBytes("UTF-8")))
+    Datastore.put(e)
+
+    val a = Datastore.get(key)
+    assert(e.userKey == a.userKey)
+    assert(e.string == a.string)
+    assert(e.int == a.int)
+    assert(e.long == a.long)
+    assert(e.double == a.double)
+    assert(e.bool == a.bool)
+    assert(e.date == a.date)
+    assert(e.geoPt == a.geoPt)
+    assert(e.text == a.text)
+    assert(e.shortBlob == a.shortBlob)
+    assert(e.blob == a.blob)
+  }
+
+  test("クエリできること") {
+    Datastore.query[IndexedOptionValueEntity1].filter(_.int == None).count
+
+    //FIXME: コンパイル時にNullPointerExceptionが出る。
+    //    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == Some(ScalaEnum.ScalaEnum1)).count
+  }
+}
+class IndexedOptionValueEntity2Test extends FunSuite with AppEngineTestSuite {
+
+  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+
+  test("IndexedOptionValueEntity2のMetaが正しく生成されること") {
+
+    val meta = EntityMeta.createMeta[IndexedOptionValueEntity2]
+
+    assert(meta.properties.size == 13)
+
+    def assertProperty(name: String, propertyType: Class[_]) = {
+      assert(meta.property(name).isDefined)
+      assert(meta.property(name).get.isInstanceOf[IndexedProperty[_]])
+      assert(meta.property(name).get.isInstanceOf[OptionProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.isInstanceOf[ValueProperty[_]])
+      assert(meta.property(name).get.asInstanceOf[OptionProperty[_]].property.asInstanceOf[ValueProperty[_]].propertyType == propertyType)
+    }
+
     assertProperty("postalAddress", classOf[PostalAddress])
     assertProperty("phoneNumber", classOf[PhoneNumber])
     assertProperty("email", classOf[Email])
@@ -58,18 +117,8 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 
   test("保存して読み込めること") {
 
-    val key = Datastore.allocateKey[IndexedOptionValueEntity]
-    val e = new IndexedOptionValueEntity(key)
-    e.userKey = Some(Datastore.allocateKey)
-    e.string = Some("test_string")
-    e.int = Some(1)
-    e.long = Some(2)
-    e.double = Some(3)
-    e.bool = Some(true)
-    e.date = Some(new Date(5))
-    e.geoPt = Some(new GeoPt(6, 7))
-    e.shortBlob = Some(new ShortBlob("8".getBytes("UTF-8")))
-    e.blob = Some(new Blob("9".getBytes("UTF-8")))
+    val key = Datastore.allocateKey[IndexedOptionValueEntity2]
+    val e = new IndexedOptionValueEntity2(key)
     e.postalAddress = Some(new PostalAddress("123-4567"))
     e.phoneNumber = Some(new PhoneNumber("0120-123-456"))
     e.email = Some(new Email("test@example.com"))
@@ -86,16 +135,6 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
     Datastore.put(e)
 
     val a = Datastore.get(key)
-    assert(e.userKey == a.userKey)
-    assert(e.string == a.string)
-    assert(e.int == a.int)
-    assert(e.long == a.long)
-    assert(e.double == a.double)
-    assert(e.bool == a.bool)
-    assert(e.date == a.date)
-    assert(e.geoPt == a.geoPt)
-    assert(e.shortBlob == a.shortBlob)
-    assert(e.blob == a.blob)
     assert(e.postalAddress == a.postalAddress)
     assert(e.phoneNumber == a.phoneNumber)
     assert(e.email == a.email)
@@ -112,7 +151,7 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("クエリできること") {
-    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == None).count
+    Datastore.query[IndexedOptionValueEntity2].filter(_.scalaEnum == None).count
 
     //FIXME: コンパイル時にNullPointerExceptionが出る。
     //    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == Some(ScalaEnum.ScalaEnum1)).count
@@ -120,7 +159,7 @@ class IndexedOptionValueEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 // TODO: @entity(indexed = true)で全プロパティがindex対象になったほうがいいかも
-class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends Entity[IndexedOptionValueEntity] {
+class IndexedOptionValueEntity1(val key: Key[IndexedOptionValueEntity1]) extends Entity[IndexedOptionValueEntity1] {
   @property(indexed = true) var userKey: Option[Key[User]] = Some(Datastore.allocateKey[User])
   @property(indexed = true) var string: Option[String] = Some("")
   @property(indexed = true) var int: Option[Int] = Some(0)
@@ -129,8 +168,12 @@ class IndexedOptionValueEntity(val key: Key[IndexedOptionValueEntity]) extends E
   @property(indexed = true) var bool: Option[Boolean] = Some(false)
   @property(indexed = true) var date: Option[Date] = Some(new Date(0))
   @property(indexed = true) var geoPt: Option[GeoPt] = Some(new GeoPt(0, 0))
+  @property(indexed = true) var text: Option[Text] = Some(new Text(null)) //FIXME:インデックスは張れないのでエラーにすべき
   @property(indexed = true) var shortBlob: Option[ShortBlob] = Some(new ShortBlob("shot_blob".getBytes("UTF-8")))
   @property(indexed = true) var blob: Option[Blob] = Some(new Blob("blob".getBytes("UTF-8")))
+}
+
+class IndexedOptionValueEntity2(val key: Key[IndexedOptionValueEntity2]) extends Entity[IndexedOptionValueEntity2] {
   @property(indexed = true) var postalAddress: Option[PostalAddress] = Some(new PostalAddress("060-0806"))
   @property(indexed = true) var phoneNumber: Option[PhoneNumber] = Some(new PhoneNumber("0120-501353"))
   @property(indexed = true) var email: Option[Email] = Some(new Email("eample@example.com"))
