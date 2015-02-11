@@ -98,4 +98,13 @@ abstract class EntityMeta[E <: Entity[E]] extends Serializable {
 
   def toKeyStrong(key: Key[_]): String = KeyFactory.keyToString(key.key)
 
+  def toStrong(entity: E): String = {
+    val values = properties.map{
+      case p: Getter[E,_] => s"${p.name}:${p.getValueFromEntity(entity)}"
+      case p => s"${p.name}:???"
+    }
+    val k = key.getValueFromEntity(entity)
+    values.mkString(s"$kind(key:$k, ", ", ", ")")
+  }
+
 }
