@@ -20,6 +20,18 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
     assert(meta.properties.size == 14)
     assert(meta.properties.exists(_.name == "twitter"))
 
+    assert(meta.key.gettable)
+    assert(!meta.key.settable)
+    assert(meta.key.indexed)
+    assert(meta.property("name").get.gettable)
+    assert(meta.property("name").get.settable)
+    assert(!meta.property("name").get.indexed)
+    assert(meta.property("createdAt").get.gettable)
+    assert(meta.property("createdAt").get.settable)
+    assert(meta.property("twitter").get.gettable)
+    assert(!meta.property("twitter").get.settable)
+    assert(meta.property("twitter").get.indexed)
+
     val key = Datastore.allocateKey[User]
     assert(key.kind == "com.xhachi.gae4s.datastore.User")
 

@@ -74,7 +74,13 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
-  override def toString = s"Property(name=$name, propertyType=$propertyType, storeType=$storeType)"
+  override def toString = s"$getClass(name=$name, propertyType=$propertyType, storeType=$storeType, gettable=$gettable, settable=$settable, indexed=$indexed)"
+
+  val gettable = this.isInstanceOf[Getter[_, T]]
+
+  val settable = this.isInstanceOf[Setter[_, T]]
+
+  val indexed = this.isInstanceOf[IndexedProperty[T]]
 
 }
 
