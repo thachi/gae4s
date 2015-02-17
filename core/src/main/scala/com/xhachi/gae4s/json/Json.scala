@@ -1,7 +1,5 @@
 package com.xhachi.gae4s.json
 
-import java.util.TimeZone
-
 import org.json4s._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.JsonMethods.{parse => parseByJson4s}
@@ -44,11 +42,7 @@ class Json {
 
   private def buildFormats(): Unit = {
     _formats = new DefaultFormats {
-      override val dateFormatter = {
-        val df = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
-        df.setTimeZone(TimeZone.getTimeZone("GMT"))
-        df
-      }
+      override def dateFormatter = DefaultFormats.losslessDate()
       override val typeHintFieldName: String = "class"
       override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
     } ++ enumSeq.map(e => new EnumNameSerializer(e))
