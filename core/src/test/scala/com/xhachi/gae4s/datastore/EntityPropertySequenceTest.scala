@@ -28,7 +28,7 @@ class EntityPropertySequenceTestEntity1(val key: Key[EntityPropertySequenceTestE
   extends Entity[EntityPropertySequenceTestEntity1]
   with EntityPropertySequenceTestTrait1
   with EntityPropertySequenceTestTrait2
-  with CreatedAt with UpdatedAt with Version {
+  with MutableEntity {
 
   var sample1: String = ""
   var sample2: String = ""
@@ -39,15 +39,15 @@ class EntityPropertySequenceTestEntity2(val key: Key[EntityPropertySequenceTestE
   extends Entity[EntityPropertySequenceTestEntity2]
   with EntityPropertySequenceTestTrait1
   with EntityPropertySequenceTestTrait2
-  with CreatedAt with UpdatedAt with Version {
+  with MutableEntity {
 
   def sample1: String = ""
   def sample2: String = ""
 
-  @property(order = 5999)
+  @property(order = 6999)
   override def trait2 = "2"
 
-  @property(order = 6001)
+  @property(order = 7001)
   override def trait1 = "2"
 }
 

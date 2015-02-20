@@ -79,7 +79,7 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 
 final class UserDiary(
                        val key: Key[UserDiary]
-                       ) extends Entity[UserDiary] with Ancestor[User] with CreatedAt with UpdatedAt with Version with ParentEntity {
+                       ) extends Entity[UserDiary] with Ancestor[User] with MutableEntity with ParentEntity {
   var firstName: String = ""
 
   @property(order = 2, indexed = true, version = false)
