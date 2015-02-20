@@ -41,7 +41,7 @@ class DataEntityTest extends FunSuite with AppEngineTestSuite {
 }
 
 class SampleDataEntity(val key: Key[SampleDataEntity])
-  extends Entity[SampleDataEntity] with MutableEntity {
+  extends Entity[SampleDataEntity] with CreatedAt with UpdatedAt with Version {
 
   @property(json = true) var data: SampleData = SampleData("unknown", 0)
 }

@@ -4,14 +4,6 @@ import java.util.Date
 
 import com.xhachi.gae4s.datastore.meta._
 
-private[datastore] trait MutableEntity extends Version with UpdatedAt with CreatedAt {
-  self: Entity[_] =>
-}
-
-private[datastore] trait ImmutableEntity extends CreatedAt {
-  self: Entity[_] =>
-}
-
 @entity
 trait Version {
   self: Entity[_] =>
