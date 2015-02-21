@@ -89,6 +89,6 @@ object Settings {
 }
 
 object Versions {
-  val appengineVersion = "1.9.17"
+  val appengineVersion = "1.9.18"
   val scalatestVersion = "2.2.4"
 }
