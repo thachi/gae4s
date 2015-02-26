@@ -23,6 +23,7 @@ abstract class Property[T: ClassTag] extends Serializable {
   type PropertyType = T
 
   def propertyType: Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+
   def storeType: Class[_]
 
   def name: String
@@ -37,33 +38,49 @@ abstract class Property[T: ClassTag] extends Serializable {
           case a: java.util.List[_] => a.toArray.map(i => s"$i: ${i.getClass}").mkString("(", ",", ")")
           case a => a
         }
-        Logger.error(s"$name cannot restored. value is $v")
+        Logger.error(s"$name couldn't restore. value is $v")
         throw e
     }
   }
 
-  final def setValueToLLEntity(entity: LLEntity)(value: T) = this match {
-    case p: IndexedProperty[_] => entity.setProperty(name, toStoreProperty(value))
-    case _ =>
-      val storeValue = toStoreProperty(value)
-      try {
-        entity.setUnindexedProperty(name, storeValue)
-      } catch {
-        case NonFatal(e) =>
-          val v = storeValue match {
-            case a: Array[_] => a.toSeq.map(i => s"$i: ${i.getClass}")
-            case o => o
-          }
-          Logger.error(s"$name is not stored. value is ($v): ${v.getClass}")
-          throw e
+  final def setValueToLLEntity(entity: LLEntity)(value: T) = {
+    val storeValue = try {
+      toStoreProperty(value)
+    } catch {
+      case NonFatal(e) =>
+        throw new IllegalStateException( s"""$name couldn't convert from entity value "$value" to store value""", e)
+    }
+
+    try {
+      this match {
+        case p: IndexedProperty[_] =>
+          entity.setProperty(name, storeValue)
+        case _ =>
+          entity.setUnindexedProperty(name, storeValue)
       }
+    } catch {
+      case NonFatal(e) =>
+        val v = storeValue match {
+          case a: Array[_] => a.toSeq.map(i => s"$i: ${i.getClass}")
+          case o => o
+        }
+        Logger.error(s"$name is not stored. value is ($v): ${v.getClass}")
+        throw e
+    }
   }
+
 
   protected[datastore] def toStoreProperty(value: T): Any
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
-  override def toString = s"(${getClass.getName}($name)})"
+  override def toString = s"$getClass(name=$name, propertyType=$propertyType, storeType=$storeType, gettable=$gettable, settable=$settable, indexed=$indexed)"
+
+  val gettable = this.isInstanceOf[Getter[_, T]]
+
+  val settable = this.isInstanceOf[Setter[_, T]]
+
+  val indexed = this.isInstanceOf[IndexedProperty[T]]
 
 }
 
@@ -86,7 +103,7 @@ trait IndexedProperty[T] extends Property[T] {
   def compare(value1: T, value2: T): Int = {
     value1.asInstanceOf[Comparable[T]].compareTo(value2)
   }
-  
+
   def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
 
   def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
@@ -211,6 +228,8 @@ class IntProperty(name: String) extends ValueProperty[Int](name) {
 }
 
 
+class TextProperty(name: String) extends ValueProperty[Text](name)
+
 class DoubleProperty(name: String) extends ValueProperty[Double](name)
 
 class BooleanProperty(name: String) extends ValueProperty[Boolean](name)
@@ -309,9 +328,10 @@ class EnumProperty[E <: Enum[E] : ClassTag](name: String) extends StringStorePro
   override def toString(value: E): String = value.name()
 }
 
-abstract class EnumerationProperty[E : ClassTag](name: String) extends StringStoreProperty[E](name) {
+abstract class EnumerationProperty[E: ClassTag](name: String) extends StringStoreProperty[E](name) {
 
   def withName(name: String): E
+
   def values: Seq[E]
 
 }
@@ -385,7 +405,7 @@ class VersionProperty(name: String) extends ValueProperty[Long](name) with Index
   override def toStoreProperty(value: Long): Any = value + 1
 }
 
-class CreationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+class CreationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
 
   override def toStoreProperty(value: Date): Any = value match {
     case d: Date => d
@@ -394,6 +414,6 @@ class CreationDateProperty(name: String) extends ValueProperty[Date](name) with 
 
 }
 
-class ModificationDateProperty(name: String) extends ValueProperty[Date](name) with IndexedProperty[Date] {
+class ModificationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
   override def toStoreProperty(value: Date): Any = new Date
 }

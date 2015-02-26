@@ -2,38 +2,37 @@ package com.xhachi.gae4s.datastore
 
 import java.util.Date
 
-import com.xhachi.gae4s.datastore.annotations.{creationDate, entity, modificationDate, version}
+import com.xhachi.gae4s.datastore.meta._
 
-@entity
-trait Mutable extends Version with UpdatedAt with CreatedAt {
+trait MutableEntity extends Version with UpdatedAt with CreatedAt {
+  self: Entity[_] =>
+}
+
+trait ImmutableEntity extends CreatedAt {
   self: Entity[_] =>
 }
 
 @entity
-trait Immutable extends CreatedAt {
-  self: Entity[_] =>
-}
-
-@entity(version = "version")
 trait Version {
   self: Entity[_] =>
 
-  @version
+  @property(version = true, order = 1000003)
   var version: Long = 0L
 }
 
-@entity(version = "", creationDate = "createdAt")
+@entity
 trait CreatedAt {
   self: Entity[_] =>
 
-  @creationDate
+  @property(creationDate = true, order = 1000002)
   var createdAt: Date = null
 }
 
-@entity(version = "", creationDate = "", modificationDate = "updatedAt")
+@entity
 trait UpdatedAt {
   self: Entity[_] =>
 
-  @modificationDate
+  @property(modificationDate = true, order = 1000001)
   var updatedAt: Date = null
 }
+

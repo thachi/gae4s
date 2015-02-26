@@ -8,7 +8,7 @@ import com.google.appengine.api.blobstore.BlobKey
 import com.google.appengine.api.datastore._
 import com.google.appengine.api.users
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.annotations.{json, serialize}
+import com.xhachi.gae4s.datastore.meta.property
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -20,7 +20,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
     val meta = EntityMeta.createMeta[SimpleValueEntity]
 
-    assert(meta.properties.size == 26)
+    assert(meta.properties.size == 27)
 
     for (p <- meta.properties) {
       assert(!p.isInstanceOf[IndexedProperty[_]], p.name)
@@ -41,6 +41,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assertProperty("bool", classOf[Boolean])
     assertProperty("date", classOf[Date])
     assertProperty("geoPt", classOf[GeoPt])
+    assertProperty("text", classOf[Text])
     assertProperty("shortBlob", classOf[ShortBlob])
     assertProperty("blob", classOf[Blob])
     assertProperty("postalAddress", classOf[PostalAddress])
@@ -76,6 +77,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     e.bool = true
     e.date = new Date(5)
     e.geoPt = new GeoPt(6, 7)
+    e.text = new Text("text7")
     e.shortBlob = new ShortBlob("8".getBytes("UTF-8"))
     e.blob = new Blob("9".getBytes("UTF-8"))
     e.postalAddress = new PostalAddress("123-4567")
@@ -105,6 +107,7 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.bool == a.bool)
     assert(e.date == a.date)
     assert(e.geoPt == a.geoPt)
+    assert(e.text == a.text)
     assert(e.shortBlob == a.shortBlob)
     assert(e.blob == a.blob)
     assert(e.postalAddress == a.postalAddress)
@@ -127,7 +130,12 @@ class SimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
   }
 }
 
-class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleValueEntity] {
+
+trait DefaultEntityProperty {
+  var sample: String = ""
+}
+
+class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleValueEntity] with DefaultEntityProperty {
   var userKey: Key[User] = Datastore.allocateKey[User]
   var string: String = ""
   var int: Int = 0
@@ -136,6 +144,7 @@ class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleVa
   var bool: Boolean = false
   var date: Date = new Date(0)
   var geoPt: GeoPt = new GeoPt(0, 0)
+  var text: Text = new Text(null)
   var shortBlob: ShortBlob = new ShortBlob("shot_blob".getBytes("UTF-8"))
   var blob: Blob = new Blob("blob".getBytes("UTF-8"))
   var postalAddress: PostalAddress = new PostalAddress("060-0806")
@@ -152,8 +161,8 @@ class SimpleValueEntity(val key: Key[SimpleValueEntity]) extends Entity[SimpleVa
   var javaEnum: JavaEnum = JavaEnum.JAVA_ENUM1
   var scalaEnum: ScalaEnum.Value = ScalaEnum.ScalaEnum1
   var byteArray: Array[Byte] = "byte_array".getBytes("UTF-8")
-  @json var json: JsonValue = JsonValue("test")
-  @serialize var serializable: SerializableValue = SerializableValue("")
+  @property(json = true)  var json: JsonValue = JsonValue("test")
+  @property(serialize = true)  var serializable: SerializableValue = SerializableValue("")
 }
 
 case class SerializableValue(name: String) extends Serializable

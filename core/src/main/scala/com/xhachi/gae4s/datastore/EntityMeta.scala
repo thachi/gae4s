@@ -19,7 +19,11 @@ abstract class EntityMeta[E <: Entity[E]] extends Serializable {
 
   def kind: String = entityType.getName
 
-  val key = new KeyProperty[EntityType]("__key__") with IndexedProperty[Key[EntityType]]
+  val key = new KeyProperty[EntityType]("__key__") with IndexedProperty[Key[EntityType]] with Getter[E, Key[EntityType]] {
+
+    def getValueFromEntity(e: E): Key[EntityType] = e.key
+
+  }
 
   def properties: Seq[Property[_]] = Seq(key)
 
@@ -93,5 +97,14 @@ abstract class EntityMeta[E <: Entity[E]] extends Serializable {
   }
 
   def toKeyStrong(key: Key[_]): String = KeyFactory.keyToString(key.key)
+
+  def toString(entity: E): String = {
+    val values = properties.map{
+      case p: Getter[E,_] => s"${p.name}:${p.getValueFromEntity(entity)}"
+      case p => s"${p.name}:???"
+    }
+    val k = key.getValueFromEntity(entity)
+    values.mkString(s"$kind(key:$k, ", ", ", ")")
+  }
 
 }

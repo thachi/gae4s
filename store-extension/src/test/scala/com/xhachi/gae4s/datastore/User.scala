@@ -1,26 +1,26 @@
 package com.xhachi.gae4s.datastore
 
-import com.xhachi.gae4s.datastore.annotations._
+import com.xhachi.gae4s.datastore.meta.property
 
-class User(val key: Key[User], @indexed var name: String = "")
+class User(val key: Key[User], @property(indexed = true) var name: String = "")
   extends Entity[User]
   with CreatedAt
   with Version
   with UpdatedAt {
 
-  @indexed
+  @property(indexed = true)
   var height: Int = 0
 
-  @indexed
+  @property(indexed = true)
   var weight: Int = 0
 
-  @indexed
+  @property(indexed = true)
   var mobilePhone: Option[String] = None
 
-  @json
+  @property(json = true)
   var webInfo = WebInfo()
 
-  @indexed
+  @property(indexed = true)
   var deleted = false
 }
 

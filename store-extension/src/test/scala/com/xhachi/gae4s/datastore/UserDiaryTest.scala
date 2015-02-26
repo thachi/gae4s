@@ -2,6 +2,7 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.KeyFactory
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
+import com.xhachi.gae4s.datastore.meta._
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
@@ -78,10 +79,18 @@ class UserDiaryTest extends FunSuite with AppEngineTestSuite {
 
 final class UserDiary(
                        val key: Key[UserDiary]
-                       ) extends Entity[UserDiary] with Ancestor[User] {
+                       ) extends Entity[UserDiary] with Ancestor[User] with MutableEntity with ParentEntity {
+  var firstName: String = ""
 
+  @property(order = 2, indexed = true, version = false)
+  var lastName: String = ""
 }
 
+trait ParentEntity {
+
+  @property(indexed = true)
+  var age: Int = 0
+}
 
 class UserDiaryStore
   extends EntityStore[UserDiary]
@@ -90,8 +99,15 @@ class UserDiaryStore
   with QueryableStore
   with AllocatableKeyStore {
 
+
   val meta = EntityMeta.createMeta[UserDiary]
 }
 
 
 object UserDiary extends UserDiaryStore
+
+
+
+
+
+

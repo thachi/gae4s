@@ -1,7 +1,6 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore._
-import com.google.appengine.api.datastore.{Entity => LLEntity}
+import com.google.appengine.api.datastore.{Entity => LLEntity, _}
 
 import scala.collection.JavaConversions._
 
