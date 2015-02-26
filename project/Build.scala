@@ -1,6 +1,7 @@
 import sbt.Keys._
 import sbt._
 import sbtappengine.Plugin._
+import sbtrelease.ReleasePlugin._
 
 object Gae4sBuild extends Build {
   import Settings._
@@ -61,12 +62,11 @@ object Gae4sBuild extends Build {
 object Settings {
   import Versions._
 
-  lazy val defaultSetting = Defaults.defaultSettings ++
+  lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
       scalaVersion := "2.11.5",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
-      version := "0.7-SNAPSHOT",
       parallelExecution in Test := false,
       publishTo <<= version { (v: String) =>
         val base = "/Users/takashi/Documents/xhachi/repository"
