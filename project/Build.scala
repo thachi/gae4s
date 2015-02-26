@@ -9,6 +9,22 @@ object Gae4sBuild extends Build {
   import Versions._
   import sbt.Keys._
   import sbtbuildinfo.Plugin._
+  import sbtrelease._
+  import ReleaseStateTransformations._
+
+  ReleaseKeys.releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+//    tagRelease,
+    publishArtifacts,
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  )
+
 
   lazy val root = Project(
     id = "gae4s-project",
