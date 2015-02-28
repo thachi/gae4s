@@ -1,5 +1,6 @@
 *.class
 *.log
+encoded_gs_key**
 
 # sbt specific
 dist/*
