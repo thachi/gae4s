@@ -66,7 +66,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
   }
 
   def readByteBuffer(path: String): Option[ByteBuffer] = {
-    metadata(path) map {
+    metadata(path).map {
       case m =>
         info("CloudStorage[" + bucketName + "] read : " + path)
         val fileSize = m.getLength.toInt
@@ -77,7 +77,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     }
   }
 
-  def readBytes(path: String): Option[Array[Byte]] = readByteBuffer(path) map (_.array())
+  def readBytes(path: String): Option[Array[Byte]] = readByteBuffer(path).map(_.array())
 
   def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None) = {
     writeByteBuffer(path, ByteBuffer.wrap(bytes), mimeType)
