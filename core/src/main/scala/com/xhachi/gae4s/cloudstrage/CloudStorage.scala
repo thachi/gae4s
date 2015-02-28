@@ -12,32 +12,32 @@ import org.json4s.native.Serialization
 object CloudStorage extends Logger {
 
   object MimeType {
-    val HTML = "text/html"
-    val TEXT = "text/plain"
-    val XML = "text/xml"
-    val XHTML = "text/xhtml+xml"
+    val Html = "text/html"
+    val Text = "text/plain"
+    val Xml = "text/xml"
+    val Xhtml = "text/xhtml+xml"
     val JavaScript = "text/javascript"
-    val CSS = "text/css"
+    val Css = "text/css"
 
-    val JSON = "application/json"
-    val PDF = "application/pdf"
+    val Json = "application/json"
+    val Pdf = "application/pdf"
 
-    val JPEG = "image/jpeg"
-    val PNG = "image/png"
+    val Jpeg = "image/jpeg"
+    val Png = "image/png"
   }
 
   val Ext2MimeType = Map(
-    ".html" -> MimeType.HTML,
-    ".txt" -> MimeType.TEXT,
-    ".xml" -> MimeType.XML,
-    ".xhtml" -> MimeType.XHTML,
+    ".html" -> MimeType.Html,
+    ".txt" -> MimeType.Text,
+    ".xml" -> MimeType.Xml,
+    ".xhtml" -> MimeType.Xhtml,
     ".js" -> MimeType.JavaScript,
-    ".css" -> MimeType.CSS,
-    ".json" -> MimeType.JSON,
-    ".pdf" -> MimeType.PDF,
-    ".jpeg" -> MimeType.JPEG,
-    ".jpg" -> MimeType.JPEG,
-    ".png" -> MimeType.PNG
+    ".css" -> MimeType.Css,
+    ".json" -> MimeType.Json,
+    ".pdf" -> MimeType.Pdf,
+    ".jpeg" -> MimeType.Jpeg,
+    ".jpg" -> MimeType.Jpeg,
+    ".png" -> MimeType.Png
   )
 
   def apply(bucketName: String): CloudStorage = CloudStorage(defaultService, bucketName)
