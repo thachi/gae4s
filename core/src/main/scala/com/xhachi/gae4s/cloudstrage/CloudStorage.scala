@@ -85,22 +85,22 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
   def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None) = {
     info("CloudStorage[" + bucketName + "] write : " + path)
+
+    val option: GcsFileOptions = mimeType match {
+      case Some(m) =>
+        new GcsFileOptions.Builder().mimeType(m).build()
+      case None =>
+        CloudStorage.Ext2MimeType.find {
+          case (e, m) => path.endsWith(e)
+        }.map(_._2).map { m =>
+          new GcsFileOptions.Builder().mimeType(m).build()
+        }.getOrElse {
+          GcsFileOptions.getDefaultInstance
+        }
+    }
+
     var c: GcsOutputChannel = null
     try {
-
-      val option: GcsFileOptions = mimeType match {
-        case Some(m) =>
-          new GcsFileOptions.Builder().mimeType(m).build()
-        case None =>
-          CloudStorage.Ext2MimeType.find {
-            case (e, m) => path.endsWith(e)
-          }.map(_._2).map { m =>
-            new GcsFileOptions.Builder().mimeType(m).build()
-          }.getOrElse {
-            GcsFileOptions.getDefaultInstance
-          }
-      }
-
       c = service.createOrReplace(pathToFilename(path), option)
       c.write(bytes)
     } catch {
