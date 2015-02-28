@@ -1,7 +1,10 @@
 import sbt.Keys._
 import sbt._
 import sbtappengine.Plugin._
+import sbtrelease.ReleasePlugin.ReleaseKeys._
 import sbtrelease.ReleasePlugin._
+import sbtrelease.ReleaseStateTransformations._
+import sbtrelease.ReleaseStep
 
 object Gae4sBuild extends Build {
 
@@ -88,7 +91,19 @@ object Settings {
           Some(Resolver.file("snapshot", file(base + "/maven2-snapshot")))
         else
           Some(Resolver.file("release", file(base + "/maven2")))
-      }
+      },
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        // tagRelease,
+        publishArtifacts,
+        setNextVersion,
+        commitNextVersion,
+        pushChanges
+      )
     )
 
   val defaultDependency = Seq(
