@@ -89,21 +89,16 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     try {
 
       val option: GcsFileOptions = mimeType match {
-        case Some(m) => new GcsFileOptions.Builder().mimeType(m).build()
+        case Some(m) =>
+          new GcsFileOptions.Builder().mimeType(m).build()
         case None =>
-          CloudStorage.Ext2MimeType.map {
-            case (e, m) => path.endsWith(e) match {
-              case true => Some(m)
-              case false => None
-            }
-          }.find(_.isDefined)
-            .flatten
-            .headOption match {
-            case Some(m) => new GcsFileOptions.Builder().mimeType(m).build()
-            case _ => GcsFileOptions.getDefaultInstance
+          CloudStorage.Ext2MimeType.find {
+            case (e, m) => path.endsWith(e)
+          }.map(_._2).map { m =>
+            new GcsFileOptions.Builder().mimeType(m).build()
+          }.getOrElse {
+            GcsFileOptions.getDefaultInstance
           }
-
-        case _ => GcsFileOptions.getDefaultInstance
       }
 
       c = service.createOrReplace(pathToFilename(path), option)
