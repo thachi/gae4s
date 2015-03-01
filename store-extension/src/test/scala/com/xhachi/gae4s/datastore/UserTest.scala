@@ -267,6 +267,17 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     assert(filter.asSeq(all).size == 1)
   }
 
+  test("filterByMetaを試す") {
+    createTaroJiroSaburo()
+    val all = UserStore.query.asSeq
+
+    assert(UserStore.query.asSeq(all) == all)
+
+    val filter = UserStore.query.filterByMeta(_.property("name").get.asInstanceOf[IndexedProperty[String]].isEqual("Taro"))
+    assert(filter.asSeq.size == 1)
+    assert(filter.asSeq(all).size == 1)
+  }
+
   test("filterでasSingleを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
