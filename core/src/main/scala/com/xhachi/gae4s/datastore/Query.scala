@@ -82,7 +82,7 @@ case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMet
   }
 }
 
-trait Filter {
+trait Filter extends Serializable {
 
   private[datastore] def toLLFilter: LLFilter
 
@@ -139,7 +139,7 @@ case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: 
   }
 }
 
-trait Sort {
+trait Sort extends Serializable {
 
   private[datastore] def name: String
 
