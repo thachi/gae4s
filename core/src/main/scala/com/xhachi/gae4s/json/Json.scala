@@ -58,6 +58,7 @@ class Json(dateFormat: Option[String]) {
         } ++ enumSeq.map(e => new EnumNameSerializer(e))
     }
   }
+  buildFormats()
 
   /**
    * Convert JSON String to case class.
