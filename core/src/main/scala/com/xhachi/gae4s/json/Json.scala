@@ -1,5 +1,7 @@
 package com.xhachi.gae4s.json
 
+import java.text.SimpleDateFormat
+
 import org.json4s._
 import org.json4s.ext.EnumNameSerializer
 import org.json4s.native.JsonMethods.{parse => parseByJson4s}
@@ -7,12 +9,12 @@ import org.json4s.native.Serialization.write
 
 import scala.collection.mutable
 
-object Json extends Json
+object Json extends Json(None)
 
 /**
  * TODO: もっと汎用的に使えるよう再設計する
  */
-class Json {
+class Json(dateFormat: Option[String]) {
 
   protected val enumSeq = new mutable.HashSet[Enumeration]
 
@@ -41,11 +43,20 @@ class Json {
   }
 
   private def buildFormats(): Unit = {
-    _formats = new DefaultFormats {
-      override def dateFormatter = DefaultFormats.losslessDate()
-      override val typeHintFieldName: String = "class"
-      override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
-    } ++ enumSeq.map(e => new EnumNameSerializer(e))
+    _formats = dateFormat match {
+      case Some(f) =>
+        new DefaultFormats {
+          override def dateFormatter = new SimpleDateFormat(f)
+          override val typeHintFieldName: String = "class"
+          override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
+        } ++ enumSeq.map(e => new EnumNameSerializer(e))
+      case None =>
+        new DefaultFormats {
+          override def dateFormatter = DefaultFormats.losslessDate()
+          override val typeHintFieldName: String = "class"
+          override val typeHints: TypeHints = FullTypeHints(typeHintTargetSeq.toList)
+        } ++ enumSeq.map(e => new EnumNameSerializer(e))
+    }
   }
 
   /**
