@@ -14,11 +14,11 @@ object Json extends Json
  */
 class Json {
 
-  private val enumSeq = new mutable.HashSet[Enumeration]
+  protected val enumSeq = new mutable.HashSet[Enumeration]
 
-  private val typeHintTargetSeq = new mutable.HashSet[Class[_]]
+  protected val typeHintTargetSeq = new mutable.HashSet[Class[_]]
 
-  implicit private var _formats: Formats = DefaultFormats
+  implicit protected var _formats: Formats = DefaultFormats
 
   def formats: Formats = _formats
 
