@@ -5,6 +5,7 @@ import sbtrelease.ReleasePlugin.ReleaseKeys._
 import sbtrelease.ReleasePlugin._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleaseStep
+import net.virtualvoid.sbt.graph.Plugin._
 
 object Gae4sBuild extends Build {
 
@@ -23,7 +24,7 @@ object Gae4sBuild extends Build {
   lazy val core = Project(
     id = "gae4s-core",
     base = file("core"),
-    settings = defaultSetting ++ buildInfoSettings ++ Seq(
+    settings = defaultSetting ++ buildInfoSettings ++ graphSettings ++ Seq(
       name := "gae4s-core",
       sourceGenerators in Compile <+= buildInfo,
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
