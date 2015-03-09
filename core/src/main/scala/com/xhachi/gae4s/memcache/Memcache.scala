@@ -55,14 +55,15 @@ class Memcache private[Memcache](service: MemcacheService) {
     case (k, null) => k -> None
   }.toMap
 
-  def getIdentifiable[T](key: AnyRef): IdValue[T] = service.getIdentifiable(key) match {
-    case value: IdentifiableValue => new IdValue[T](value)
-    case null => null
+  def getIdentifiable[T](key: AnyRef): Option[IdValue[T]] = service.getIdentifiable(key) match {
+    case value: IdentifiableValue => Some(new IdValue[T](value))
+    case null => None
   }
 
-  def getIdentifiables[K, V](key: Seq[K]): Map[K, IdValue[V]] =
+  def getAllIdentifiable[K, V](key: Seq[K]): Map[K, Option[IdValue[V]]] =
     service.getIdentifiables(key).map {
-      case (k, v) => k -> new IdValue[V](v)
+      case (k, v: Any) => k -> Some(new IdValue[V](v))
+      case (k, _) => k -> None
     }.toMap
 
   def clearAll() = service.clearAll()
