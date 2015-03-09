@@ -80,15 +80,16 @@ class Memcache private[Memcache](service: MemcacheService) {
 
   def statistics = service.getStatistics
 
-  class IdValue[T](private[Memcache] val identifiableValue: IdentifiableValue) {
-    def value: T = {
-      val value1: AnyRef = {
-        identifiableValue.getValue
-      }
-      value1.asInstanceOf[T]
-    }
-  }
 
+}
+
+class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
+  def value: T = {
+    val value1: AnyRef = {
+      identifiableValue.getValue
+    }
+    value1.asInstanceOf[T]
+  }
 }
 
 /**
