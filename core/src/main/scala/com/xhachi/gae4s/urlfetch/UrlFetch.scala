@@ -72,17 +72,7 @@ class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[S
                               data: Map[String, Seq[String]] = Map(),
                               headers: Map[String, String] = Map()): HTTPRequest = {
 
-    val requestUrl = if (query.isEmpty) {
-      url
-    } else {
-      url + "?" + query.map {
-        case (name, values) =>
-          values.map {
-            value =>
-              URLEncoder.encode(name, charset) + "=" + URLEncoder.encode(value, charset)
-          }
-      }.flatten.mkString("&")
-    }
+    val requestUrl = buildUrl(url, query)
 
     val request = new HTTPRequest(new URL(requestUrl), method)
 
@@ -91,15 +81,27 @@ class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[S
     }.foreach(request.addHeader)
 
     if (data.nonEmpty) {
-      val payload = data.map {
+      val payload = data.flatMap {
         case (name, values) => values.map {
           value => URLEncoder.encode(name, charset) + "=" + URLEncoder.encode(value, charset)
         }
-      }.flatten
+      }
       request.setPayload(payload.mkString("&").getBytes(charset))
     }
     request
   }
+
+  protected[urlfetch] def buildUrl(url: String, query: Map[String, Seq[String]] = Map()): String = {
+    if (query.isEmpty) {
+      url
+    } else {
+      url + "?" + query.flatMap {
+        case (name, values) =>
+          values.map(URLEncoder.encode(name, charset) + "=" + URLEncoder.encode(_, charset))
+      }.mkString("&")
+    }
+  }
+
 }
 
 /**
