@@ -82,7 +82,7 @@ object Settings {
 
   lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
-      scalaVersion := "2.11.5",
+      scalaVersion := "2.11.6",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       parallelExecution in Test := false,
