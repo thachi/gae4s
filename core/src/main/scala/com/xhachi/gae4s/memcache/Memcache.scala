@@ -50,6 +50,13 @@ class Memcache private[Memcache](service: MemcacheService) {
     case null => default
   }
 
+  def getOrElseUpdate[V](key: AnyRef, default: => V): V = service.get(key) match {
+    case value: Any => value.asInstanceOf[V]
+    case null =>
+      put(key, default)
+      default
+  }
+
   def getAll[T](keys: Seq[AnyRef]): Map[AnyRef, Option[T]] = service.getAll(keys).map {
     case (k, v: Any) => k -> Some(v.asInstanceOf[T])
     case (k, null) => k -> None
