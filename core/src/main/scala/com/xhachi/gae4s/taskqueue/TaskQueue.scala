@@ -22,9 +22,7 @@ class TaskQueue private[TaskQueue](val queue: Queue) {
   def add(tx: Transaction, task: TaskOptions):TaskHandle = queue.add(tx, task)
 
   def addAll(tx: Transaction, tasks: Seq[TaskOptions]): Seq[TaskHandle] = queue.add(tx, tasks.asJava).asScala
-
-  //  def addGet(tx: Transaction, task: TaskOptions) = queue.add(tx, task)
-
+  
   def addWithoutTx(task: TaskOptions):TaskHandle = queue.add(null, task)
 
   def addAllWithoutTx(tasks: Seq[TaskOptions]):Seq[TaskHandle] = queue.add(null, tasks.asJava).asScala

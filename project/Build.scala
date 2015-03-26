@@ -1,7 +1,11 @@
 import sbt.Keys._
 import sbt._
 import sbtappengine.Plugin._
+import sbtrelease.ReleasePlugin.ReleaseKeys._
 import sbtrelease.ReleasePlugin._
+import sbtrelease.ReleaseStateTransformations._
+import sbtrelease.ReleaseStep
+import net.virtualvoid.sbt.graph.Plugin._
 
 object Gae4sBuild extends Build {
 
@@ -9,6 +13,22 @@ object Gae4sBuild extends Build {
   import Versions._
   import sbt.Keys._
   import sbtbuildinfo.Plugin._
+  import sbtrelease._
+  import ReleaseStateTransformations._
+
+  ReleaseKeys.releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runTest,
+    setReleaseVersion,
+    commitReleaseVersion,
+//    tagRelease,
+    publishArtifacts,
+    setNextVersion,
+    commitNextVersion,
+    pushChanges
+  )
+
 
   lazy val root = Project(
     id = "gae4s-project",
@@ -20,7 +40,7 @@ object Gae4sBuild extends Build {
   lazy val core = Project(
     id = "gae4s-core",
     base = file("core"),
-    settings = defaultSetting ++ buildInfoSettings ++ Seq(
+    settings = defaultSetting ++ buildInfoSettings ++ graphSettings ++ Seq(
       name := "gae4s-core",
       sourceGenerators in Compile <+= buildInfo,
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
@@ -78,7 +98,7 @@ object Settings {
 
   lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
-      scalaVersion := "2.11.5",
+      scalaVersion := "2.11.6",
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       parallelExecution in Test := false,
@@ -88,7 +108,19 @@ object Settings {
           Some(Resolver.file("snapshot", file(base + "/maven2-snapshot")))
         else
           Some(Resolver.file("release", file(base + "/maven2")))
-      }
+      },
+      releaseProcess := Seq[ReleaseStep](
+        checkSnapshotDependencies,
+        inquireVersions,
+        runTest,
+        setReleaseVersion,
+        commitReleaseVersion,
+        // tagRelease,
+        publishArtifacts,
+        setNextVersion,
+        commitNextVersion,
+        pushChanges
+      )
     )
 
   val defaultDependency = Seq(

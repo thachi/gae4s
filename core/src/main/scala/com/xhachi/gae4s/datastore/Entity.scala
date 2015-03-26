@@ -3,7 +3,12 @@ package com.xhachi.gae4s.datastore
 import com.google.appengine.api.datastore.{Key => LLKey}
 
 
-abstract class Entity[E <: Entity[E]] extends Serializable {
+/**
+ * エンティティを表します。
+ *
+ * @tparam E
+ */
+trait Entity[E <: Entity[E]] extends Serializable {
 
   val key: Key[E]
 
@@ -15,8 +20,10 @@ abstract class Entity[E <: Entity[E]] extends Serializable {
 }
 
 /**
- * TODO: ちゃんとしたエラーチェックの仕組みをDatastoreに入れたい
- * @tparam A 親のキー
+ *
+ * Ancestorを持つエンティティを表します。
+ *
+ * @tparam A 親エンティティ型
  */
 trait Ancestor[A <: Entity[A]] {
   self: Entity[_] =>
@@ -27,3 +34,4 @@ trait Ancestor[A <: Entity[A]] {
     case _ => throw new IllegalStateException("this entity has no parent.")
   }
 }
+
