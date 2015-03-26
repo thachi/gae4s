@@ -1,5 +1,7 @@
 package com.xhachi.gae4s.datastore
 
+import java.util.ConcurrentModificationException
+
 import com.google.appengine.api.datastore.{Entity => LLEntity, _}
 
 import scala.collection.JavaConversions._
@@ -151,7 +153,7 @@ sealed private[datastore] trait DatastoreCreateMethods {
 
   def createWithTx[E <: Entity[E]](tx: Transaction, entity: E)(implicit meta: EntityMeta[E]): Key[E] = entity.keyOption match {
     case Some(k) => getOptionWithTx(tx, k) match {
-      case Some(e) => throw new IllegalStateException("entity was already stored")
+      case Some(e) => throw new ConcurrentModificationException("entity was already stored")
       case None => putWithTx(tx, entity)
     }
     case None => putWithTx(tx, entity)
@@ -159,7 +161,7 @@ sealed private[datastore] trait DatastoreCreateMethods {
 
   def create[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = entity.keyOption match {
     case Some(k) => getOption(k) match {
-      case Some(e) => throw new IllegalStateException("entity was already stored")
+      case Some(e) => throw new ConcurrentModificationException("entity was already stored")
       case None => put(entity)
     }
     case None => put(entity)
@@ -173,13 +175,13 @@ sealed private[datastore] trait DatastoreCreateListMethods {
 
   def createWithTx[E <: Entity[E]](tx: Transaction, entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val keys = entities.map(_.key)
-    if (getWithTx[E](tx, keys).exists(_._2 == null)) throw new IllegalStateException("entity which is stored already is included")
+    if (getWithTx[E](tx, keys).exists(_._2 == null)) throw new ConcurrentModificationException("entity which is stored already is included")
     putWithTx(tx, entities)
   }
 
   def create[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val keys = entities.map(_.key)
-    if (get[E](keys).exists(_._2 == null)) throw new IllegalStateException("entity which is stored already is included")
+    if (get[E](keys).exists(_._2 == null)) throw new ConcurrentModificationException("entity which is stored already is included")
     put(entities)
   }
 }
@@ -191,13 +193,13 @@ sealed private[datastore] trait DatastoreUpdateMethods {
 
   def updateWithTx[E <: Entity[E]](tx: Transaction, entity: E)(implicit meta: EntityMeta[E]): Key[E] = getOptionWithTx(tx, entity.key) match {
     case Some(e) if isSameVersion(entity, e) => putWithTx(tx, entity)
-    case None => throw new IllegalStateException()
+    case None => throw new IllegalStateException("entity is not exists in datastore.")
   }
 
   def update[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = if (meta.versionEnabled) {
     getOption(entity.key) match {
       case Some(e) if isSameVersion(entity, e) => put(entity)
-      case Some(e) => throw new IllegalStateException("invalid version property. %s store:%d, stored:%d".format(entity.key, meta.version(entity).get, meta.version(e).get))
+      case Some(e) => throw new ConcurrentModificationException("invalid version property. %s store:%d, stored:%d".format(entity.key, meta.version(entity).get, meta.version(e).get))
       case None => throw new IllegalStateException("entity is not exists in datastore.")
     }
   } else {
@@ -219,14 +221,14 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
   def updateWithTx[E <: Entity[E]](tx: Transaction, entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val got = get[E](entities.map(_.key)).values.toSeq
     val invalids = getInvalidVersion(entities, got)
-    if (invalids.nonEmpty) throw new IllegalStateException("invalid version property.\n" + invalids.mkString("\n"))
+    if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property.\n" + invalids.mkString("\n"))
     putWithTx(tx, entities)
   }
 
   def update[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
     val got = get[E](entities.map(_.key)).values.toSeq
     val invalids = getInvalidVersion(entities.sortBy(_.key), got.sortBy(_.key))
-    if (invalids.nonEmpty) throw new IllegalStateException("invalid version property. " + invalids)
+    if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property. " + invalids)
     put(entities)
   }
 

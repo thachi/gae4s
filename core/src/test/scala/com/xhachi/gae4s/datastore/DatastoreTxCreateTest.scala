@@ -45,11 +45,11 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     Datastore.createWithTx(tx1, tx1entity)
     tx1.commit()
 
-    Datastore.createWithTx(tx2, tx2entity)
-
     intercept[ConcurrentModificationException] {
-      tx2.commit()
+      Datastore.createWithTx(tx2, tx2entity)
     }
+
+    tx2.commit()
   }
 
   test("tx1開始→tx1でcreate→tx2開始→tx1コミット→tx2でcreate→tx2コミットでConcurrentModificationExceptionが発生すること") {
@@ -66,7 +66,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     tx1.commit()
 
 
-    intercept[IllegalStateException] {
+    intercept[ConcurrentModificationException] {
       Datastore.createWithTx(tx2, tx2entity)
     }
     tx2.commit()
@@ -86,7 +86,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
     val tx2 = Datastore.beginTx
 
-    intercept[IllegalStateException] {
+    intercept[ConcurrentModificationException] {
       Datastore.createWithTx(tx2, tx2entity)
     }
     tx2.commit()
