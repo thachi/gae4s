@@ -44,6 +44,13 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     assert(actual == 999)
   }
 
+  test("MemcacheにputしてないものがgetOrElseUpdateで正常にアップデートでき取得できること") {
+    val actual1 = Memcache.getOrElseUpdate[Int]("key", 111)
+    assert(actual1 == 111)
+
+    val actual2 = Memcache.getOrElseUpdate[Int]("key", 222)
+    assert(actual2 == 111)
+  }
 
   test("Memcacheにputしてgetすることができること（case class）") {
     Memcache.put("key", StoreSample("Takashi", 99))
@@ -102,27 +109,30 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
 
     Memcache.put(key, 1)
     val id1 = Memcache.getIdentifiable[Int](key)
+    assert(id1.isDefined)
+    assert(id1.get.value == 1)
 
-    assert(id1.value == 1)
-
-    val res1 = Memcache.putIfUntouched(key, id1, 2)
+    val res1 = Memcache.putIfUntouched(key, id1.get, 2)
     assert(res1)
 
     val id2 = Memcache.getIdentifiable[Int](key)
     val id3 = Memcache.getIdentifiable[Int](key)
+    assert(id2.isDefined)
+    assert(id3.isDefined)
 
-    assert(id2.value == 2)
-    assert(id3.value == 2)
+    assert(id2.get.value == 2)
+    assert(id3.get.value == 2)
 
-    val res2 = Memcache.putIfUntouched(key, id2, 3)
+    val res2 = Memcache.putIfUntouched(key, id2.get, 3)
     assert(res2)
 
     // 書けない
-    val res3 = Memcache.putIfUntouched(key, id3, 4)
+    val res3 = Memcache.putIfUntouched(key, id3.get, 4)
     assert(!res3)
 
     val id4 = Memcache.getIdentifiable[Int](key)
-    assert(id4.value == 3)
+    assert(id4.isDefined)
+    assert(id4.get.value == 3)
 
     val actual = Memcache.get[Int](key)
     assert(actual.get == 3)
@@ -139,18 +149,22 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     Memcache.put(key2, 20)
     val id21 = Memcache.getIdentifiable[Int](key2)
 
-    assert(id11.value == 10)
-    assert(id21.value == 20)
+    assert(id11.isDefined)
+    assert(id21.isDefined)
+    assert(id11.get.value == 10)
+    assert(id21.get.value == 20)
 
-    val res11 = Memcache.putIfUntouched(key1, id11, 11)
+    val res11 = Memcache.putIfUntouched(key1, id11.get, 11)
     assert(res11)
 
-    val ids = Memcache.getIdentifiables[String, Int](Seq(key1, key2))
+    val ids = Memcache.getAllIdentifiable[String, Int](Seq(key1, key2))
 
     ids.keys
 
-    assert(ids(key1).value == 11)
-    assert(ids(key2).value == 20)
+    assert(ids(key1).isDefined)
+    assert(ids(key2).isDefined)
+    assert(ids(key1).get.value == 11)
+    assert(ids(key2).get.value == 20)
 
   }
 

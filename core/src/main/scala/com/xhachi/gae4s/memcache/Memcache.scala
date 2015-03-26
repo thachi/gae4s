@@ -50,19 +50,27 @@ class Memcache private[Memcache](service: MemcacheService) {
     case null => default
   }
 
+  def getOrElseUpdate[V](key: AnyRef, default: => V): V = service.get(key) match {
+    case value: Any => value.asInstanceOf[V]
+    case null =>
+      put(key, default)
+      default
+  }
+
   def getAll[T](keys: Seq[AnyRef]): Map[AnyRef, Option[T]] = service.getAll(keys).map {
     case (k, v: Any) => k -> Some(v.asInstanceOf[T])
     case (k, null) => k -> None
   }.toMap
 
-  def getIdentifiable[T](key: AnyRef): IdValue[T] = service.getIdentifiable(key) match {
-    case value: IdentifiableValue => new IdValue[T](value)
-    case null => null
+  def getIdentifiable[T](key: AnyRef): Option[IdValue[T]] = service.getIdentifiable(key) match {
+    case value: IdentifiableValue => Some(new IdValue[T](value))
+    case null => None
   }
 
-  def getIdentifiables[K, V](key: Seq[K]): Map[K, IdValue[V]] =
+  def getAllIdentifiable[K, V](key: Seq[K]): Map[K, Option[IdValue[V]]] =
     service.getIdentifiables(key).map {
-      case (k, v) => k -> new IdValue[V](v)
+      case (k, v: Any) => k -> Some(new IdValue[V](v))
+      case (k, _) => k -> None
     }.toMap
 
   def clearAll() = service.clearAll()
@@ -79,15 +87,16 @@ class Memcache private[Memcache](service: MemcacheService) {
 
   def statistics = service.getStatistics
 
-  class IdValue[T](private[Memcache] val identifiableValue: IdentifiableValue) {
-    def value: T = {
-      val value1: AnyRef = {
-        identifiableValue.getValue
-      }
-      value1.asInstanceOf[T]
-    }
-  }
 
+}
+
+class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
+  def value: T = {
+    val value1: AnyRef = {
+      identifiableValue.getValue
+    }
+    value1.asInstanceOf[T]
+  }
 }
 
 /**

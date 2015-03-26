@@ -13,4 +13,16 @@ class UrlFetchTest extends FunSuite with AppEngineTestSuite {
     assert(result.status == 200)
     assert(result.content.isDefined)
   }
+
+  test("URLがビルドができること") {
+    val result = UrlFetch.buildUrl("http://www.google.com")
+    assert(result == "http://www.google.com")
+  }
+
+  test("クエリ付きのURLがビルドができること") {
+    val result = UrlFetch.buildUrl("http://www.google.com", Map("keyword" -> Seq("*", "=", "あ", "abc")))
+    assert(result == "http://www.google.com?keyword=*&keyword=%3D&keyword=%E3%81%82&keyword=abc")
+  }
+
+
 }
