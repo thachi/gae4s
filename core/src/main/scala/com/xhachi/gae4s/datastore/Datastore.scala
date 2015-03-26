@@ -150,7 +150,7 @@ sealed private[datastore] trait DatastoreCreateMethods {
   def createWithoutTx[E <: Entity[E]](entity: E)(implicit meta: EntityMeta[E]): Key[E] = createWithTx(null, entity)
 
   def createWithTx[E <: Entity[E]](tx: Transaction, entity: E)(implicit meta: EntityMeta[E]): Key[E] = entity.keyOption match {
-    case Some(k) => getOption(k) match {
+    case Some(k) => getOptionWithTx(tx, k) match {
       case Some(e) => throw new IllegalStateException("entity was already stored")
       case None => putWithTx(tx, entity)
     }
