@@ -1,8 +1,10 @@
 package com.xhachi.gae4s.cloudstrage
 
-import java.io.StringReader
+import java.io.{OutputStream, StringReader}
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
 
+import com.google.appengine.tools.cloudstorage.GcsFileOptions.Builder
 import com.google.appengine.tools.cloudstorage._
 import com.xhachi.gae4s.common.Logger
 import org.json4s._
@@ -85,20 +87,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
   def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None) = {
     info("CloudStorage[" + bucketName + "] write : " + path)
-
-    val option: GcsFileOptions = mimeType match {
-      case Some(m) =>
-        new GcsFileOptions.Builder().mimeType(m).build()
-      case None =>
-        CloudStorage.Ext2MimeType.find {
-          case (e, m) => path.endsWith(e)
-        }.map(_._2).map { m =>
-          new GcsFileOptions.Builder().mimeType(m).build()
-        }.getOrElse {
-          GcsFileOptions.getDefaultInstance
-        }
-    }
-
+    val option = toGcsFileOption(path, mimeType)
     var c: GcsOutputChannel = null
     try {
       c = service.createOrReplace(pathToFilename(path), option)
@@ -108,6 +97,25 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     } finally {
       if (c != null) c.close()
     }
+  }
+
+  def getOutputStream(path: String, mimeType: Option[String] = None): OutputStream = {
+    val option = toGcsFileOption(path, mimeType)
+    val outputChannel = service.createOrReplace(pathToFilename(path), option)
+    Channels.newOutputStream(outputChannel)
+  }
+
+  def toGcsFileOption(path: String, mimeType: Option[String]): GcsFileOptions = mimeType match {
+    case Some(m) =>
+      new Builder().mimeType(m).build()
+    case None =>
+      CloudStorage.Ext2MimeType.find {
+        case (e, m) => path.endsWith(e)
+      }.map(_._2).map { m =>
+        new Builder().mimeType(m).build()
+      }.getOrElse {
+        GcsFileOptions.getDefaultInstance
+      }
   }
 
   implicit var formats = DefaultFormats
