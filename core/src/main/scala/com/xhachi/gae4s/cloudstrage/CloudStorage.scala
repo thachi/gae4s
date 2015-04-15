@@ -110,6 +110,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
     if (public) {
       builder.acl("public-read")
+      builder.cacheControl("public; max-age=60")
     }
 
     mimeType match {
