@@ -133,9 +133,9 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     readBytes(path) map (b => parse(new StringReader(new String(b, "UTF-8"))))
   }
 
-  def writeJson(path: String, value: JValue): Unit = {
+  def writeJson(path: String, value: JValue, public: Boolean = false): Unit = {
     val b = Serialization.write(value).getBytes("UTF-8")
-    writeBytes(path, b)
+    writeBytes(path, b, public = public)
   }
 
 }
