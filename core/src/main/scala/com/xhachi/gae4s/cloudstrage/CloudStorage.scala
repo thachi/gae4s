@@ -52,7 +52,7 @@ object CloudStorage extends Logger {
 class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends Logger {
 
 
-  def pathToFilename(path: String) = new GcsFilename(bucketName, path)
+  def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
 
   def metadata(path: String): Option[GcsFileMetadata] = {
     service.getMetadata(pathToFilename(path)) match {
