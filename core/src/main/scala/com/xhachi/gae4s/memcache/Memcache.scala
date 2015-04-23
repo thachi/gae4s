@@ -77,7 +77,7 @@ class Memcache private[Memcache](service: MemcacheService) {
 
   def inclement(key: AnyRef, delta: Long = 1L, initialValue: Option[Long] = None): Long = initialValue match {
     case Some(i) => service.increment(key, delta, i)
-    case None => service.increment(key, delta)
+    case None => service.increment(key, delta, 0L)
   }
 
   def inclementAll[T](keys: Seq[T], delta: Long = 1L, initialValue: Option[Long] = None): Map[T, Long] = initialValue match {

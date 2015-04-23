@@ -92,7 +92,18 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     assert(actual.isEmpty)
   }
 
-  test("Memcacheにinclementして値が正しいこと") {
+  test("Memcacheにinclementして値が正しいこと1") {
+
+    (1 to 1000).foreach {
+      i => Memcache.inclement("inclement")
+    }
+
+    val actual = Memcache.get[Long]("inclement")
+    assert(actual.isDefined)
+    assert(actual.get == 1000)
+  }
+
+  test("Memcacheにinclementして値が正しいこと2") {
 
     (1 to 1000).foreach {
       i => Memcache.inclement("inclement", 1, Some(0))
