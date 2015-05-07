@@ -14,7 +14,7 @@ import scala.collection.JavaConversions._
  * @author Takashi Hachinohe
  * @param service the MemcacheService instance
  */
-class Memcache private[Memcache](service: MemcacheService) {
+class Memcache private[Memcache](service: MemcacheService) extends Serializable {
 
   def namespace = service.getNamespace
 
