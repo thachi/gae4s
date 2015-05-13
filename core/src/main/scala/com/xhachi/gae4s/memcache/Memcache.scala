@@ -7,6 +7,7 @@ import com.google.appengine.api.memcache.MemcacheService._
 import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.Duration
 
 /**
  * Class to access Memcache service.
@@ -22,19 +23,19 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
 
   def put[K](key: K, value: Any, expirationDate: Date): Boolean = service.put(key, value, Expiration.onDate(expirationDate), policy)
 
-  def put[K](key: K, value: Any, lifeTimeSecond: Int): Boolean = service.put(key, value, Expiration.byDeltaSeconds(lifeTimeSecond), policy)
+  def put[K](key: K, value: Any, duration: Duration): Boolean = service.put(key, value, Expiration.byDeltaMillis(duration.toMillis.toInt), policy)
 
   def putAll[K](values: Map[K, Any]): Set[K] = service.putAll(values, null, policy).toSet
 
   def putAll[K](values: Map[K, Any], expirationDate: Date): Set[K] = service.putAll(values, Expiration.onDate(expirationDate), policy).toSet
 
-  def putAll[K](values: Map[K, Any], lifeTimeSecond: Int): Set[K] = service.putAll(values, Expiration.byDeltaSeconds(lifeTimeSecond), policy).toSet
+  def putAll[K](values: Map[K, Any], duration: Duration): Set[K] = service.putAll(values, Expiration.byDeltaMillis(duration.toMillis.toInt), policy).toSet
 
   def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, null)
 
   def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, expirationDate: Date): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.onDate(expirationDate))
 
-  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, lifeTimeSecond: Int): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.byDeltaSeconds(lifeTimeSecond))
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, duration: Duration): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.byDeltaMillis(duration.toMillis.toInt))
 
 
   def delete(key: AnyRef, millisNoReAdd: Long = 0L): Boolean = service.delete(key, millisNoReAdd)
@@ -67,10 +68,10 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
       default
   }
 
-  def getOrElseUpdate[V](key: AnyRef, lifeTimeSecond: Int)(default: => V): V = service.get(key) match {
+  def getOrElseUpdate[V](key: AnyRef, duration: Duration)(default: => V): V = service.get(key) match {
     case value: Any => value.asInstanceOf[V]
     case null =>
-      put(key, default, lifeTimeSecond)
+      put(key, default, duration)
       default
   }
 
@@ -103,8 +104,6 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
   }
 
   def statistics = service.getStatistics
-
-
 }
 
 class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
