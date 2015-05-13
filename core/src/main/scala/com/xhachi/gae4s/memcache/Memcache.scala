@@ -50,10 +50,10 @@ class Memcache private[Memcache](service: MemcacheService) extends Serializable 
     case null => default
   }
 
-  def getOrElseUpdate[V](key: AnyRef, default: => V): V = service.get(key) match {
+  def getOrElseUpdate[V](key: AnyRef, expire: Option[Date] = None, policy: SetPolicy = SET_ALWAYS)(default: => V): V = service.get(key) match {
     case value: Any => value.asInstanceOf[V]
     case null =>
-      put(key, default)
+      put(key, default, expire, policy)
       default
   }
 
