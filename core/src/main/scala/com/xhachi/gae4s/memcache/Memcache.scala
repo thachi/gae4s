@@ -14,24 +14,27 @@ import scala.collection.JavaConversions._
  * @author Takashi Hachinohe
  * @param service the MemcacheService instance
  */
-class Memcache private[Memcache](service: MemcacheService) extends Serializable {
+class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = SET_ALWAYS) extends Serializable {
 
   def namespace = service.getNamespace
 
-  def put[K](key: K, value: Any, expire: Option[Date] = None, policy: SetPolicy = SET_ALWAYS): Boolean = expire match {
-    case Some(date) => service.put(key, value, Expiration.onDate(date), policy)
-    case _ => service.put(key, value, null, policy)
-  }
+  def put[K](key: K, value: Any): Boolean = service.put(key, value, null, policy)
 
-  def putAll[K](values: Map[K, Any], expire: Option[Date] = None, policy: SetPolicy = SET_ALWAYS): Set[K] = expire match {
-    case Some(date) => service.putAll(values, Expiration.onDate(date), policy).toSet
-    case _ => service.putAll(values, null, policy).toSet
-  }
+  def put[K](key: K, value: Any, expirationDate: Date): Boolean = service.put(key, value, Expiration.onDate(expirationDate), policy)
 
-  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, expire: Option[Date] = None): Boolean = expire match {
-    case Some(date) => service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.onDate(date))
-    case _ => service.putIfUntouched(key, oldValue.identifiableValue, newValue, null)
-  }
+  def put[K](key: K, value: Any, lifeTimeSecond: Int): Boolean = service.put(key, value, Expiration.byDeltaSeconds(lifeTimeSecond), policy)
+
+  def putAll[K](values: Map[K, Any]): Set[K] = service.putAll(values, null, policy).toSet
+
+  def putAll[K](values: Map[K, Any], expirationDate: Date): Set[K] = service.putAll(values, Expiration.onDate(expirationDate), policy).toSet
+
+  def putAll[K](values: Map[K, Any], lifeTimeSecond: Int): Set[K] = service.putAll(values, Expiration.byDeltaSeconds(lifeTimeSecond), policy).toSet
+
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, null)
+
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, expirationDate: Date): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.onDate(expirationDate))
+
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, lifeTimeSecond: Int): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.byDeltaSeconds(lifeTimeSecond))
 
 
   def delete(key: AnyRef, millisNoReAdd: Long = 0L): Boolean = service.delete(key, millisNoReAdd)
@@ -50,10 +53,24 @@ class Memcache private[Memcache](service: MemcacheService) extends Serializable 
     case null => default
   }
 
-  def getOrElseUpdate[V](key: AnyRef, expire: Option[Date] = None, policy: SetPolicy = SET_ALWAYS)(default: => V): V = service.get(key) match {
+  def getOrElseUpdate[V](key: AnyRef)(default: => V): V = service.get(key) match {
     case value: Any => value.asInstanceOf[V]
     case null =>
-      put(key, default, expire, policy)
+      put(key, default)
+      default
+  }
+
+  def getOrElseUpdate[V](key: AnyRef, expirationDate: Date)(default: => V): V = service.get(key) match {
+    case value: Any => value.asInstanceOf[V]
+    case null =>
+      put(key, default, expirationDate)
+      default
+  }
+
+  def getOrElseUpdate[V](key: AnyRef, lifeTimeSecond: Int)(default: => V): V = service.get(key) match {
+    case value: Any => value.asInstanceOf[V]
+    case null =>
+      put(key, default, lifeTimeSecond)
       default
   }
 
@@ -104,9 +121,11 @@ class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
  *
  * @author Takashi Hachinohe
  */
-object Memcache extends Memcache(MemcacheServiceFactory.getMemcacheService) {
+object Memcache extends Memcache(MemcacheServiceFactory.getMemcacheService, SET_ALWAYS) {
 
-  def apply(name: String) = new Memcache(MemcacheServiceFactory.getMemcacheService(name))
+  def apply(name: String, policy: SetPolicy = SET_ALWAYS) = new Memcache(MemcacheServiceFactory.getMemcacheService(name), policy)
+
+  def apply(policy: SetPolicy) = new Memcache(MemcacheServiceFactory.getMemcacheService, policy)
 
 }
 
