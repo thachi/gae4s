@@ -33,13 +33,13 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("Memcacheに期限付きでputしてgetすることができ、期限を過ぎて取得できないこと") {
-    Memcache.put("key", 123, 500.millis)
+    Memcache.put("key", 123, 2.seconds)
 
     val actual1 = Memcache.get[Int]("key")
     assert(actual1.isDefined)
     assert(actual1.get == 123)
 
-    Thread.sleep(510)
+    Thread.sleep(2010)
 
     val actual2 = Memcache.get[Int]("key")
     assert(actual2.isEmpty)
