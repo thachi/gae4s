@@ -4,6 +4,7 @@ import com.google.appengine.tools.development.testing.LocalMemcacheServiceTestCo
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
+import scala.concurrent.duration._
 
 class MemcacheTest extends FunSuite with AppEngineTestSuite {
 
@@ -29,6 +30,19 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
 
     assert(actual.isDefined)
     assert(actual.get == 123)
+  }
+
+  test("Memcacheに期限付きでputしてgetすることができ、期限を過ぎて取得できないこと") {
+    Memcache.put("key", 123, 500.millis)
+
+    val actual1 = Memcache.get[Int]("key")
+    assert(actual1.isDefined)
+    assert(actual1.get == 123)
+
+    Thread.sleep(510)
+
+    val actual2 = Memcache.get[Int]("key")
+    assert(actual2.isEmpty)
   }
 
   test("MemcacheにputしたものがgetOrElseで正常に取得できること") {
