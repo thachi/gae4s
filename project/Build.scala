@@ -128,6 +128,7 @@ object Settings {
     "org.json4s" %% "json4s-ext" % "3.2.11",
     "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
     "com.google.appengine.tools" % "appengine-gcs-client" % "0.4.4",
+    "com.google.appengine" % "appengine-tools-sdk" % appengineVersion % "test",
     "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
     "com.google.appengine" % "appengine-testing" % appengineVersion % "test",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test"
