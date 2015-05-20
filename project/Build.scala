@@ -1,34 +1,17 @@
+import net.virtualvoid.sbt.graph.Plugin._
 import sbt.Keys._
 import sbt._
 import sbtappengine.Plugin._
+import sbtbuildinfo.Plugin._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
 import sbtrelease.ReleasePlugin._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleaseStep
-import net.virtualvoid.sbt.graph.Plugin._
 
 object Gae4sBuild extends Build {
 
-  import Settings._
-  import Versions._
-  import sbt.Keys._
-  import sbtbuildinfo.Plugin._
-  import sbtrelease._
-  import ReleaseStateTransformations._
-
-  ReleaseKeys.releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runTest,
-    setReleaseVersion,
-    commitReleaseVersion,
-//    tagRelease,
-    publishArtifacts,
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  )
-
+  val appengineVersion = "1.9.20"
+  val scalatestVersion = "2.2.4"
 
   lazy val root = Project(
     id = "gae4s-project",
@@ -89,13 +72,7 @@ object Gae4sBuild extends Build {
   ).dependsOn(core, scalatest % "test")
 
   lazy val doNotPublish = Seq(publish := {}, publishLocal := {})
-
-}
-
-object Settings {
-
-  import Versions._
-
+  
   lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
       scalaVersion := "2.11.6",
@@ -135,7 +112,3 @@ object Settings {
   )
 }
 
-object Versions {
-  val appengineVersion = "1.9.20"
-  val scalatestVersion = "2.2.4"
-}
