@@ -10,7 +10,7 @@ import sbtrelease.ReleaseStep
 
 object Gae4sBuild extends Build {
 
-  val appengineVersion = "1.9.20"
+  val appengineVersion = "1.9.21"
   val scalatestVersion = "2.2.4"
 
   lazy val root = Project(
@@ -72,7 +72,7 @@ object Gae4sBuild extends Build {
   ).dependsOn(core, scalatest % "test")
 
   lazy val doNotPublish = Seq(publish := {}, publishLocal := {})
-  
+
   lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
       scalaVersion := "2.11.6",
