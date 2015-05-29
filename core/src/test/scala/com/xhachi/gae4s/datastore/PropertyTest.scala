@@ -35,6 +35,14 @@ class KeyPropertyTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
+  test("keyTypeが正しく取得できること") {
+
+    val property = new KeyProperty[User]("name")
+
+    assert(property.keyType == classOf[User])
+
+  }
+
   test("toStorePropertyとfromStorePropertyが正しいこと") {
 
     val expected = Datastore.createKey[User]("hoge")
