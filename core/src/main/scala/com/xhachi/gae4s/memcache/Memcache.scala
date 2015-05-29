@@ -7,6 +7,7 @@ import com.google.appengine.api.memcache.MemcacheService._
 import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory}
 
 import scala.collection.JavaConversions._
+import scala.concurrent.duration.Duration
 
 /**
  * Class to access Memcache service.
@@ -14,24 +15,27 @@ import scala.collection.JavaConversions._
  * @author Takashi Hachinohe
  * @param service the MemcacheService instance
  */
-class Memcache private[Memcache](service: MemcacheService) {
+class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = SET_ALWAYS) extends Serializable {
 
   def namespace = service.getNamespace
 
-  def put[K](key: K, value: Any, expire: Option[Date] = None, policy: SetPolicy = SET_ALWAYS): Boolean = expire match {
-    case Some(date) => service.put(key, value, Expiration.onDate(date), policy)
-    case _ => service.put(key, value, null, policy)
-  }
+  def put[K](key: K, value: Any): Boolean = service.put(key, value, null, policy)
 
-  def putAll[K](values: Map[K, Any], expire: Option[Date] = None, policy: SetPolicy = SET_ALWAYS): Set[K] = expire match {
-    case Some(date) => service.putAll(values, Expiration.onDate(date), policy).toSet
-    case _ => service.putAll(values, null, policy).toSet
-  }
+  def put[K](key: K, value: Any, expirationDate: Date): Boolean = service.put(key, value, Expiration.onDate(expirationDate), policy)
 
-  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, expire: Option[Date] = None): Boolean = expire match {
-    case Some(date) => service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.onDate(date))
-    case _ => service.putIfUntouched(key, oldValue.identifiableValue, newValue, null)
-  }
+  def put[K](key: K, value: Any, duration: Duration): Boolean = service.put(key, value, Expiration.byDeltaMillis(duration.toMillis.toInt), policy)
+
+  def putAll[K](values: Map[K, Any]): Set[K] = service.putAll(values, null, policy).toSet
+
+  def putAll[K](values: Map[K, Any], expirationDate: Date): Set[K] = service.putAll(values, Expiration.onDate(expirationDate), policy).toSet
+
+  def putAll[K](values: Map[K, Any], duration: Duration): Set[K] = service.putAll(values, Expiration.byDeltaMillis(duration.toMillis.toInt), policy).toSet
+
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, null)
+
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, expirationDate: Date): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.onDate(expirationDate))
+
+  def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V, duration: Duration): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, Expiration.byDeltaMillis(duration.toMillis.toInt))
 
 
   def delete(key: AnyRef, millisNoReAdd: Long = 0L): Boolean = service.delete(key, millisNoReAdd)
@@ -50,10 +54,24 @@ class Memcache private[Memcache](service: MemcacheService) {
     case null => default
   }
 
-  def getOrElseUpdate[V](key: AnyRef, default: => V): V = service.get(key) match {
+  def getOrElseUpdate[V](key: AnyRef)(default: => V): V = service.get(key) match {
     case value: Any => value.asInstanceOf[V]
     case null =>
       put(key, default)
+      default
+  }
+
+  def getOrElseUpdate[V](key: AnyRef, expirationDate: Date)(default: => V): V = service.get(key) match {
+    case value: Any => value.asInstanceOf[V]
+    case null =>
+      put(key, default, expirationDate)
+      default
+  }
+
+  def getOrElseUpdate[V](key: AnyRef, duration: Duration)(default: => V): V = service.get(key) match {
+    case value: Any => value.asInstanceOf[V]
+    case null =>
+      put(key, default, duration)
       default
   }
 
@@ -77,7 +95,7 @@ class Memcache private[Memcache](service: MemcacheService) {
 
   def inclement(key: AnyRef, delta: Long = 1L, initialValue: Option[Long] = None): Long = initialValue match {
     case Some(i) => service.increment(key, delta, i)
-    case None => service.increment(key, delta)
+    case None => service.increment(key, delta, 0L)
   }
 
   def inclementAll[T](keys: Seq[T], delta: Long = 1L, initialValue: Option[Long] = None): Map[T, Long] = initialValue match {
@@ -86,8 +104,6 @@ class Memcache private[Memcache](service: MemcacheService) {
   }
 
   def statistics = service.getStatistics
-
-
 }
 
 class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
@@ -104,9 +120,11 @@ class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
  *
  * @author Takashi Hachinohe
  */
-object Memcache extends Memcache(MemcacheServiceFactory.getMemcacheService) {
+object Memcache extends Memcache(MemcacheServiceFactory.getMemcacheService, SET_ALWAYS) {
 
-  def apply(name: String) = new Memcache(MemcacheServiceFactory.getMemcacheService(name))
+  def apply(name: String, policy: SetPolicy = SET_ALWAYS) = new Memcache(MemcacheServiceFactory.getMemcacheService(name), policy)
+
+  def apply(policy: SetPolicy) = new Memcache(MemcacheServiceFactory.getMemcacheService, policy)
 
 }
 

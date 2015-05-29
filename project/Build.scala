@@ -1,34 +1,17 @@
+import net.virtualvoid.sbt.graph.Plugin._
 import sbt.Keys._
 import sbt._
 import sbtappengine.Plugin._
+import sbtbuildinfo.Plugin._
 import sbtrelease.ReleasePlugin.ReleaseKeys._
 import sbtrelease.ReleasePlugin._
 import sbtrelease.ReleaseStateTransformations._
 import sbtrelease.ReleaseStep
-import net.virtualvoid.sbt.graph.Plugin._
 
 object Gae4sBuild extends Build {
 
-  import Settings._
-  import Versions._
-  import sbt.Keys._
-  import sbtbuildinfo.Plugin._
-  import sbtrelease._
-  import ReleaseStateTransformations._
-
-  ReleaseKeys.releaseProcess := Seq[ReleaseStep](
-    checkSnapshotDependencies,
-    inquireVersions,
-    runTest,
-    setReleaseVersion,
-    commitReleaseVersion,
-//    tagRelease,
-    publishArtifacts,
-    setNextVersion,
-    commitNextVersion,
-    pushChanges
-  )
-
+  val appengineVersion = "1.9.21"
+  val scalatestVersion = "2.2.4"
 
   lazy val root = Project(
     id = "gae4s-project",
@@ -90,12 +73,6 @@ object Gae4sBuild extends Build {
 
   lazy val doNotPublish = Seq(publish := {}, publishLocal := {})
 
-}
-
-object Settings {
-
-  import Versions._
-
   lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
       scalaVersion := "2.11.6",
@@ -128,13 +105,10 @@ object Settings {
     "org.json4s" %% "json4s-ext" % "3.2.11",
     "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
     "com.google.appengine.tools" % "appengine-gcs-client" % "0.4.4",
+    "com.google.appengine" % "appengine-tools-sdk" % appengineVersion % "test",
     "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
     "com.google.appengine" % "appengine-testing" % appengineVersion % "test",
     "org.scalatest" %% "scalatest" % scalatestVersion % "test"
   )
 }
 
-object Versions {
-  val appengineVersion = "1.9.18"
-  val scalatestVersion = "2.2.4"
-}

@@ -1,8 +1,10 @@
 package com.xhachi.gae4s.cloudstrage
 
-import java.io.StringReader
+import java.io.{OutputStream, StringReader}
 import java.nio.ByteBuffer
+import java.nio.channels.Channels
 
+import com.google.appengine.tools.cloudstorage.GcsFileOptions.Builder
 import com.google.appengine.tools.cloudstorage._
 import com.xhachi.gae4s.common.Logger
 import org.json4s._
@@ -50,7 +52,7 @@ object CloudStorage extends Logger {
 class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends Logger {
 
 
-  def pathToFilename(path: String) = new GcsFilename(bucketName, path)
+  def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
 
   def metadata(path: String): Option[GcsFileMetadata] = {
     service.getMetadata(pathToFilename(path)) match {
@@ -79,26 +81,13 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
   def readBytes(path: String): Option[Array[Byte]] = readByteBuffer(path).map(_.array())
 
-  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None) = {
-    writeByteBuffer(path, ByteBuffer.wrap(bytes), mimeType)
+  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false) = {
+    writeByteBuffer(path, ByteBuffer.wrap(bytes), mimeType, public)
   }
 
-  def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None) = {
+  def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None, public: Boolean = false) = {
     info("CloudStorage[" + bucketName + "] write : " + path)
-
-    val option: GcsFileOptions = mimeType match {
-      case Some(m) =>
-        new GcsFileOptions.Builder().mimeType(m).build()
-      case None =>
-        CloudStorage.Ext2MimeType.find {
-          case (e, m) => path.endsWith(e)
-        }.map(_._2).map { m =>
-          new GcsFileOptions.Builder().mimeType(m).build()
-        }.getOrElse {
-          GcsFileOptions.getDefaultInstance
-        }
-    }
-
+    val option = toGcsFileOption(path, mimeType, public)
     var c: GcsOutputChannel = null
     try {
       c = service.createOrReplace(pathToFilename(path), option)
@@ -110,15 +99,43 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     }
   }
 
+  def getOutputStream(path: String, mimeType: Option[String] = None, public: Boolean = false): OutputStream = {
+    val option = toGcsFileOption(path, mimeType, public)
+    val outputChannel = service.createOrReplace(pathToFilename(path), option)
+    Channels.newOutputStream(outputChannel)
+  }
+
+  def toGcsFileOption(path: String, mimeType: Option[String], public: Boolean): GcsFileOptions = {
+    val builder = new Builder()
+
+    if (public) {
+      builder.acl("public-read")
+      builder.cacheControl("public; max-age=60")
+    }
+
+    mimeType match {
+      case Some(m) =>
+        builder.mimeType(m).build()
+      case None =>
+        CloudStorage.Ext2MimeType.find {
+          case (e, m) => path.endsWith(e)
+        }.map(_._2).map { m =>
+          builder.mimeType(m).build()
+        }.getOrElse {
+          GcsFileOptions.getDefaultInstance
+        }
+    }
+  }
+
   implicit var formats = DefaultFormats
 
   def readJson(path: String): Option[JValue] = {
     readBytes(path) map (b => parse(new StringReader(new String(b, "UTF-8"))))
   }
 
-  def writeJson(path: String, value: JValue): Unit = {
+  def writeJson(path: String, value: JValue, public: Boolean = false): Unit = {
     val b = Serialization.write(value).getBytes("UTF-8")
-    writeBytes(path, b)
+    writeBytes(path, b, public = public)
   }
 
 }

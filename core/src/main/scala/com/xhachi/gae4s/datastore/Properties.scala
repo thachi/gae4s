@@ -189,9 +189,11 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
   }
 }
 
-class KeyProperty[E <: Entity[E]](val name: String) extends Property[Key[E]] {
+class KeyProperty[E <: Entity[E]: ClassTag](val name: String) extends Property[Key[E]] {
 
   def storeType: Class[Key[E]] = propertyType
+
+  def keyType: Class[E] = implicitly[ClassTag[E]].runtimeClass.asInstanceOf[Class[E]]
 
   override protected[datastore] def fromStoreProperty(value: Any): Key[E] = value match {
     case k: LLKey => Key[E](k)

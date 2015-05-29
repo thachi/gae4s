@@ -4,6 +4,7 @@ import com.google.appengine.tools.development.testing.LocalMemcacheServiceTestCo
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
+import scala.concurrent.duration._
 
 class MemcacheTest extends FunSuite with AppEngineTestSuite {
 
@@ -31,6 +32,19 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     assert(actual.get == 123)
   }
 
+  test("Memcacheに期限付きでputしてgetすることができ、期限を過ぎて取得できないこと") {
+    Memcache.put("key", 123, 2.seconds)
+
+    val actual1 = Memcache.get[Int]("key")
+    assert(actual1.isDefined)
+    assert(actual1.get == 123)
+
+    Thread.sleep(2010)
+
+    val actual2 = Memcache.get[Int]("key")
+    assert(actual2.isEmpty)
+  }
+
   test("MemcacheにputしたものがgetOrElseで正常に取得できること") {
     Memcache.put("key", 123)
     val actual = Memcache.getOrElse[Int]("key", 999)
@@ -45,10 +59,10 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("MemcacheにputしてないものがgetOrElseUpdateで正常にアップデートでき取得できること") {
-    val actual1 = Memcache.getOrElseUpdate[Int]("key", 111)
+    val actual1 = Memcache.getOrElseUpdate[Int]("key")(111)
     assert(actual1 == 111)
 
-    val actual2 = Memcache.getOrElseUpdate[Int]("key", 222)
+    val actual2 = Memcache.getOrElseUpdate[Int]("key")(222)
     assert(actual2 == 111)
   }
 
@@ -92,7 +106,18 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     assert(actual.isEmpty)
   }
 
-  test("Memcacheにinclementして値が正しいこと") {
+  test("Memcacheにinclementして値が正しいこと1") {
+
+    (1 to 1000).foreach {
+      i => Memcache.inclement("inclement")
+    }
+
+    val actual = Memcache.get[Long]("inclement")
+    assert(actual.isDefined)
+    assert(actual.get == 1000)
+  }
+
+  test("Memcacheにinclementして値が正しいこと2") {
 
     (1 to 1000).foreach {
       i => Memcache.inclement("inclement", 1, Some(0))

@@ -206,7 +206,7 @@ sealed private[datastore] trait DatastoreUpdateMethods {
     put(entity)
   }
 
-  def isSameVersion[E <: Entity[E]](entity1: E, entity2: E)(implicit meta: EntityMeta[E]) =
+  private def isSameVersion[E <: Entity[E]](entity1: E, entity2: E)(implicit meta: EntityMeta[E]) =
     (meta.version(entity1), meta.version(entity2)) match {
       case (Some(v1), Some(v2)) => v1 == v2
       case _ => throw new IllegalStateException("%s versioning is not enabled.".format(meta.kind))
@@ -232,7 +232,7 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
     put(entities)
   }
 
-  def getInvalidVersion[E <: Entity[E]](entity1: Seq[E], entity2: Seq[E])(implicit meta: EntityMeta[E]): Seq[String] = {
+  private def getInvalidVersion[E <: Entity[E]](entity1: Seq[E], entity2: Seq[E])(implicit meta: EntityMeta[E]): Seq[String] = {
     assert(entity1.size == entity2.size)
     if (meta.versionEnabled) {
       entity1.zip(entity2).filterNot {

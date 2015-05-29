@@ -2,6 +2,8 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
+import scala.reflect.ClassTag
+
 object EntityMeta {
 
   import scala.language.experimental.macros
@@ -9,7 +11,7 @@ object EntityMeta {
   implicit def createMeta[E <: Entity[E]]: EntityMeta[E] = macro EntityMacro.createMeta[E]
 }
 
-abstract class EntityMeta[E <: Entity[E]] extends Serializable {
+abstract class EntityMeta[E <: Entity[E]: ClassTag] extends Serializable {
 
   type EntityType = E
 
