@@ -10,15 +10,16 @@ import scala.language.implicitConversions
 
 object Query {
   def apply[E <: Entity[E]](implicit meta: EntityMeta[E]): Query[E] = Query(meta, None)
+
   def apply[E <: Entity[E]](ancestor: Key[E])(implicit meta: EntityMeta[E]): Query[E] = Query(meta, Some(ancestor))
 }
 
-case class Query[E <: Entity[E]] private[datastore](meta: EntityMeta[E],
-                                                    ancestorOption: Option[Key[_]] = None,
-                                                    filterOption: Option[Filter] = None,
-                                                    sorts: Seq[Sort] = Nil,
-                                                    offset: Option[Int] = None,
-                                                    limit: Option[Int] = None) {
+case class Query[E <: Entity[E]](meta: EntityMeta[E],
+                                 ancestorOption: Option[Key[_]] = None,
+                                 filterOption: Option[Filter] = None,
+                                 sorts: Seq[Sort] = Nil,
+                                 offset: Option[Int] = None,
+                                 limit: Option[Int] = None) {
 
   def ancestor(ancestor: Key[_]): Query[E] = copy(ancestorOption = Some(ancestor))
 
