@@ -1,15 +1,19 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, CompositeFilterOperator, Filter => LLFilter, FilterOperator, FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection, SortPredicate => LLSortPredicate}
-import com.google.appengine.api.datastore.{Query => LLQuery, Transaction}
+import com.google.appengine.api.datastore.{Query => LLQuery}
 
 import scala.collection.JavaConversions._
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 
 
-case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMethods,
-                                                    meta: EntityMeta[E],
-                                                    tx: Option[Transaction],
+object Query {
+  def apply[E <: Entity[E]](implicit meta: EntityMeta[E]): Query[E] = Query(meta, None)
+  def apply[E <: Entity[E]](ancestor: Key[E])(implicit meta: EntityMeta[E]): Query[E] = Query(meta, Some(ancestor))
+}
+
+case class Query[E <: Entity[E]] private[datastore](meta: EntityMeta[E],
                                                     ancestorOption: Option[Key[_]] = None,
                                                     filterOption: Option[Filter] = None,
                                                     sorts: Seq[Sort] = Nil,
@@ -31,46 +35,6 @@ case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMet
   def offset(o: Int): Query[E] = copy(offset = Some(o))
 
   def limit(l: Int): Query[E] = copy(limit = Some(l))
-
-  def count: Int = datastore.count(this)
-
-  def asSeq: Seq[E] = datastore.asSeq(this)
-
-  def asSingle: E = datastore.asSingle(this)
-
-  def asSingleOption: Option[E] = datastore.asSingleOption(this)
-
-  def asKeySeq: Seq[Key[E]] = datastore.asKeySeq(this)
-
-  def count(entities: Seq[E]): Int = asSeq(entities).size
-
-  def asSeq(entities: Seq[E]): Seq[E] = {
-    val filtered = entities.filter {
-      entity =>
-        (entity.keyOption.map(_.parent).flatten, ancestorOption, filterOption) match {
-          case (Some(parentKey), Some(ancestorKey), _) if parentKey != ancestorKey =>
-            false
-          case (_, _, Some(filter)) =>
-            filter.isMatch(entity, meta)
-          case _ =>
-            true
-        }
-    }
-    val sorted = filtered.sortWith {
-      case (e1, e2) =>
-        sorts.map(_.lt(e1, e2, meta)).contains(true)
-    }
-    sorted
-  }
-
-  def asSingle(entities: Seq[E]): E = asSingleOption.getOrElse(null.asInstanceOf[E])
-
-  def asSingleOption(entities: Seq[E]): Option[E] = asSeq(entities) match {
-    case head :: Nil => Some(head)
-    case _ => None
-  }
-
-  def asKeySeq(entities: Seq[E]): Seq[Key[E]] = asSeq(entities).map(_.key)
 
   private[datastore] def toLLQuery(keysOnly: Boolean): LLQuery = {
     val query = new LLQuery(meta.kind)

@@ -2,7 +2,7 @@ package com.example
 
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
-import com.xhachi.gae4s.datastore.{Datastore, Entity, Key, MutableEntity => MutableEntity}
+import com.xhachi.gae4s.datastore.{Datastore, Entity, Key, MutableEntity}
 
 class SampleServlet extends HttpServlet {
 

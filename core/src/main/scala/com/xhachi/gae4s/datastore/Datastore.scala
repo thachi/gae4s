@@ -5,6 +5,7 @@ import java.util.ConcurrentModificationException
 import com.google.appengine.api.datastore.{Entity => LLEntity, _}
 
 import scala.collection.JavaConversions._
+import scala.language.implicitConversions
 
 /**
  * Class to access Datastore service.
@@ -27,7 +28,10 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
   with DatastoreDeleteListMethods
   with DatastoreQueryMethods
   with DatastoreCreateKeyMethods
-  with DatastoreTxMethods
+  with DatastoreTxMethods {
+
+  implicit def toDatastoreQuery[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): DatastoreQuery[E] = DatastoreQuery(this, query)
+}
 
 /**
  * Object to access default Datastore service.
@@ -279,34 +283,33 @@ sealed private[datastore] trait DatastoreCreateKeyMethods {
 sealed private[datastore] trait DatastoreQueryMethods {
   self: DatastoreBase =>
 
-  def query[E <: Entity[E]](implicit meta: EntityMeta[E]) =
-    Query[E](this, meta, None)
+  def query[E <: Entity[E]](implicit meta: EntityMeta[E]) = Query[E](meta)
 
-  def query[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]) =
-    Query[E](this, meta, None, Some(ancestor))
+  def query[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]) = Query[E](meta, Some(ancestor))
 
-  def queryWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]) =
-    Query[E](this, meta, Some(tx))
+  def countWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Int = _count(Some(tx), Datastore.query)
 
-  def queryWithTx[E <: Entity[E]](tx: Transaction, ancestor: Key[_])(implicit meta: EntityMeta[E]) =
-    Query[E](this, meta, Some(tx), Some(ancestor))
+  def countWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(Some(tx), query)
 
-  def queryWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]) =
-    Query[E](this, meta, null)
+  def countWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Int = _count(Some(null), Datastore.query)
 
-  def queryWithoutTx[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]) =
-    Query[E](this, meta, null, Some(ancestor))
+  def countWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(Some(null), query)
 
-  def count[E <: Entity[E]](query: Query[E]): Int = {
+  def count[E <: Entity[E]](implicit meta: EntityMeta[E]): Int = _count(None, Datastore.query)
+
+  def count[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(None, query)
+
+  private def _count[E <: Entity[E]](tx: Option[Transaction], query: Query[E])(implicit meta: EntityMeta[E]): Int = {
     val llQuery = query.toLLQuery(keysOnly = false)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
   }
 
-  private def prepare[E <: Entity[E]](query: Query[E], keysOnly: Boolean): PreparedQuery = {
+  private def prepare[E <: Entity[E]](tx: Option[Transaction], query: Query[E], keysOnly: Boolean): PreparedQuery = {
     val llQuery = query.toLLQuery(keysOnly = keysOnly)
-    query.tx match {
+    tx match {
       case o: Option[Transaction] => o match {
-        case Some(tx) => service.prepare(tx, llQuery)
+        case Some(null) => service.prepare(llQuery)
+        case Some(t) => service.prepare(t, llQuery)
         case None => service.prepare(null, llQuery)
       }
       case _ =>
@@ -314,41 +317,93 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-  def asSeq[E <: Entity[E]](query: Query[E]): Seq[E] = {
-    val options = (query.offset, query.limit) match {
+  def asSeqWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(tx), Datastore.query)
+
+  def asSeqWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(tx), query)
+
+  def asSeqWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(null), Datastore.query)
+
+  def asSeqWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(null), query)
+
+  def asSeq[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[E] = _asSeq(None, Datastore.query)
+
+  def asSeq[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(None, query)
+
+  private def _asSeq[E <: Entity[E]](tx: Option[Transaction], query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = {
+    val q = query
+    val options = (q.offset, q.limit) match {
       case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
       case (Some(o), _) => FetchOptions.Builder.withOffset(o)
       case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
       case _ => FetchOptions.Builder.withDefaults()
     }
-    prepare(query, keysOnly = false).asIterable(options).map {
-      e => query.meta.toEntity(e)
+    prepare(tx, q, keysOnly = false).asIterable(options).map {
+      e => q.meta.toEntity(e)
     }.toSeq
   }
 
-  def asSingle[E <: Entity[E]](query: Query[E]): E = {
-    prepare(query, keysOnly = false).asSingleEntity() match {
-      case singleEntity: LLEntity => query.meta.toEntity(singleEntity)
-      case null => throw new IllegalArgumentException(s"Entity not found for query $query.")
+  def asSingleWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): E = _asSingle(Some(tx), Datastore.query)
+
+  def asSingleWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): E = _asSingle(Some(tx), query)
+
+  def asSingleWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): E = _asSingle(Some(null), Datastore.query)
+
+  def asSingleWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): E = _asSingle(Some(null), query)
+
+  def asSingle[E <: Entity[E]](implicit meta: EntityMeta[E]): E = _asSingle(None, Datastore.query)
+
+  def asSingle[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): E = _asSingle(None, query)
+
+  private def _asSingle[E <: Entity[E]](tx: Option[Transaction], query: Query[E])(implicit meta: EntityMeta[E]): E = {
+    val q = query
+    prepare(tx, q, keysOnly = false).asSingleEntity() match {
+      case singleEntity: LLEntity => q.meta.toEntity(singleEntity)
+      case null => throw new IllegalArgumentException(s"Entity not found for $q.")
     }
   }
 
-  def asSingleOption[E <: Entity[E]](query: Query[E]): Option[E] = {
-    prepare(query, keysOnly = false).asSingleEntity() match {
-      case s: LLEntity => Some(query.meta.toEntity(s))
+  def asSingleOptionWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(tx), Datastore.query)
+
+  def asSingleOptionWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(tx), query)
+
+  def asSingleOptionWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(null), Datastore.query)
+
+  def asSingleOptionWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(null), query)
+
+  def asSingleOption[E <: Entity[E]](implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(None, Datastore.query)
+
+  def asSingleOption[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(None, query)
+
+  private def _asSingleOption[E <: Entity[E]](tx: Option[Transaction], query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = {
+    val q = query
+    prepare(tx, q, keysOnly = false).asSingleEntity() match {
+      case s: LLEntity => Some(q.meta.toEntity(s))
       case e => None
     }
   }
 
-  def asKeySeq[E <: Entity[E]](query: Query[E]): Seq[Key[E]] = {
-    val options = (query.offset, query.limit) match {
+  def asKeySeqWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(tx), Datastore.query)
+
+  def asKeySeqWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(tx), query)
+
+  def asKeySeqWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(null), Datastore.query)
+
+  def asKeySeqWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(null), query)
+
+  def asKeySeq[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(None, Datastore.query)
+
+  def asKeySeq[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(None, query)
+
+  private def _asKeySeq[E <: Entity[E]](tx: Option[Transaction], query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = {
+    val q = query
+    val options = (q.offset, q.limit) match {
       case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
       case (Some(o), _) => FetchOptions.Builder.withOffset(o)
       case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
       case _ => FetchOptions.Builder.withDefaults()
     }
-    prepare(query, keysOnly = true).asIterable(options).map {
-      e => query.meta.createKey(e.getKey)
+    prepare(tx, q, keysOnly = true).asIterable(options).map {
+      e => q.meta.createKey(e.getKey)
     }.toSeq
   }
 }
@@ -389,4 +444,19 @@ sealed private[datastore] trait DatastoreTxMethods {
       if (tx.isActive) tx.rollback()
     }
   }
+}
+
+case class DatastoreQuery[E <: Entity[E]](datastore: Datastore, query: Query[E]) {
+
+  implicit val entityMeta = query.meta
+
+  def asSeq = datastore.asSeq(query)
+
+  def asKeySeq = datastore.asKeySeq(query)
+
+  def asSingle = datastore.asSingle(query)
+
+  def asSingleOption = datastore.asSingleOption(query)
+
+  def count = datastore.count(query)
 }

@@ -14,6 +14,8 @@ import org.scalatest.FunSuite
 
 class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
+  import com.xhachi.gae4s.datastore.Datastore._
+
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
   test("IndexedSimpleValueEntityのMetaが正しく生成されること") {
@@ -202,8 +204,8 @@ class IndexedSimpleValueEntity2Test extends FunSuite with AppEngineTestSuite {
 
 
   test("クエリできること") {
-    Datastore.query[IndexedSimpleValueEntity2].filter(_.scalaEnum == null).count
-    Datastore.query[IndexedSimpleValueEntity2].filter(_.scalaEnum == ScalaEnum.ScalaEnum1).count
+    Datastore.count(Query[IndexedSimpleValueEntity2].filter(_.scalaEnum == null))
+    Datastore.count(Query[IndexedSimpleValueEntity2].filter(_.scalaEnum == ScalaEnum.ScalaEnum1))
   }
 
 }
