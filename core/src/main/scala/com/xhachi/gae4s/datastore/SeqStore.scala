@@ -3,7 +3,7 @@ package com.xhachi.gae4s.datastore
 
 class SeqStore[E <: Entity[E]](entities: Seq[E])(implicit meta: EntityMeta[E]) {
 
-  def query: SeqQuery[E] = SeqQuery(this, Query[E](meta))
+  def query: SeqQuery[E] = SeqQuery(this, Query[E])
 
   def count(query: Query[E]): Int = asSeq(query).size
 

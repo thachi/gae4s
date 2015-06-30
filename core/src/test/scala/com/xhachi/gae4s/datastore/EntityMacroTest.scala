@@ -62,7 +62,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
 
     assert(meta.property("role").isDefined)
 
-    val s = Datastore.query[UserInfo].sort(_.lastLoginDate)
+    val s = Query[UserInfo].sort(_.lastLoginDate)
     assert(s.sorts.size == 1)
     assert(s.sorts.head.name == "lastLoginDate")
     assert(s.sorts.head.direction == Sort.Direction.Ascending)

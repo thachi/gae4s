@@ -81,7 +81,7 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
     assert(e.shortBlob == a.shortBlob)
     assert(e.blob == a.blob)
 
-    val q = Datastore.query[IndexedSimpleValueEntity]
+    val q = Query[IndexedSimpleValueEntity]
     assert(q.filter(_.key == key).asSingleOption.nonEmpty)
     assert(q.filter(_.key == key2).asSingleOption.isEmpty)
     assert(q.filter(_.string == "test_string").asSingleOption.nonEmpty)
@@ -107,8 +107,8 @@ class IndexedSimpleValueEntityTest extends FunSuite with AppEngineTestSuite {
 
 
   test("クエリできること") {
-    Datastore.query[IndexedSimpleValueEntity].filter(_.int == 0).count
-    Datastore.query[IndexedSimpleValueEntity].filter(_.int == 1).count
+    Datastore.count(Query[IndexedSimpleValueEntity].filter(_.int == 0))
+    Datastore.count(Query[IndexedSimpleValueEntity].filter(_.int == 1))
   }
 
 }

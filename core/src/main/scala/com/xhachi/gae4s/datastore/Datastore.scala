@@ -30,7 +30,6 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
   with DatastoreQueryMethods
   with DatastoreCreateKeyMethods
   with DatastoreTxMethods {
-
   implicit def toDatastoreQuery[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): DatastoreQuery[E] = DatastoreQuery(this, query)
 }
 
@@ -46,6 +45,9 @@ object Datastore extends Datastore(DatastoreServiceFactory.getDatastoreService) 
 sealed private[datastore] trait DatastoreBase {
 
   private[datastore] def service: DatastoreService
+
+  implicit def toDatastoreQuery[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): DatastoreQuery[E]
+
 }
 
 sealed private[datastore] trait DatastoreGetMethods {
@@ -284,19 +286,19 @@ sealed private[datastore] trait DatastoreCreateKeyMethods {
 sealed private[datastore] trait DatastoreQueryMethods {
   self: DatastoreBase =>
 
-  def query[E <: Entity[E]](implicit meta: EntityMeta[E]) = Query[E](meta)
+  def query[E <: Entity[E]](implicit meta: EntityMeta[E]): DatastoreQuery[E] = Query[E]
 
-  def query[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]) = Query[E](meta, Some(ancestor))
+  def query[E <: Entity[E]](ancestor: Key[_])(implicit meta: EntityMeta[E]): DatastoreQuery[E] = Query[E](meta).ancestor(ancestor)
 
-  def countWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Int = _count(Some(tx), Datastore.query)
+  def countWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Int = _count(Some(tx), Query[E])
 
   def countWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(Some(tx), query)
 
-  def countWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Int = _count(Some(null), Datastore.query)
+  def countWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Int = _count(Some(null), Query[E])
 
   def countWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(Some(null), query)
 
-  def count[E <: Entity[E]](implicit meta: EntityMeta[E]): Int = _count(None, Datastore.query)
+  def count[E <: Entity[E]](implicit meta: EntityMeta[E]): Int = _count(None, Query[E])
 
   def count[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(None, query)
 
@@ -318,15 +320,15 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-  def asSeqWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(tx), Datastore.query)
+  def asSeqWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(tx), Query[E])
 
   def asSeqWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(tx), query)
 
-  def asSeqWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(null), Datastore.query)
+  def asSeqWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(null), Query[E])
 
   def asSeqWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(Some(null), query)
 
-  def asSeq[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[E] = _asSeq(None, Datastore.query)
+  def asSeq[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[E] = _asSeq(None, Query[E])
 
   def asSeq[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[E] = _asSeq(None, query)
 
@@ -343,15 +345,15 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }.toSeq
   }
 
-  def asSingleWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): E = _asSingle(Some(tx), Datastore.query)
+  def asSingleWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): E = _asSingle(Some(tx), Query[E])
 
   def asSingleWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): E = _asSingle(Some(tx), query)
 
-  def asSingleWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): E = _asSingle(Some(null), Datastore.query)
+  def asSingleWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): E = _asSingle(Some(null), Query[E])
 
   def asSingleWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): E = _asSingle(Some(null), query)
 
-  def asSingle[E <: Entity[E]](implicit meta: EntityMeta[E]): E = _asSingle(None, Datastore.query)
+  def asSingle[E <: Entity[E]](implicit meta: EntityMeta[E]): E = _asSingle(None, Query[E])
 
   def asSingle[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): E = _asSingle(None, query)
 
@@ -363,15 +365,15 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-  def asSingleOptionWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(tx), Datastore.query)
+  def asSingleOptionWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(tx), Query[E])
 
   def asSingleOptionWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(tx), query)
 
-  def asSingleOptionWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(null), Datastore.query)
+  def asSingleOptionWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(null), Query[E])
 
   def asSingleOptionWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(Some(null), query)
 
-  def asSingleOption[E <: Entity[E]](implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(None, Datastore.query)
+  def asSingleOption[E <: Entity[E]](implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(None, Query[E])
 
   def asSingleOption[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Option[E] = _asSingleOption(None, query)
 
@@ -383,15 +385,15 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-  def asKeySeqWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(tx), Datastore.query)
+  def asKeySeqWithTx[E <: Entity[E]](tx: Transaction)(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(tx), Query[E])
 
   def asKeySeqWithTx[E <: Entity[E]](tx: Transaction, query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(tx), query)
 
-  def asKeySeqWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(null), Datastore.query)
+  def asKeySeqWithoutTx[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(null), Query[E])
 
   def asKeySeqWithoutTx[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(Some(null), query)
 
-  def asKeySeq[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(None, Datastore.query)
+  def asKeySeq[E <: Entity[E]](implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(None, Query[E])
 
   def asKeySeq[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Seq[Key[E]] = _asKeySeq(None, query)
 

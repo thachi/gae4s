@@ -6,8 +6,6 @@ import scala.language.experimental.macros
 
 object Query {
   def apply[E <: Entity[E]](implicit meta: EntityMeta[E]): Query[E] = Query(meta, None)
-
-  def apply[E <: Entity[E]](ancestor: Key[E])(implicit meta: EntityMeta[E]): Query[E] = Query(meta, Some(ancestor))
 }
 
 case class Query[E <: Entity[E]](meta: EntityMeta[E],
@@ -18,6 +16,8 @@ case class Query[E <: Entity[E]](meta: EntityMeta[E],
                                  limit: Option[Int] = None) {
 
   def ancestor(ancestor: Key[_]): Query[E] = copy(ancestorOption = Some(ancestor))
+
+  def ancestor(ancestor: Option[Key[_]]): Query[E] = copy(ancestorOption = ancestor)
 
   def filterByMeta(filter: EntityMeta[E] => Filter): Query[E] = copy(filterOption = Some(filter(meta)))
 
@@ -31,7 +31,11 @@ case class Query[E <: Entity[E]](meta: EntityMeta[E],
 
   def offset(o: Int): Query[E] = copy(offset = Some(o))
 
+  def offset(o: Option[Int]): Query[E] = copy(offset = o)
+
   def limit(l: Int): Query[E] = copy(limit = Some(l))
+
+  def limit(l: Option[Int]): Query[E] = copy(limit = l)
 
 }
 

@@ -74,7 +74,7 @@ class IndexedOptionValueEntity1Test extends FunSuite with AppEngineTestSuite {
   }
 
   test("クエリできること") {
-    Datastore.count(Datastore.query[IndexedOptionValueEntity1].filter(_.int == None))
+    Datastore.count(Query[IndexedOptionValueEntity1].filter(_.int == None))
 
     //FIXME: コンパイル時にNullPointerExceptionが出る。
     //    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == Some(ScalaEnum.ScalaEnum1)).count
@@ -151,7 +151,7 @@ class IndexedOptionValueEntity2Test extends FunSuite with AppEngineTestSuite {
   }
 
   test("クエリできること") {
-    Datastore.count(Datastore.query[IndexedOptionValueEntity2].filter(_.scalaEnum == None))
+    Datastore.count(Query[IndexedOptionValueEntity2].filter(_.scalaEnum == None))
 
     //FIXME: コンパイル時にNullPointerExceptionが出る。
     //    Datastore.query[IndexedOptionValueEntity].filter(_.scalaEnum == Some(ScalaEnum.ScalaEnum1)).count
