@@ -1,6 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.Query.SortDirection
 import com.google.appengine.api.datastore.{Key => LLKey}
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.xhachi.gae4s.tests.AppEngineTestSuite
@@ -66,7 +65,7 @@ class EntityMacroTest extends FunSuite with AppEngineTestSuite {
     val s = Datastore.query[UserInfo].sort(_.lastLoginDate)
     assert(s.sorts.size == 1)
     assert(s.sorts.head.name == "lastLoginDate")
-    assert(s.sorts.head.direction == SortDirection.ASCENDING)
+    assert(s.sorts.head.direction == Sort.Direction.Ascending)
 
     val key = Datastore.createKey(Datastore.createKey[User](1), 1)
     val e = meta.createEntity(key)

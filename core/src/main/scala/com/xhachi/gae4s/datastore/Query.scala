@@ -1,11 +1,7 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, CompositeFilterOperator, Filter => LLFilter, FilterOperator, FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection, SortPredicate => LLSortPredicate}
-import com.google.appengine.api.datastore.{Query => LLQuery}
 
-import scala.collection.JavaConversions._
 import scala.language.experimental.macros
-import scala.language.implicitConversions
 
 
 object Query {
@@ -37,85 +33,104 @@ case class Query[E <: Entity[E]](meta: EntityMeta[E],
 
   def limit(l: Int): Query[E] = copy(limit = Some(l))
 
-  private[datastore] def toLLQuery(keysOnly: Boolean): LLQuery = {
-    val query = new LLQuery(meta.kind)
-    if (keysOnly) query.setKeysOnly() else query.clearKeysOnly()
-    if (ancestorOption.isDefined) query.setAncestor(ancestorOption.get.key)
-    if (filterOption.isDefined) query.setFilter(filterOption.get.toLLFilter)
-    sorts.foreach(s => query.addSort(s.name, s.direction))
-    query
-  }
 }
 
-trait Filter extends Serializable {
+object Filter {
 
-  private[datastore] def toLLFilter: LLFilter
+  sealed trait CompositeOperator
+
+  case object And extends CompositeOperator
+
+  case object Or extends CompositeOperator
+
+  sealed trait ComparativeOperator
+
+  case object Equal extends ComparativeOperator
+
+  case object NotEqual extends ComparativeOperator
+
+  case object LessThan extends ComparativeOperator
+
+  case object LessThanOrEqual extends ComparativeOperator
+
+  case object GreaterThan extends ComparativeOperator
+
+  case object GreaterThanOrEqual extends ComparativeOperator
+
+  case object In extends ComparativeOperator
+
+}
+
+sealed trait Filter extends Serializable {
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean
 
   def &&(f: Filter): Filter = {
-    CompositeFilterPredicate(CompositeFilterOperator.AND, this :: f :: Nil)
+    CompositeFilterPredicate(Filter.And, this :: f :: Nil)
   }
 
   def ||(f: Filter): Filter = {
-    CompositeFilterPredicate(CompositeFilterOperator.OR, this :: f :: Nil)
+    CompositeFilterPredicate(Filter.Or, this :: f :: Nil)
   }
 }
 
-case class FilterPredicate[T](name: String, operator: FilterOperator, property: IndexedProperty[T], value: T, values: Seq[T] = Nil) extends Filter {
+case class FilterPredicate[T](property: IndexedProperty[T], operator: Filter.ComparativeOperator, values: Seq[T] = Nil) extends Filter {
 
-  import com.google.appengine.api.datastore.Query.FilterOperator._
+  import com.xhachi.gae4s.datastore.Filter._
 
-  if (operator != IN && values.nonEmpty) throw new IllegalArgumentException("valid values")
-
-  private[datastore] def toLLFilter = operator match {
-    case FilterOperator.IN => new LLFilterPredicate(name, operator, seqAsJavaList(value +: values))
-    case _ => new LLFilterPredicate(name, operator, property.toStoreProperty(value))
-  }
+  if (operator != In && values.size != 1) throw new IllegalArgumentException("valid values")
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    val v: T = property.fromStoreProperty(meta.toLLEntity(entity).getProperty(name))
+    val v: T = property.fromStoreProperty(meta.toLLEntity(entity).getProperty(property.name))
 
     operator match {
-      case EQUAL => property.compare(v, value) == 0
-      case NOT_EQUAL => property.compare(v, value) != 0
-      case LESS_THAN => property.compare(v, value) < 0
-      case LESS_THAN_OR_EQUAL => property.compare(v, value) <= 0
-      case GREATER_THAN => 0 < property.compare(v, value)
-      case GREATER_THAN_OR_EQUAL => 0 <= property.compare(v, value)
-      case IN => (value +: values).contains(v)
-      case _ => false
+      case Equal => property.compare(v, values.head) == 0
+      case NotEqual => property.compare(v, values.head) != 0
+      case LessThan => property.compare(v, values.head) < 0
+      case LessThanOrEqual => property.compare(v, values.head) <= 0
+      case GreaterThan => 0 < property.compare(v, values.head)
+      case GreaterThanOrEqual => 0 <= property.compare(v, values.head)
+      case In => values.contains(v)
     }
   }
 }
 
-case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: Seq[Filter]) extends Filter {
+case class CompositeFilterPredicate(operator: Filter.CompositeOperator, filters: Seq[Filter]) extends Filter {
 
-  private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
+  import com.xhachi.gae4s.datastore.Filter._
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    import com.google.appengine.api.datastore.Query.CompositeFilterOperator._
     operator match {
-      case AND =>
-        filters.map(f => f.isMatch(entity, meta)).filter(m => !m).isEmpty
-      case OR =>
-        filters.map(f => f.isMatch(entity, meta)).filter(m => m).nonEmpty
+      case And => filters.map(f => f.isMatch(entity, meta)).filter(m => !m).isEmpty
+      case Or => filters.map(f => f.isMatch(entity, meta)).filter(m => m).nonEmpty
     }
   }
 }
 
-trait Sort extends Serializable {
+object Sort {
+
+  trait Direction
+
+  object Direction {
+
+    case object Ascending extends Direction
+
+    case object Descending extends Direction
+
+  }
+
+}
+
+sealed trait Sort extends Serializable {
 
   private[datastore] def name: String
 
-  private[datastore] def direction: LLSortDirection
+  private[datastore] def direction: Sort.Direction
 
   private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean
 }
 
-case class SortPredicate[T](name: String, direction: LLSortDirection, property: IndexedProperty[T]) extends Sort {
-
-  private[datastore] def toLLSortDirection = new LLSortPredicate(name, direction)
+case class SortPredicate[T](name: String, direction: Sort.Direction, property: IndexedProperty[T]) extends Sort {
 
   private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean = {
     val v1: T = property.fromStoreProperty(meta.toLLEntity(entity1).getProperty(name))

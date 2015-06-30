@@ -2,7 +2,8 @@ package com.xhachi.gae4s.datastore
 
 import java.util.ConcurrentModificationException
 
-import com.google.appengine.api.datastore.{Entity => LLEntity, _}
+import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate}
+import com.google.appengine.api.datastore.{Entity => LLEntity, Query => LLQuery, _}
 
 import scala.collection.JavaConversions._
 import scala.language.implicitConversions
@@ -300,12 +301,12 @@ sealed private[datastore] trait DatastoreQueryMethods {
   def count[E <: Entity[E]](query: Query[E])(implicit meta: EntityMeta[E]): Int = _count(None, query)
 
   private def _count[E <: Entity[E]](tx: Option[Transaction], query: Query[E])(implicit meta: EntityMeta[E]): Int = {
-    val llQuery = query.toLLQuery(keysOnly = false)
+    val llQuery = _toLLQuery(query, keysOnly = false)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
   }
 
-  private def prepare[E <: Entity[E]](tx: Option[Transaction], query: Query[E], keysOnly: Boolean): PreparedQuery = {
-    val llQuery = query.toLLQuery(keysOnly = keysOnly)
+  private def prepare[E <: Entity[E]](tx: Option[Transaction], query: Query[E], keysOnly: Boolean)(implicit meta: EntityMeta[E]): PreparedQuery = {
+    val llQuery = _toLLQuery[E](query, keysOnly = keysOnly)
     tx match {
       case o: Option[Transaction] => o match {
         case Some(null) => service.prepare(llQuery)
@@ -406,6 +407,56 @@ sealed private[datastore] trait DatastoreQueryMethods {
       e => q.meta.createKey(e.getKey)
     }.toSeq
   }
+
+
+  private[datastore] def _toLLQuery[E <: Entity[E]](query: Query[E], keysOnly: Boolean)(implicit meta: EntityMeta[E]): LLQuery = {
+    import com.google.appengine.api.datastore.Query.SortDirection._
+
+    val q = new LLQuery(meta.kind)
+    if (keysOnly) q.setKeysOnly() else q.clearKeysOnly()
+    query.ancestorOption.foreach(a => q.setAncestor(a.key))
+    query.filterOption.foreach(f => q.setFilter(_toLLFilter(f)))
+
+    query.sorts.foreach(s =>
+      q.addSort(
+        s.name,
+        s.direction match {
+          case Sort.Direction.Ascending => ASCENDING
+          case Sort.Direction.Descending => DESCENDING
+        }
+      )
+    )
+    q
+  }
+
+  private[datastore] def _toLLFilter[E <: Entity[E]](filter: Filter)(implicit meta: EntityMeta[E]): LLFilter = {
+    import com.google.appengine.api.datastore.Query.CompositeFilterOperator._
+    import com.google.appengine.api.datastore.Query.FilterOperator._
+    import com.xhachi.gae4s.datastore.Filter._
+
+    filter match {
+      case CompositeFilterPredicate(operator, filters) =>
+        new LLCompositeFilter(operator match {
+          case And => AND
+          case Or => OR
+        }, filters.map(f => _toLLFilter(f)))
+      case FilterPredicate(property, In, values) =>
+        new LLFilterPredicate(property.name, IN, values.map(property.toStoreProperty))
+      case FilterPredicate(property, operator, value :: Nil) =>
+        val o = operator match {
+          case Equal => EQUAL
+          case NotEqual => NOT_EQUAL
+          case LessThan => LESS_THAN
+          case LessThanOrEqual => LESS_THAN_OR_EQUAL
+          case GreaterThan => GREATER_THAN
+          case GreaterThanOrEqual => GREATER_THAN_OR_EQUAL
+          case In => throw new IllegalArgumentException("unexpected filter")
+        }
+        new LLFilterPredicate(property.name, o, property.toStoreProperty(value))
+      case FilterPredicate(_, _, _) => throw new IllegalArgumentException("unexpected filter")
+    }
+  }
+
 }
 
 sealed private[datastore] trait DatastoreTxMethods {

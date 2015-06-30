@@ -79,4 +79,14 @@ class TaskQueueTest extends FunSuite with AppEngineTestSuite {
       }
     }
   }
+
+  test("登録してないタスクを削除すると失敗すること") {
+    assert(!TaskQueue.delete("hoge"))
+  }
+
+  test("名前付きのタスクを登録して削除すると成功すること") {
+    TaskQueue.add(TaskOptions.Builder.withUrl("/task/null").taskName("hoge"))
+
+    assert(TaskQueue.delete("hoge"))
+  }
 }
