@@ -192,7 +192,7 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
 
 class KeyProperty[E <: Entity[E] : ClassTag](val name: String) extends Property[Key[E]] {
   
-  type KeyType = E
+  type KeyType = Entity[E]
 
   def storeType: Class[Key[E]] = propertyType
 
