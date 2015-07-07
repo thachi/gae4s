@@ -11,7 +11,11 @@ object EntityMeta {
   implicit def createMeta[E <: Entity[E]]: EntityMeta[E] = macro EntityMacro.createMeta[E]
 }
 
-abstract class EntityMeta[E <: Entity[E]: ClassTag] extends Serializable {
+trait EntityType {
+  type EntityType <: Entity[_]
+}
+
+abstract class EntityMeta[E <: Entity[E]: ClassTag] extends Serializable with EntityType {
 
   type EntityType = E
 
