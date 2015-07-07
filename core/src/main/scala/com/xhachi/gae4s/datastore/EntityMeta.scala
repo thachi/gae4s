@@ -12,7 +12,7 @@ object EntityMeta {
 }
 
 trait EntityType {
-  type EntityType <: Entity[_]
+  type EntityType <: Entity[EntityType]
 }
 
 abstract class EntityMeta[E <: Entity[E]: ClassTag] extends Serializable with EntityType {
