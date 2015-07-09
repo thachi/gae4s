@@ -43,7 +43,7 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   final def setValueToLLEntity(entity: LLEntity)(value: T) = {
     val storeValue = try {
-      toStoreProperty(value)
+      toStoreProperty(storedFilter(value))
     } catch {
       case NonFatal(e) =>
         throw new IllegalStateException( s"""$name couldn't convert from entity value "$value" to store value""", e)
@@ -69,6 +69,8 @@ abstract class Property[T: ClassTag] extends Serializable {
 
 
   protected[datastore] def toStoreProperty(value: T): Any
+
+  protected[datastore] def storedFilter(value: T): T = value
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
@@ -191,7 +193,7 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
 }
 
 class KeyProperty[E <: Entity[E] : ClassTag](val name: String) extends Property[Key[E]] {
-  
+
   type KeyType = E
 
   def storeType: Class[Key[E]] = propertyType
@@ -407,12 +409,12 @@ class JsonProperty[E <: AnyRef : Manifest](name: String) extends StringStoreProp
 
 class VersionProperty(name: String) extends ValueProperty[Long](name) with IndexedProperty[Long] {
 
-  override def toStoreProperty(value: Long): Any = value + 1
+  override def storedFilter(value: Long): Long = value + 1
 }
 
 class CreationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
 
-  override def toStoreProperty(value: Date): Any = value match {
+  override def storedFilter(value: Date): Date = value match {
     case d: Date => d
     case _ => new Date
   }
@@ -420,5 +422,5 @@ class CreationDateProperty(name: String) extends DateProperty(name) with Indexed
 }
 
 class ModificationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
-  override def toStoreProperty(value: Date): Any = new Date
+  override def storedFilter(value: Date): Date = new Date
 }
