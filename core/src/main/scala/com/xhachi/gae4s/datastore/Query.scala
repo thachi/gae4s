@@ -21,9 +21,13 @@ case class Query[E <: Entity[E]](meta: EntityMeta[E],
 
   def filterByMeta(filter: EntityMeta[E] => Filter): Query[E] = copy(filterOption = Some(filter(meta)))
 
+  def filter(filter: Filter): Query[E] = copy(filterOption = Some(filter))
+
   def filter(filter: E => Boolean): Query[E] = macro EntityMacro.filter[E]
 
   def sortByMeta(sort: EntityMeta[E] => Sort): Query[E] = copy(sorts = sort(meta) :: Nil)
+
+  def sort(sorts: Sort*): Query[E] = copy(sorts = sorts.toSeq)
 
   def sort(sort: E => Any): Query[E] = macro EntityMacro.sort[E]
 
