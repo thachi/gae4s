@@ -53,19 +53,19 @@ class DatastoreTest extends FunSuite with AppEngineTestSuite {
   }
 
   test("countできること") {
-    val count = Datastore.query[User].count
+    val count = Datastore.count[User]
     assert(count == 0)
   }
 
   test("putしてcountが増えること") {
-    val count1 = Datastore.query[User].count
+    val count1 = Datastore.count[User]
     assert(count1 == 0)
 
     val s = new User(Datastore.createKey("key_name"))
     s.name = "Hoge"
     Datastore.put(s)
 
-    val count2 = Datastore.query[User].count
+    val count2 = Datastore.count[User]
     assert(count2 == 1)
   }
 
