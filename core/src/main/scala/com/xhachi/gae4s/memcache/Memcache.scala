@@ -75,8 +75,8 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
       default
   }
 
-  def getAll[T](keys: Seq[AnyRef]): Map[AnyRef, Option[T]] = service.getAll(keys).map {
-    case (k, v: Any) => k -> Some(v.asInstanceOf[T])
+  def getAll[K, T](keys: Seq[K]): Map[K, Option[T]] = service.getAll(keys).map {
+    case (k, v: K) => k -> Some(v.asInstanceOf[T])
     case (k, null) => k -> None
   }.toMap
 
