@@ -389,6 +389,27 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     assert(SeqStore(all).asSeq(filter4).size == 2)
   }
 
+  test("filterで大小比較を試す(from-to)") {
+    createTaroJiroSaburo()
+    val all = UserStore.query.asSeq
+
+    val filter1 = Query[User].filter(m => m.height > 140 && m.height <= 190)
+    assert(UserStore.asSeq(filter1).size == 2)
+    assert(SeqStore(all).asSeq(filter1).size == 2)
+
+    val filter2 = Query[User].filter(m => m.height > 190 && m.height <= 220)
+    assert(UserStore.asSeq(filter2).size == 1)
+    assert(SeqStore(all).asSeq(filter2).size == 1)
+//
+//    val filter3 = Query[User].filter(_.height > 190)
+//    assert(UserStore.asSeq(filter3).size == 1)
+//    assert(SeqStore(all).asSeq(filter3).size == 1)
+//
+//    val filter4 = Query[User].filter(_.height >= 190)
+//    assert(UserStore.asSeq(filter4).size == 2)
+//    assert(SeqStore(all).asSeq(filter4).size == 2)
+  }
+
   test("filterでnullでの検索を試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
