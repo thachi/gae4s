@@ -503,6 +503,33 @@ case class DatastoreQuery[E <: Entity[E]](datastore: Datastore, query: Query[E])
 
   implicit val entityMeta = query.meta
 
+
+  def ancestor(ancestor: Key[_]): DatastoreQuery[E] = copy(query = query.ancestor(ancestor))
+
+  def ancestor(ancestor: Option[Key[_]]): DatastoreQuery[E] = copy(query = query.ancestor(ancestor))
+
+  def filterByMeta(filter: EntityMeta[E] => Filter): DatastoreQuery[E] = copy(query = query.filterByMeta(filter))
+
+  def filter(filter: Filter): DatastoreQuery[E] = copy(query = query.filter(filter))
+
+//  def filter(filter: E => Boolean): DatastoreQuery[E] = macro EntityMacro.filter[E]
+
+  def sortByMeta(sort: EntityMeta[E] => Sort): DatastoreQuery[E] = copy(query = query.sortByMeta(sort))
+
+  def sort(sorts: Sort*): DatastoreQuery[E] = copy(query = query.sort(sorts: _*))
+
+//  def sort(sort: E => Any): DatastoreQuery[E] = macro EntityMacro.sort[E]
+
+//  def sortDesc(sort: E => Any): DatastoreQuery[E] = macro EntityMacro.sortDesc[E]
+
+  def offset(o: Int): DatastoreQuery[E] = copy(query = query.offset(o))
+
+  def offset(o: Option[Int]): DatastoreQuery[E] = copy(query = query.offset(o))
+
+  def limit(l: Int): DatastoreQuery[E] = copy(query = query.limit(l))
+
+  def limit(l: Option[Int]): DatastoreQuery[E] = copy(query = query.limit(l))
+
   def asSeq = datastore.asSeq(query)
 
   def asKeySeq = datastore.asKeySeq(query)
