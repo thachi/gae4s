@@ -67,6 +67,20 @@ class CloudStorageTest extends FunSuite with AppEngineTestSuite {
     assert(name == "ロト")
   }
 
+  test("writeXML") {
+
+    val xml = <char name="ロト" age="16" />
+
+    target.writeXML("path/xml", xml)
+    val actual = target.readXML("path/xml")
+
+    assert(actual.isDefined)
+
+    val name = actual.get \ "@name"
+    assert(name.nonEmpty)
+    assert(name.head.text == "ロト")
+  }
+
   test("writeJson(拡張子あり)") {
     import org.json4s.JsonDSL._
 

@@ -1,15 +1,16 @@
 package com.xhachi.gae4s.cloudstrage
 
-import java.io.{OutputStream, StringReader}
+import java.io.{OutputStream, OutputStreamWriter, StringReader}
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 
 import com.google.appengine.tools.cloudstorage.GcsFileOptions.Builder
 import com.google.appengine.tools.cloudstorage._
+import com.sun.xml.internal.messaging.saaj.util.ByteInputStream
+import com.xhachi.gae4s.cloudstrage.CloudStorage.MimeType
 import com.xhachi.gae4s.common.Logger
-import org.json4s._
-import org.json4s.native.JsonMethods._
-import org.json4s.native.Serialization
+
+import scala.xml.{Elem, XML}
 
 object CloudStorage extends Logger {
 
@@ -49,7 +50,7 @@ object CloudStorage extends Logger {
   def defaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
 }
 
-class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends Logger {
+class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends JsonOps with XMLOpt with Logger {
 
 
   def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
@@ -81,19 +82,17 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
   def readBytes(path: String): Option[Array[Byte]] = readByteBuffer(path).map(_.array())
 
-  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false) = {
+  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false): Unit = {
     writeByteBuffer(path, ByteBuffer.wrap(bytes), mimeType, public)
   }
 
-  def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None, public: Boolean = false) = {
+  def writeByteBuffer(path: String, bytes: ByteBuffer, mimeType: Option[String] = None, public: Boolean = false): Unit = {
     info("CloudStorage[" + bucketName + "] write : " + path)
     val option = toGcsFileOption(path, mimeType, public)
     var c: GcsOutputChannel = null
     try {
       c = service.createOrReplace(pathToFilename(path), option)
       c.write(bytes)
-    } catch {
-      case e: Throwable => throw e
     } finally {
       if (c != null) c.close()
     }
@@ -127,16 +126,55 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     }
   }
 
+}
+
+
+sealed trait XMLOpt {
+
+
+  def readXML(path: String): Option[Elem] = {
+    readBytes(path) map (b => XML.load(new ByteInputStream(b, b.length)))
+  }
+
+  def writeXML(path: String, xml: Elem, public: Boolean = false): Unit = {
+    val writer = new OutputStreamWriter(getOutputStream(path, Some(MimeType.Xml), public))
+    try {
+      XML.write(writer, xml, "UTF-8", xmlDecl = true, doctype = null)
+    }
+    finally {
+      writer.flush()
+      writer.close()
+    }
+  }
+
+  def readBytes(path: String): Option[Array[Byte]]
+
+  def getOutputStream(path: String, mimeType: Option[String] = None, public: Boolean = false): OutputStream
+
+}
+
+sealed  trait JsonOps {
+
+  import org.json4s._
+  import org.json4s.native.JsonMethods._
+  import org.json4s.native.Serialization
+
   implicit var formats = DefaultFormats
 
   def readJson(path: String): Option[JValue] = {
+
     readBytes(path) map (b => parse(new StringReader(new String(b, "UTF-8"))))
   }
 
   def writeJson(path: String, value: JValue, public: Boolean = false): Unit = {
+
     val b = Serialization.write(value).getBytes("UTF-8")
     writeBytes(path, b, public = public)
   }
+
+  def readBytes(path: String): Option[Array[Byte]]
+
+  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false): Unit
 
 }
 
