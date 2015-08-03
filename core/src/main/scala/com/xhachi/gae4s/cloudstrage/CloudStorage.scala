@@ -6,7 +6,6 @@ import java.nio.channels.Channels
 
 import com.google.appengine.tools.cloudstorage.GcsFileOptions.Builder
 import com.google.appengine.tools.cloudstorage._
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream
 import com.xhachi.gae4s.cloudstrage.CloudStorage.MimeType
 import com.xhachi.gae4s.common.Logger
 
@@ -128,12 +127,10 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
 }
 
-
 sealed trait XMLOpt {
 
-
   def readXML(path: String): Option[Elem] = {
-    readBytes(path) map (b => XML.load(new ByteInputStream(b, b.length)))
+    readByteBuffer(path).map(b => XML.loadString(new String(b.array(), "UTF-8")))
   }
 
   def writeXML(path: String, xml: Elem, public: Boolean = false): Unit = {
@@ -147,13 +144,13 @@ sealed trait XMLOpt {
     }
   }
 
-  def readBytes(path: String): Option[Array[Byte]]
+  def readByteBuffer(path: String): Option[ByteBuffer]
 
   def getOutputStream(path: String, mimeType: Option[String] = None, public: Boolean = false): OutputStream
 
 }
 
-sealed  trait JsonOps {
+sealed trait JsonOps {
 
   import org.json4s._
   import org.json4s.native.JsonMethods._
