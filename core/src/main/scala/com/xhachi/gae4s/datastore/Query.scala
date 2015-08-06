@@ -1,28 +1,33 @@
 package com.xhachi.gae4s.datastore
 
-import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, CompositeFilterOperator, Filter => LLFilter, FilterOperator, FilterPredicate => LLFilterPredicate, SortDirection => LLSortDirection, SortPredicate => LLSortPredicate}
-import com.google.appengine.api.datastore.{Query => LLQuery, Transaction}
 
-import scala.collection.JavaConversions._
 import scala.language.experimental.macros
 
 
-case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMethods,
-                                                    meta: EntityMeta[E],
-                                                    tx: Option[Transaction],
-                                                    ancestorOption: Option[Key[_]] = None,
-                                                    filterOption: Option[Filter] = None,
-                                                    sorts: Seq[Sort] = Nil,
-                                                    offset: Option[Int] = None,
-                                                    limit: Option[Int] = None) {
+object Query {
+  def apply[E <: Entity[E]](implicit meta: EntityMeta[E]): Query[E] = Query(meta, None)
+}
+
+case class Query[E <: Entity[E]](meta: EntityMeta[E],
+                                 ancestorOption: Option[Key[_]] = None,
+                                 filterOption: Option[Filter] = None,
+                                 sorts: Seq[Sort] = Nil,
+                                 offset: Option[Int] = None,
+                                 limit: Option[Int] = None) {
 
   def ancestor(ancestor: Key[_]): Query[E] = copy(ancestorOption = Some(ancestor))
 
+  def ancestor(ancestor: Option[Key[_]]): Query[E] = copy(ancestorOption = ancestor)
+
   def filterByMeta(filter: EntityMeta[E] => Filter): Query[E] = copy(filterOption = Some(filter(meta)))
+
+  def filter(filter: Filter): Query[E] = copy(filterOption = Some(filter))
 
   def filter(filter: E => Boolean): Query[E] = macro EntityMacro.filter[E]
 
   def sortByMeta(sort: EntityMeta[E] => Sort): Query[E] = copy(sorts = sort(meta) :: Nil)
+
+  def sort(sorts: Sort*): Query[E] = copy(sorts = sorts.toSeq)
 
   def sort(sort: E => Any): Query[E] = macro EntityMacro.sort[E]
 
@@ -30,127 +35,110 @@ case class Query[E <: Entity[E]] private[datastore](datastore: DatastoreQueryMet
 
   def offset(o: Int): Query[E] = copy(offset = Some(o))
 
+  def offset(o: Option[Int]): Query[E] = copy(offset = o)
+
   def limit(l: Int): Query[E] = copy(limit = Some(l))
 
-  def count: Int = datastore.count(this)
+  def limit(l: Option[Int]): Query[E] = copy(limit = l)
 
-  def asSeq: Seq[E] = datastore.asSeq(this)
-
-  def asSingle: E = datastore.asSingle(this)
-
-  def asSingleOption: Option[E] = datastore.asSingleOption(this)
-
-  def asKeySeq: Seq[Key[E]] = datastore.asKeySeq(this)
-
-  def count(entities: Seq[E]): Int = asSeq(entities).size
-
-  def asSeq(entities: Seq[E]): Seq[E] = {
-    val filtered = entities.filter {
-      entity =>
-        (entity.keyOption.map(_.parent).flatten, ancestorOption, filterOption) match {
-          case (Some(parentKey), Some(ancestorKey), _) if parentKey != ancestorKey =>
-            false
-          case (_, _, Some(filter)) =>
-            filter.isMatch(entity, meta)
-          case _ =>
-            true
-        }
-    }
-    val sorted = filtered.sortWith {
-      case (e1, e2) =>
-        sorts.map(_.lt(e1, e2, meta)).contains(true)
-    }
-    sorted
-  }
-
-  def asSingle(entities: Seq[E]): E = asSingleOption.getOrElse(null.asInstanceOf[E])
-
-  def asSingleOption(entities: Seq[E]): Option[E] = asSeq(entities) match {
-    case head :: Nil => Some(head)
-    case _ => None
-  }
-
-  def asKeySeq(entities: Seq[E]): Seq[Key[E]] = asSeq(entities).map(_.key)
-
-  private[datastore] def toLLQuery(keysOnly: Boolean): LLQuery = {
-    val query = new LLQuery(meta.kind)
-    if (keysOnly) query.setKeysOnly() else query.clearKeysOnly()
-    if (ancestorOption.isDefined) query.setAncestor(ancestorOption.get.key)
-    if (filterOption.isDefined) query.setFilter(filterOption.get.toLLFilter)
-    sorts.foreach(s => query.addSort(s.name, s.direction))
-    query
-  }
 }
 
-trait Filter extends Serializable {
+object Filter {
 
-  private[datastore] def toLLFilter: LLFilter
+  sealed trait CompositeOperator
+
+  case object And extends CompositeOperator
+
+  case object Or extends CompositeOperator
+
+  sealed trait ComparativeOperator
+
+  case object Equal extends ComparativeOperator
+
+  case object NotEqual extends ComparativeOperator
+
+  case object LessThan extends ComparativeOperator
+
+  case object LessThanOrEqual extends ComparativeOperator
+
+  case object GreaterThan extends ComparativeOperator
+
+  case object GreaterThanOrEqual extends ComparativeOperator
+
+  case object In extends ComparativeOperator
+
+}
+
+sealed trait Filter extends Serializable {
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean
 
   def &&(f: Filter): Filter = {
-    CompositeFilterPredicate(CompositeFilterOperator.AND, this :: f :: Nil)
+    CompositeFilterPredicate(Filter.And, this :: f :: Nil)
   }
 
   def ||(f: Filter): Filter = {
-    CompositeFilterPredicate(CompositeFilterOperator.OR, this :: f :: Nil)
+    CompositeFilterPredicate(Filter.Or, this :: f :: Nil)
   }
 }
 
-case class FilterPredicate[T](name: String, operator: FilterOperator, property: IndexedProperty[T], value: T, values: Seq[T] = Nil) extends Filter {
+case class FilterPredicate[T](property: IndexedProperty[T], operator: Filter.ComparativeOperator, values: Seq[T] = Nil) extends Filter {
 
-  import com.google.appengine.api.datastore.Query.FilterOperator._
+  import com.xhachi.gae4s.datastore.Filter._
 
-  if (operator != IN && values.nonEmpty) throw new IllegalArgumentException("valid values")
-
-  private[datastore] def toLLFilter = operator match {
-    case FilterOperator.IN => new LLFilterPredicate(name, operator, seqAsJavaList(value +: values))
-    case _ => new LLFilterPredicate(name, operator, property.toStoreProperty(value))
-  }
+  if (operator != In && values.size != 1) throw new IllegalArgumentException("valid values")
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    val v: T = property.fromStoreProperty(meta.toLLEntity(entity).getProperty(name))
+    val v: T = property.fromStoreProperty(meta.toLLEntity(entity).getProperty(property.name))
 
     operator match {
-      case EQUAL => property.compare(v, value) == 0
-      case NOT_EQUAL => property.compare(v, value) != 0
-      case LESS_THAN => property.compare(v, value) < 0
-      case LESS_THAN_OR_EQUAL => property.compare(v, value) <= 0
-      case GREATER_THAN => 0 < property.compare(v, value)
-      case GREATER_THAN_OR_EQUAL => 0 <= property.compare(v, value)
-      case IN => (value +: values).contains(v)
-      case _ => false
+      case Equal => property.compare(v, values.head) == 0
+      case NotEqual => property.compare(v, values.head) != 0
+      case LessThan => property.compare(v, values.head) < 0
+      case LessThanOrEqual => property.compare(v, values.head) <= 0
+      case GreaterThan => 0 < property.compare(v, values.head)
+      case GreaterThanOrEqual => 0 <= property.compare(v, values.head)
+      case In => values.contains(v)
     }
   }
 }
 
-case class CompositeFilterPredicate(operator: CompositeFilterOperator, filters: Seq[Filter]) extends Filter {
+case class CompositeFilterPredicate(operator: Filter.CompositeOperator, filters: Seq[Filter]) extends Filter {
 
-  private[datastore] def toLLFilter = new LLCompositeFilter(operator, filters.map(_.toLLFilter))
+  import com.xhachi.gae4s.datastore.Filter._
 
   private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    import com.google.appengine.api.datastore.Query.CompositeFilterOperator._
     operator match {
-      case AND =>
-        filters.map(f => f.isMatch(entity, meta)).filter(m => !m).isEmpty
-      case OR =>
-        filters.map(f => f.isMatch(entity, meta)).filter(m => m).nonEmpty
+      case And => filters.map(f => f.isMatch(entity, meta)).filter(m => !m).isEmpty
+      case Or => filters.map(f => f.isMatch(entity, meta)).filter(m => m).nonEmpty
     }
   }
 }
 
-trait Sort extends Serializable {
+object Sort {
+
+  trait Direction
+
+  object Direction {
+
+    case object Ascending extends Direction
+
+    case object Descending extends Direction
+
+  }
+
+}
+
+sealed trait Sort extends Serializable {
 
   private[datastore] def name: String
 
-  private[datastore] def direction: LLSortDirection
+  private[datastore] def direction: Sort.Direction
 
   private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean
 }
 
-case class SortPredicate[T](name: String, direction: LLSortDirection, property: IndexedProperty[T]) extends Sort {
-
-  private[datastore] def toLLSortDirection = new LLSortPredicate(name, direction)
+case class SortPredicate[T](name: String, direction: Sort.Direction, property: IndexedProperty[T]) extends Sort {
 
   private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean = {
     val v1: T = property.fromStoreProperty(meta.toLLEntity(entity1).getProperty(name))

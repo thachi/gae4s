@@ -75,10 +75,13 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
       default
   }
 
-  def getAll[T](keys: Seq[AnyRef]): Map[AnyRef, Option[T]] = service.getAll(keys).map {
-    case (k, v: Any) => k -> Some(v.asInstanceOf[T])
-    case (k, null) => k -> None
-  }.toMap
+  def getAll[K, T](keys: Seq[K]): Map[K, Option[T]] = {
+    val all = service.getAll(keys)
+    keys.map {
+      case k if all.containsKey(k) => k -> Some(all.get(k).asInstanceOf[T])
+      case k => k -> None
+    }.toMap
+  }
 
   def getIdentifiable[T](key: AnyRef): Option[IdValue[T]] = service.getIdentifiable(key) match {
     case value: IdentifiableValue => Some(new IdValue[T](value))

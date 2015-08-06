@@ -52,18 +52,18 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
   }
 
   test("countできること") {
-    val count = Datastore.count(Datastore.query[User])
+    val count = UserStore.query.count
     assert(count == 0)
   }
 
   test("putしてcountが増えること") {
-    val count1 = Datastore.count(Datastore.query[User])
+    val count1 = UserStore.query.count
     assert(count1 == 0)
 
     val s = new User(UserStore.createKeyWithName("key_name"), "Hoge")
     Datastore.put(s)
 
-    val count2 = Datastore.count(Datastore.query[User])
+    val count2 = UserStore.query.count
     assert(count2 == 1)
   }
 
@@ -71,8 +71,8 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     val s = new User(UserStore.createKeyWithName("key_name"), "Hoge")
     Datastore.put(s)
 
-    val count = Datastore.count(Datastore.query[User])
-    val seq = Datastore.asSeq(Datastore.query[User])
+    val count = UserStore.query.count
+    val seq = UserStore.query.asSeq
     assert(count == seq.size)
   }
 
@@ -259,41 +259,37 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
   test("filterを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
-
-    assert(UserStore.query.asSeq(all) == all)
-
-    val filter = UserStore.query.filter(_.name == "Taro")
-    assert(filter.asSeq.size == 1)
-    assert(filter.asSeq(all).size == 1)
+    val query = Query[User].filter(_.name == "Taro")
+    assert(UserStore.asSeq(query).size == 1)
+    assert(SeqStore(all).asSeq(query).size == 1)
   }
 
   test("filterByMetaを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
-
-    assert(UserStore.query.asSeq(all) == all)
-
-    val filter = UserStore.query.filterByMeta(_.property("name").get.asInstanceOf[IndexedProperty[String]].isEqual("Taro"))
-    assert(filter.asSeq.size == 1)
-    assert(filter.asSeq(all).size == 1)
+    val filter = Query[User].filterByMeta(_.property("name").get.asInstanceOf[IndexedProperty[String]].isEqual("Taro"))
+    assert(UserStore.asSeq(filter).size == 1)
+    assert(SeqStore(all).asSeq(filter).size == 1)
   }
 
   test("filterでasSingleを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
-    val filter = UserStore.query.filter(m => m.name == "Jiro")
-    assert(filter.asSingle.name == "Jiro")
-    assert(filter.asSingle(all).name == "Jiro")
+    val filter = Query[User].filter(m => m.name == "Jiro")
+    assert(UserStore.asSingle(filter).name == "Jiro")
+    assert(SeqStore(all).asSingle(filter).name == "Jiro")
   }
 
   test("asSingleでヒットしない場合") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
-    val filter = UserStore.query.filter(m => m.name == "hogehoge")
+    val filter = Query[User].filter(m => m.name == "hogehoge")
 
-    filter.asSingle(all) should be(null)
     intercept[IllegalArgumentException] {
-      filter.asSingle should be(null)
+      SeqStore(all).asSingle(filter)
+    }
+    intercept[IllegalArgumentException] {
+      UserStore.asSingle(filter)
     }
   }
 
@@ -301,15 +297,15 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter = UserStore.query.filter(m => m.name == "Jiro")
+    val filter = Query[User].filter(m => m.name == "Jiro")
 
     {
-      val single = filter.asSingleOption
+      val single = UserStore.asSingleOption(filter)
       assert(single.isDefined)
       assert(single.get.name == "Jiro")
     }
     {
-      val single = filter.asSingleOption(all)
+      val single = SeqStore(all).asSingleOption(filter)
       assert(single.isDefined)
       assert(single.get.name == "Jiro")
     }
@@ -319,26 +315,26 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter = UserStore.query.filter(m => m.name == "hogehoge")
-    assert(filter.asSingleOption.isEmpty)
-    assert(filter.asSingleOption(all).isEmpty)
+    val filter = Query[User].filter(m => m.name == "hogehoge")
+    assert(UserStore.asSingleOption(filter).isEmpty)
+    assert(SeqStore(all).asSingleOption(filter).isEmpty)
   }
 
   test("filterでandを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter1 = UserStore.query.filter(m => (m.name == "Jiro") && (m.deleted == false))
-    assert(filter1.asSeq.size == 0)
-    assert(filter1.asSeq(all).size == 0)
+    val filter1 = Query[User].filter(m => (m.name == "Jiro") && (m.deleted == false))
+    assert(UserStore.asSeq(filter1).size == 0)
+    assert(SeqStore(all).asSeq(filter1).size == 0)
 
-    val filter2 = UserStore.query.filter(m => (m.name == "Jiro") && (m.deleted == true))
-    assert(filter2.asSeq.size == 1)
-    assert(filter2.asSeq(all).size == 1)
+    val filter2 = Query[User].filter(m => (m.name == "Jiro") && (m.deleted == true))
+    assert(UserStore.asSeq(filter2).size == 1)
+    assert(SeqStore(all).asSeq(filter2).size == 1)
 
-    val filter3 = UserStore.query.filter(m => (m.name == "Jiro") && (m.deleted == true))
-    assert(filter2.asSeq.head.key == filter3.asSingle.key)
-    assert(filter2.asSeq.head.key == filter3.asSingle(all).key)
+    val filter3 = Query[User].filter(m => (m.name == "Jiro") && (m.deleted == true))
+    assert(UserStore.asSeq(filter2).head.key == UserStore.asSingle(filter3).key)
+    assert(SeqStore(all).asSeq(filter2).head.key == SeqStore(all).asSeq(filter3).head.key)
 
   }
 
@@ -346,28 +342,28 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter1 = UserStore.query.filter(m => (m.name == "Jiro") || (m.name == "Taro"))
-    assert(filter1.asSeq.size == 2)
-    assert(filter1.asSeq(all).size == 2)
+    val filter1 = Query[User].filter(m => (m.name == "Jiro") || (m.name == "Taro"))
+    assert(UserStore.asSeq(filter1).size == 2)
+    assert(SeqStore(all).asSeq(filter1).size == 2)
 
-    val filter2 = UserStore.query.filter(m => (m.name == "Jiro") || (m.name == "Goro"))
-    assert(filter2.asSeq.size == 1)
-    assert(filter2.asSeq(all).size == 1)
+    val filter2 = Query[User].filter(m => (m.name == "Jiro") || (m.name == "Goro"))
+    assert(UserStore.asSeq(filter2).size == 1)
+    assert(SeqStore(all).asSeq(filter2).size == 1)
   }
 
   ignore("filterでinを試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    //    val filter1 = UserStore.query.filter(_.name in("Taro", "Jiro", "Saburo"))
+    //    val filter1 = Query[User].filter(_.name in("Taro", "Jiro", "Saburo"))
     //    assert(filter1.asSeq.size == 3)
     //    assert(filter1.asSeq(all).size == 3)
     //
-    //    val filter2 = UserStore.query.filter(_.name in("Jiro", "Taro"))
+    //    val filter2 = Query[User].filter(_.name in("Jiro", "Taro"))
     //    assert(filter2.asSeq.size == 2)
     //    assert(filter2.asSeq(all).size == 2)
     //
-    //    val filter3 = UserStore.query.filter(_.name in("Jiro", "Goro"))
+    //    val filter3 = Query[User].filter(_.name in("Jiro", "Goro"))
     //    assert(filter3.asSeq.size == 1)
     //    assert(filter3.asSeq(all).size == 1)
   }
@@ -376,44 +372,65 @@ class UserTest extends FunSuite with AppEngineTestSuite with Matchers {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter1 = UserStore.query.filter(_.height < 190)
-    assert(filter1.asSeq.size == 1)
-    assert(filter1.asSeq(all).size == 1)
+    val filter1 = Query[User].filter(_.height < 190)
+    assert(UserStore.asSeq(filter1).size == 1)
+    assert(SeqStore(all).asSeq(filter1).size == 1)
 
-    val filter2 = UserStore.query.filter(_.height <= 190)
-    assert(filter2.asSeq.size == 2)
-    assert(filter2.asSeq(all).size == 2)
+    val filter2 = Query[User].filter(_.height <= 190)
+    assert(UserStore.asSeq(filter2).size == 2)
+    assert(SeqStore(all).asSeq(filter2).size == 2)
 
-    val filter3 = UserStore.query.filter(_.height > 190)
-    assert(filter3.asSeq.size == 1)
-    assert(filter3.asSeq(all).size == 1)
+    val filter3 = Query[User].filter(_.height > 190)
+    assert(UserStore.asSeq(filter3).size == 1)
+    assert(SeqStore(all).asSeq(filter3).size == 1)
 
-    val filter4 = UserStore.query.filter(_.height >= 190)
-    assert(filter4.asSeq.size == 2)
-    assert(filter4.asSeq(all).size == 2)
+    val filter4 = Query[User].filter(_.height >= 190)
+    assert(UserStore.asSeq(filter4).size == 2)
+    assert(SeqStore(all).asSeq(filter4).size == 2)
+  }
+
+  test("filterで大小比較を試す(from-to)") {
+    createTaroJiroSaburo()
+    val all = UserStore.query.asSeq
+
+    val filter1 = Query[User].filter(m => m.height > 140 && m.height <= 190)
+    assert(UserStore.asSeq(filter1).size == 2)
+    assert(SeqStore(all).asSeq(filter1).size == 2)
+
+    val filter2 = Query[User].filter(m => m.height > 190 && m.height <= 220)
+    assert(UserStore.asSeq(filter2).size == 1)
+    assert(SeqStore(all).asSeq(filter2).size == 1)
+//
+//    val filter3 = Query[User].filter(_.height > 190)
+//    assert(UserStore.asSeq(filter3).size == 1)
+//    assert(SeqStore(all).asSeq(filter3).size == 1)
+//
+//    val filter4 = Query[User].filter(_.height >= 190)
+//    assert(UserStore.asSeq(filter4).size == 2)
+//    assert(SeqStore(all).asSeq(filter4).size == 2)
   }
 
   test("filterでnullでの検索を試す") {
     createTaroJiroSaburo()
     val all = UserStore.query.asSeq
 
-    val filter1 = UserStore.query.filter(_.mobilePhone == None)
-    assert(filter1.asSeq.size == 1)
+    val filter1 = Query[User].filter(_.mobilePhone == None)
+    assert(UserStore.asSeq(filter1).size == 1)
     //FIXME: 今はまだOptionはフィルタできないです
     //    assert(filter1.asSeq(all).size == 1)
 
-    val filter2 = UserStore.query.filter(_.mobilePhone != None)
-    assert(filter2.asSeq.size == 2)
+    val filter2 = Query[User].filter(_.mobilePhone != None)
+    assert(UserStore.asSeq(filter2).size == 2)
     //FIXME: 今はまだOptionはフィルタできないです
     //    assert(filter2.asSeq(all).size == 2)
 
-    val filter3 = UserStore.query.filter(_.mobilePhone == null)
-    assert(filter3.asSeq.size == 1)
+    val filter3 = Query[User].filter(_.mobilePhone == null)
+    assert(UserStore.asSeq(filter3).size == 1)
     //FIXME: 今はまだOptionはフィルタできないです
     //    assert(filter3.asSeq(all).size == 1)
 
-    val filter4 = UserStore.query.filter(_.mobilePhone != null)
-    assert(filter4.asSeq.size == 2)
+    val filter4 = Query[User].filter(_.mobilePhone != null)
+    assert(UserStore.asSeq(filter4).size == 2)
     //FIXME: 今はまだOptionはフィルタできないです
     //    assert(filter4.asSeq(all).size == 2)
   }

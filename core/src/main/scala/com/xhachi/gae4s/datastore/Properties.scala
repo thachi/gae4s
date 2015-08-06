@@ -3,8 +3,6 @@ package com.xhachi.gae4s.datastore
 import java.util.Date
 
 import com.google.appengine.api.blobstore.BlobKey
-import com.google.appengine.api.datastore.Query.FilterOperator._
-import com.google.appengine.api.datastore.Query.SortDirection._
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, _}
 import com.google.appengine.api.users.User
 import com.xhachi.gae4s.common.Logger
@@ -45,7 +43,7 @@ abstract class Property[T: ClassTag] extends Serializable {
 
   final def setValueToLLEntity(entity: LLEntity)(value: T) = {
     val storeValue = try {
-      toStoreProperty(value)
+      toStoreProperty(storedFilter(value))
     } catch {
       case NonFatal(e) =>
         throw new IllegalStateException( s"""$name couldn't convert from entity value "$value" to store value""", e)
@@ -71,6 +69,8 @@ abstract class Property[T: ClassTag] extends Serializable {
 
 
   protected[datastore] def toStoreProperty(value: T): Any
+
+  protected[datastore] def storedFilter(value: T): T = value
 
   protected[datastore] def fromStoreProperty(value: Any): T
 
@@ -98,23 +98,26 @@ trait Setter[E, T] {
 
 trait IndexedProperty[T] extends Property[T] {
 
+  import com.xhachi.gae4s.datastore.Filter._
+  import com.xhachi.gae4s.datastore.Sort.Direction._
+
   def name: String
 
   def compare(value1: T, value2: T): Int = {
     value1.asInstanceOf[Comparable[T]].compareTo(value2)
   }
 
-  def isEqual(value: T): Filter = FilterPredicate(name, EQUAL, this, value)
+  def isEqual(value: T): Filter = FilterPredicate(this, Equal, value :: Nil)
 
-  def isNotEqual(value: T): Filter = FilterPredicate(name, NOT_EQUAL, this, value)
+  def isNotEqual(value: T): Filter = FilterPredicate(this, NotEqual, value :: Nil)
 
-  def isGreaterThan(value: T): Filter = FilterPredicate(name, GREATER_THAN, this, value)
+  def isGreaterThan(value: T): Filter = FilterPredicate(this, GreaterThan, value :: Nil)
 
-  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(name, GREATER_THAN_OR_EQUAL, this, value)
+  def isGreaterThanOrEqual(value: T): Filter = FilterPredicate(this, GreaterThanOrEqual, value :: Nil)
 
-  def isLessThan(value: T): Filter = FilterPredicate(name, LESS_THAN, this, value)
+  def isLessThan(value: T): Filter = FilterPredicate(this, LessThan, value :: Nil)
 
-  def isLessThanOrEqual(value: T): Filter = FilterPredicate(name, LESS_THAN_OR_EQUAL, this, value)
+  def isLessThanOrEqual(value: T): Filter = FilterPredicate(this, LessThanOrEqual, value :: Nil)
 
   def #==(value: T): Filter = isEqual(value)
 
@@ -128,11 +131,11 @@ trait IndexedProperty[T] extends Property[T] {
 
   def #<=(value: T): Filter = isLessThanOrEqual(value)
 
-  def in(value: T, values: T*): Filter = FilterPredicate(name, IN, this, value, values)
+  def in(values: T*): Filter = FilterPredicate(this, In, values)
 
-  def asc = SortPredicate(name, ASCENDING, this)
+  def asc = SortPredicate(name, Ascending, this)
 
-  def desc = SortPredicate(name, DESCENDING, this)
+  def desc = SortPredicate(name, Descending, this)
 }
 
 class PropertyConversionException(message: String) extends Exception(message)
@@ -189,7 +192,9 @@ class SeqProperty[T](val property: Property[T]) extends Property[Seq[T]] {
   }
 }
 
-class KeyProperty[E <: Entity[E]: ClassTag](val name: String) extends Property[Key[E]] {
+class KeyProperty[E <: Entity[E] : ClassTag](val name: String) extends Property[Key[E]] {
+
+  type KeyType = E
 
   def storeType: Class[Key[E]] = propertyType
 
@@ -404,12 +409,12 @@ class JsonProperty[E <: AnyRef : Manifest](name: String) extends StringStoreProp
 
 class VersionProperty(name: String) extends ValueProperty[Long](name) with IndexedProperty[Long] {
 
-  override def toStoreProperty(value: Long): Any = value + 1
+  override def storedFilter(value: Long): Long = value + 1
 }
 
 class CreationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
 
-  override def toStoreProperty(value: Date): Any = value match {
+  override def storedFilter(value: Date): Date = value match {
     case d: Date => d
     case _ => new Date
   }
@@ -417,5 +422,5 @@ class CreationDateProperty(name: String) extends DateProperty(name) with Indexed
 }
 
 class ModificationDateProperty(name: String) extends DateProperty(name) with IndexedProperty[Date] {
-  override def toStoreProperty(value: Date): Any = new Date
+  override def storedFilter(value: Date): Date = new Date
 }

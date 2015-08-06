@@ -29,7 +29,8 @@ trait Ancestor[A <: Entity[A]] {
   self: Entity[_] =>
   assert(key.key.getParent != null)
 
-  def parentKey = key.key.getParent match {
+  @transient
+  def ancestorKey = key.key.getParent match {
     case k: LLKey => Key[A](k)
     case _ => throw new IllegalStateException("this entity has no parent.")
   }

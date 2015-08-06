@@ -14,8 +14,8 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     val actual = Memcache.get[String]("key")
 
     assert(actual.isEmpty)
-    assert(actual == None)
   }
+  
   test("Memcacheにputしてgetすることができること（文字列）") {
     Memcache.put("key", "value")
     val actual = Memcache.get[String]("key")
@@ -79,7 +79,7 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
     Memcache.put("key", "value")
 
     val actual = Memcache.get[Int]("key")
-    intercept[RuntimeException] {
+    intercept[ClassCastException] {
       actual.get
     }
   }
@@ -104,6 +104,17 @@ class MemcacheTest extends FunSuite with AppEngineTestSuite {
 
     assert(!containsAfter)
     assert(actual.isEmpty)
+  }
+
+  test("MemcacheのgetAllが正しいこと") {
+    Memcache.put("key1", "value")
+    Memcache.put("key2", "value")
+
+    val actual = Memcache.getAll[String, String]("key1" :: "key3" :: Nil)
+
+    assert(actual.size == 2)
+    assert(actual("key1").isDefined)
+    assert(actual("key3").isEmpty)
   }
 
   test("Memcacheにinclementして値が正しいこと1") {

@@ -22,10 +22,11 @@ trait EntityStoreBase {
   type Context = EntityStoreContext
 
   implicit def meta: EntityMeta[ENTITY]
+
   def datastore: Datastore = Datastore
 }
 
-abstract class EntityStore[E <: Entity[E]: ClassTag] extends EntityStoreBase with GettableStore {
+abstract class EntityStore[E <: Entity[E] : ClassTag] extends EntityStoreBase with GettableStore {
   type ENTITY = E
 }
 
@@ -363,18 +364,73 @@ trait UUIDKeyStore extends NamedStore {
 trait QueryableStore {
   self: EntityStoreBase =>
 
-  def query(implicit context: Context): Query[ENTITY] = context.ancestor match {
-    case Some(p) => datastore.query[ENTITY](p)
-    case None => datastore.query[ENTITY]
-  }
+  def query(query: Query[ENTITY] => Query[ENTITY]) = DatastoreQuery(datastore, query(Query(meta)))
 
-  def queryWithoutTx(implicit context: Context): Query[ENTITY] = context.ancestor match {
-    case Some(p) => datastore.queryWithoutTx[ENTITY](p)
-    case None => datastore.queryWithoutTx[ENTITY]
-  }
+  def query(ancestor: Key[_]) = DatastoreQuery(datastore, Query(meta, Some(ancestor)))
 
-  def queryWithTx(tx: Transaction)(implicit context: Context): Query[ENTITY] = context.ancestor match {
-    case Some(p) => datastore.queryWithTx[ENTITY](tx, p)
-    case None => datastore.queryWithTx[ENTITY](tx)
-  }
+  def query(implicit context: EntityStoreContext) = DatastoreQuery(datastore, Query(meta, context.ancestor))
+
+  def countWithTx(tx: Transaction) = datastore.countWithTx[ENTITY](tx)
+
+  def countWithTx(tx: Transaction, query: Query[ENTITY]) = datastore.countWithTx(tx, query)
+
+  def countWithoutTx = datastore.countWithoutTx[ENTITY]
+
+  def countWithoutTx(query: Query[ENTITY]) = datastore.countWithoutTx(query)
+
+  def count = datastore.count[ENTITY]
+
+  def count(query: Query[ENTITY]) = datastore.count(query)
+
+  def asSeqWithTx(tx: Transaction) = datastore.asSeqWithTx[ENTITY](tx)
+
+  def asSeqWithTx(tx: Transaction, query: Query[ENTITY]) = datastore.asSeqWithTx(tx, query)
+
+  def asSeqWithoutTx = datastore.asSeqWithoutTx[ENTITY]
+
+  def asSeqWithoutTx(query: Query[ENTITY]) = datastore.asSeqWithoutTx(query)
+
+  def asSeq = datastore.asSeq[ENTITY]
+
+  def asSeq(query: Query[ENTITY]) = datastore.asSeq(query)
+
+  def asKeySeqWithTx(tx: Transaction) = datastore.asKeySeqWithTx[ENTITY](tx)
+
+  def asKeySeqWithTx(tx: Transaction, query: Query[ENTITY]) = datastore.asKeySeqWithTx(tx, query)
+
+  def asKeySeqWithoutTx = datastore.asKeySeqWithoutTx[ENTITY]
+
+  def asKeySeqWithoutTx(query: Query[ENTITY]) = datastore.asKeySeqWithoutTx(query)
+
+  def asKeySeq = datastore.asKeySeq[ENTITY]
+
+  def asKeySeq(query: Query[ENTITY]) = datastore.asKeySeq(query)
+
+  def asSingleWithTx(tx: Transaction) = datastore.asSingleWithTx[ENTITY](tx)
+
+  def asSingleWithTx(tx: Transaction, query: Query[ENTITY]) = datastore.asSingleWithTx(tx, query)
+
+  def asSingleWithoutTx = datastore.asSingleWithoutTx[ENTITY]
+
+  def asSingleWithoutTx(query: Query[ENTITY]) = datastore.asSingleWithoutTx(query)
+
+  def asSingle = datastore.asSingle[ENTITY]
+
+  def asSingle(query: Query[ENTITY]) = datastore.asSingle(query)
+
+  def asSingleOptionWithTx(tx: Transaction) = datastore.asSingleOptionWithTx[ENTITY](tx)
+
+  def asSingleOptionWithTx(tx: Transaction, query: Query[ENTITY]) = datastore.asSingleOptionWithTx(tx, query)
+
+  def asSingleOptionWithoutTx = datastore.asSingleOptionWithoutTx[ENTITY]
+
+  def asSingleOptionWithoutTx(query: Query[ENTITY]) = datastore.asSingleOptionWithoutTx(query)
+
+  def asSingleOption(query: Query[ENTITY]) = datastore.asSingleOption(query)
+
+  def asSingleOption = datastore.asSingleOption[ENTITY]
+
+
 }
+
+
