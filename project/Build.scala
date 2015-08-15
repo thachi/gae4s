@@ -10,7 +10,7 @@ import sbtrelease.ReleaseStep
 
 object Gae4sBuild extends Build {
 
-  val appengineVersion = "1.9.24"
+  val appengineVersion = "1.9.25"
   val scalatestVersion = "2.2.4"
 
   lazy val root = Project(
