@@ -16,7 +16,7 @@ object Gae4sBuild extends Build {
   lazy val root = Project(
     id = "gae4s-project",
     base = file("."),
-    aggregate = Seq(core, scalatest, store_ext),
+    aggregate = Seq(core, scalatest),
     settings = defaultSetting ++ doNotPublish
   )
 
@@ -47,16 +47,6 @@ object Gae4sBuild extends Build {
     )
   )
 
-  lazy val store_ext = Project(
-    id = "gae4s-store-extension",
-    base = file("store-extension"),
-    settings = defaultSetting ++ Seq(
-      name := "gae4s-store-extension",
-      libraryDependencies ++= defaultDependency ++ Seq(
-
-      )
-    )
-  ).dependsOn(core, scalatest % "test")
 
   lazy val sample = Project(
     id = "gae4s-sample",

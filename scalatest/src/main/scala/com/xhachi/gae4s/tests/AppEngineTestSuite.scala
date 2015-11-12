@@ -24,8 +24,8 @@ trait AppEngineTestSuite extends BeforeAndAfterEach {
 
   override def afterEach() = helper.tearDown()
 
-  //  implicit def keyToContext(key: Key[_]) = new EntityStoreContext {
-  //    override def ancestor: Option[Key[_]] = Some(key)
+  //  implicit def keyToContext(key: Key) = new EntityStoreContext {
+  //    override def ancestor: Option[Key] = Some(key)
   //  }
 
 }

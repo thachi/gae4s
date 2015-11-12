@@ -2,44 +2,77 @@ package com.xhachi.gae4s.datastore
 
 
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 
 
 object Query {
-  def apply[E <: Entity[E]](implicit meta: EntityMeta[E]): Query[E] = Query(meta, None)
+
+  object Implicits {
+    implicit def f(name: String): FilterMeta = FilterMeta(name)
+
+    implicit def s(name: String): SortPredicate = SortPredicate(name, Sort.Direction.Ascending)
+  }
+
+  def apply(kind: String): Query = Query(kind, None)
 }
 
-case class Query[E <: Entity[E]](meta: EntityMeta[E],
-                                 ancestorOption: Option[Key[_]] = None,
-                                 filterOption: Option[Filter] = None,
-                                 sorts: Seq[Sort] = Nil,
-                                 offset: Option[Int] = None,
-                                 limit: Option[Int] = None) {
+case class Query(kind: String,
+                 ancestorOption: Option[Key] = None,
+                 filterOption: Option[Filter] = None,
+                 sorts: Seq[Sort] = Nil,
+                 offset: Option[Int] = None,
+                 limit: Option[Int] = None) {
 
-  def ancestor(ancestor: Key[_]): Query[E] = copy(ancestorOption = Some(ancestor))
 
-  def ancestor(ancestor: Option[Key[_]]): Query[E] = copy(ancestorOption = ancestor)
+  def ancestor(ancestor: Key): Query = copy(ancestorOption = Some(ancestor))
 
-  def filterByMeta(filter: EntityMeta[E] => Filter): Query[E] = copy(filterOption = Some(filter(meta)))
+  def ancestor(ancestor: Option[Key]): Query = copy(ancestorOption = ancestor)
 
-  def filter(filter: Filter): Query[E] = copy(filterOption = Some(filter))
+  //  def filterByMeta(filter: EntityMeta => Filter): Query = copy(filterOption = Some(filter(meta)))
 
-  def filter(filter: E => Boolean): Query[E] = macro EntityMacro.filter[E]
+  def filter(filter: Filter): Query = copy(filterOption = Some(filter))
 
-  def sortByMeta(sort: EntityMeta[E] => Sort): Query[E] = copy(sorts = sort(meta) :: Nil)
+  //  def filter(filter: Entity => Boolean): Query = macro EntityMacro.filter
 
-  def sort(sorts: Sort*): Query[E] = copy(sorts = sorts.toSeq)
+  //  def sortByMeta(sort: EntityMeta => Sort): Query = copy(sorts = sort(meta) :: Nil)
 
-  def sort(sort: E => Any): Query[E] = macro EntityMacro.sort[E]
+  def sort(sorts: Sort*): Query = copy(sorts = sorts.toSeq)
 
-  def sortDesc(sort: E => Any): Query[E] = macro EntityMacro.sortDesc[E]
+  //  def sort(sort: Entity => Any): Query = macro EntityMacro.sort
 
-  def offset(o: Int): Query[E] = copy(offset = Some(o))
+  //  def sortDesc(sort: Entity => Any): Query = macro EntityMacro.sortDesc
 
-  def offset(o: Option[Int]): Query[E] = copy(offset = o)
+  def offset(o: Int): Query = copy(offset = Some(o))
 
-  def limit(l: Int): Query[E] = copy(limit = Some(l))
+  def offset(o: Option[Int]): Query = copy(offset = o)
 
-  def limit(l: Option[Int]): Query[E] = copy(limit = l)
+  def limit(l: Int): Query = copy(limit = Some(l))
+
+  def limit(l: Option[Int]): Query = copy(limit = l)
+
+}
+
+class MetaFactory {
+  def apply(name: String) = FilterMeta(name)
+}
+
+case class FilterMeta(name: String) {
+
+  def unary_! = FilterPredicate[Boolean](name, Filter.Equal, false :: Nil)
+
+  def ===[T](value: T): Filter = FilterPredicate[T](name, Filter.Equal, value :: Nil)
+
+  def !==[T](value: T): Filter = FilterPredicate[T](name, Filter.NotEqual, value :: Nil)
+
+  def >=[T](value: T): Filter = FilterPredicate[T](name, Filter.GreaterThanOrEqual, value :: Nil)
+
+  def >[T](value: T): Filter = FilterPredicate[T](name, Filter.GreaterThan, value :: Nil)
+
+  def <=[T](value: T): Filter = FilterPredicate[T](name, Filter.LessThanOrEqual, value :: Nil)
+
+  def <[T](value: T): Filter = FilterPredicate[T](name, Filter.LessThan, value :: Nil)
+
+  def in[T](values: T*): Filter = FilterPredicate[T](name, Filter.LessThan, values)
 
 }
 
@@ -71,8 +104,6 @@ object Filter {
 
 sealed trait Filter extends Serializable {
 
-  private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean
-
   def &&(f: Filter): Filter = {
     CompositeFilterPredicate(Filter.And, this :: f :: Nil)
   }
@@ -82,38 +113,11 @@ sealed trait Filter extends Serializable {
   }
 }
 
-case class FilterPredicate[T](property: IndexedProperty[T], operator: Filter.ComparativeOperator, values: Seq[T] = Nil) extends Filter {
-
-  import com.xhachi.gae4s.datastore.Filter._
-
-  if (operator != In && values.size != 1) throw new IllegalArgumentException("valid values")
-
-  private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    val v: T = property.fromStoreProperty(meta.toLLEntity(entity).getProperty(property.name))
-
-    operator match {
-      case Equal => property.compare(v, values.head) == 0
-      case NotEqual => property.compare(v, values.head) != 0
-      case LessThan => property.compare(v, values.head) < 0
-      case LessThanOrEqual => property.compare(v, values.head) <= 0
-      case GreaterThan => 0 < property.compare(v, values.head)
-      case GreaterThanOrEqual => 0 <= property.compare(v, values.head)
-      case In => values.contains(v)
-    }
-  }
+case class FilterPredicate[T](name: String, operator: Filter.ComparativeOperator, values: Seq[T] = Nil) extends Filter {
+  if (operator != Filter.In && values.size != 1) throw new IllegalArgumentException("valid values")
 }
 
-case class CompositeFilterPredicate(operator: Filter.CompositeOperator, filters: Seq[Filter]) extends Filter {
-
-  import com.xhachi.gae4s.datastore.Filter._
-
-  private[datastore] def isMatch[E <: Entity[E]](entity: E, meta: EntityMeta[E]): Boolean = {
-    operator match {
-      case And => filters.map(f => f.isMatch(entity, meta)).filter(m => !m).isEmpty
-      case Or => filters.map(f => f.isMatch(entity, meta)).filter(m => m).nonEmpty
-    }
-  }
-}
+case class CompositeFilterPredicate(operator: Filter.CompositeOperator, filters: Seq[Filter]) extends Filter
 
 object Sort {
 
@@ -131,20 +135,16 @@ object Sort {
 
 sealed trait Sort extends Serializable {
 
+  import Sort._
+
   private[datastore] def name: String
 
-  private[datastore] def direction: Sort.Direction
+  private[datastore] def direction: Direction
 
-  private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean
+  def asc = SortPredicate(name, Direction.Ascending)
+
+  def desc = SortPredicate(name, Direction.Descending)
 }
 
-case class SortPredicate[T](name: String, direction: Sort.Direction, property: IndexedProperty[T]) extends Sort {
-
-  private[datastore] def lt[E <: Entity[E]](entity1: E, entity2: E, meta: EntityMeta[E]): Boolean = {
-    val v1: T = property.fromStoreProperty(meta.toLLEntity(entity1).getProperty(name))
-    val v2: T = property.fromStoreProperty(meta.toLLEntity(entity2).getProperty(name))
-
-    property.compare(v1, v2) < 0
-  }
-}
+case class SortPredicate(name: String, direction: Sort.Direction) extends Sort
 

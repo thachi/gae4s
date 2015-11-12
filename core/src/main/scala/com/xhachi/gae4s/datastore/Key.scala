@@ -3,7 +3,7 @@ package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
-case class Key[E](key: LLKey) extends Ordered[Key[E]] with Serializable {
+case class Key(key: LLKey) extends Ordered[Key] {
 
   val kind: String = key.getKind
 
@@ -21,13 +21,13 @@ case class Key[E](key: LLKey) extends Ordered[Key[E]] with Serializable {
     case i => Some(i)
   }
 
-  def parent[P <: Entity[P]]: Option[Key[P]] = key.getParent match {
-    case p: LLKey => Some(Key[P](p))
+  def parent: Option[Key] = key.getParent match {
+    case p: LLKey => Some(Key(p))
     case _ => None
   }
 
   override def equals(other: Any) = other match {
-    case o: Key[E] => key.equals(o.key)
+    case o: Key => key.equals(o.key)
     case _ => false
   }
 
@@ -37,9 +37,15 @@ case class Key[E](key: LLKey) extends Ordered[Key[E]] with Serializable {
 
   def toWebSafeString = KeyFactory.keyToString(key)
 
-  override def compare(that: Key[E]): Int = this.key.compareTo(that.key)
+  override def compare(that: Key): Int = this.key.compareTo(that.key)
 }
 
 object Key {
-  def fromWebSafeString[E](string: String) = Key[E](KeyFactory.stringToKey(string))
+
+  def fromWebSafeString(string: String): Key = Key(KeyFactory.stringToKey(string))
+
+  def apply(kind: String, id: Long): Key = Key(KeyFactory.createKey(kind, id))
+
+  def apply(kind: String, name: String): Key = Key(KeyFactory.createKey(kind, name))
+
 }

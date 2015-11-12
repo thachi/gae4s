@@ -11,17 +11,16 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
   override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
 
-  implicit val meta = EntityMeta.createMeta[SampleEntity]
 
   test("tx1開始→tx2開始→tx1でcreate→tx2でcreate→tx1コミット→tx2コミットでtx2コミット時にエラーになること") {
 
     val tx1 = Datastore.beginTx
     val tx2 = Datastore.beginTx
 
-    val key = Datastore.createKey[SampleEntity](1)
+    val key = Datastore.createKey("sample",1)
 
-    val tx1entity = new SampleEntity(key)
-    val tx2entity = new SampleEntity(key)
+    val tx1entity = Entity(key)
+    val tx2entity = Entity(key)
 
     Datastore.createWithTx(tx1, tx1entity)
     Datastore.createWithTx(tx2, tx2entity)
@@ -37,10 +36,10 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     val tx1 = Datastore.beginTx
     val tx2 = Datastore.beginTx
 
-    val key = Datastore.createKey[SampleEntity](1)
+    val key = Datastore.createKey("sample",1)
 
-    val tx1entity = new SampleEntity(key)
-    val tx2entity = new SampleEntity(key)
+    val tx1entity = Entity(key)
+    val tx2entity = Entity(key)
 
     Datastore.createWithTx(tx1, tx1entity)
     tx1.commit()
@@ -56,10 +55,10 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
     val tx1 = Datastore.beginTx
 
-    val key = Datastore.createKey[SampleEntity](1)
+    val key = Datastore.createKey("sample",1)
 
-    val tx1entity = new SampleEntity(key)
-    val tx2entity = new SampleEntity(key)
+    val tx1entity = Entity(key)
+    val tx2entity = Entity(key)
 
     Datastore.createWithTx(tx1, tx1entity)
     val tx2 = Datastore.beginTx
@@ -76,10 +75,10 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
     val tx1 = Datastore.beginTx
 
-    val key = Datastore.createKey[SampleEntity](1)
+    val key = Datastore.createKey("sample",1)
 
-    val tx1entity = new SampleEntity(key)
-    val tx2entity = new SampleEntity(key)
+    val tx1entity = Entity(key)
+    val tx2entity = Entity(key)
 
     Datastore.createWithTx(tx1, tx1entity)
     tx1.commit()
@@ -91,9 +90,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     }
     tx2.commit()
   }
-
-  class SampleEntity(val key: Key[SampleEntity]) extends Entity[SampleEntity]
-
+  
 }
 
 
