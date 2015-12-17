@@ -34,7 +34,7 @@ object Gae4sBuild extends Build {
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       buildInfoPackage := "com.xhachi.gae4s.buildinfo",
       libraryDependencies ++= defaultDependency ++ Seq(
-
+        "org.scala-lang" % "scala-reflect" % Versions.scala
       )
     )
   ).dependsOn(scalatest % "test")
