@@ -15,7 +15,7 @@ object Gae4sBuild extends Build {
     val appengine = "1.9.30"
     val gcs = "0.5"
     val json4s = "3.3.0"
-    val scalatest = "2.2.4"
+    val scalatest = "2.2.5"
   }
 
   lazy val root = Project(
@@ -68,7 +68,7 @@ object Gae4sBuild extends Build {
 
   lazy val doNotPublish = Seq(publish := {}, publishLocal := {})
 
-  lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
+  lazy val defaultSetting = Defaults.coreDefaultSettings ++ releaseSettings ++
     Seq(
       scalaVersion := Versions.scala,
       scalacOptions ++= Seq("-feature", "-deprecation"),
@@ -106,4 +106,3 @@ object Gae4sBuild extends Build {
     "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
   )
 }
-
