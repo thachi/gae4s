@@ -28,19 +28,9 @@ case class Query(kind: String,
 
   def ancestor(ancestor: Option[Key]): Query = copy(ancestorOption = ancestor)
 
-  //  def filterByMeta(filter: EntityMeta => Filter): Query = copy(filterOption = Some(filter(meta)))
-
   def filter(filter: Filter): Query = copy(filterOption = Some(filter))
 
-  //  def filter(filter: Entity => Boolean): Query = macro EntityMacro.filter
-
-  //  def sortByMeta(sort: EntityMeta => Sort): Query = copy(sorts = sort(meta) :: Nil)
-
   def sort(sorts: Sort*): Query = copy(sorts = sorts.toSeq)
-
-  //  def sort(sort: Entity => Any): Query = macro EntityMacro.sort
-
-  //  def sortDesc(sort: Entity => Any): Query = macro EntityMacro.sortDesc
 
   def offset(o: Int): Query = copy(offset = Some(o))
 
