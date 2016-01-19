@@ -61,7 +61,7 @@ case class Entity(key: Key, properties: Seq[Property[_]] = Seq.empty) {
   def isSameVersion(other: Entity) = isSameKind(other) && {
     (version, other.version) match {
       case (Some(v1), Some(v2)) => v1 == v2
-      case _ => false
+      case _ => true
     }
   }
 }
