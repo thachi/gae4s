@@ -3,7 +3,7 @@ package com.xhachi.gae4s.datastore
 import java.util.ConcurrentModificationException
 
 import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate}
-import com.google.appengine.api.datastore.{Query => LLQuery, _}
+import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery, _}
 
 import scala.collection.JavaConversions._
 import scala.language.implicitConversions
@@ -16,20 +16,21 @@ import scala.language.implicitConversions
   */
 class Datastore private[datastore](private[datastore] val service: DatastoreService)
   extends DatastoreBase
-  with DatastoreGetMethods
-  with DatastoreGetOptionMethods
-  with DatastoreGetListMethods
-  with DatastorePutMethods
-  with DatastorePutListMethods
-  with DatastoreCreateMethods
-  with DatastoreCreateListMethods
-  with DatastoreUpdateMethods
-  with DatastoreUpdateListMethods
-  with DatastoreDeleteMethods
-  with DatastoreDeleteListMethods
-  with DatastoreQueryMethods
-  with DatastoreCreateKeyMethods
-  with DatastoreTxMethods {
+    with DatastoreGetMethods
+    with DatastoreGetKeyMethods
+    with DatastoreGetOptionMethods
+    with DatastoreGetListMethods
+    with DatastorePutMethods
+    with DatastorePutListMethods
+    with DatastoreCreateMethods
+    with DatastoreCreateListMethods
+    with DatastoreUpdateMethods
+    with DatastoreUpdateListMethods
+    with DatastoreDeleteMethods
+    with DatastoreDeleteListMethods
+    with DatastoreQueryMethods
+    with DatastoreCreateKeyMethods
+    with DatastoreTxMethods {
 }
 
 /**
@@ -45,6 +46,16 @@ sealed private[datastore] trait DatastoreBase {
 
   private[datastore] def service: DatastoreService
 
+}
+
+sealed private[datastore] trait DatastoreGetKeyMethods {
+  self: DatastoreBase =>
+
+  def getKeysWithoutTx: Seq[Key] = getKeysWithTx(null)
+
+  def getKeysWithTx(tx: Transaction): Seq[Key] = service.prepare(tx, new LLQuery().setKeysOnly()).asIterable().map(e => Key(e.getKey)).toSeq
+
+  def getKeys: Seq[Key] = service.prepare(new LLQuery().setKeysOnly()).asIterable().map(e => Key(e.getKey)).toSeq
 }
 
 sealed private[datastore] trait DatastoreGetMethods {
@@ -254,26 +265,15 @@ sealed private[datastore] trait DatastoreCreateKeyMethods {
 
 sealed private[datastore] trait DatastoreQueryMethods {
   self: DatastoreBase =>
-  //
-  //  def query(kind: String): Query = Query(kind)
-  //
-  //  def query(kind: String, ancestor: Key): Query = Query(kind).ancestor(ancestor)
-  //
-  //  def countWithTx(tx: Transaction): Int = _count(Some(tx), Query)
-  //
-  //  def countWithTx(tx: Transaction, query: Query): Int = _count(Some(tx), query)
-  //
-  //  def countWithoutTx: Int = _count(Some(null), Query)
-  //
-  //  def countWithoutTx(query: Query): Int = _count(Some(null), query)
-  //
-  def count(kind: String): Int = _count(None, Query(kind))
 
-  //
-  //  def count(query: Query): Int = _count(None, query)
-  //
+  def countWithTx(tx: Transaction, query: Query): Int = _count(Some(tx), query)
+
+  def countWithoutTx(query: Query): Int = _count(Some(null), query)
+
+  def count(query: Query): Int = _count(None, query)
+
   private def _count(tx: Option[Transaction], query: Query): Int = {
-    val llQuery = _toLLQuery(query, keysOnly = false)
+    val llQuery = _toLLQuery(query, keysOnly = true)
     service.prepare(llQuery).countEntities(FetchOptions.Builder.withLimit(Int.MaxValue))
   }
 
@@ -290,15 +290,9 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }
   }
 
-  def asSeqWithTx(tx: Transaction, kind: String): Seq[Entity] = _asSeq(Some(tx), Query(kind))
-
   def asSeqWithTx(tx: Transaction, query: Query): Seq[Entity] = _asSeq(Some(tx), query)
 
-  def asSeqWithoutTx(kind: String): Seq[Entity] = _asSeq(Some(null), Query(kind))
-
   def asSeqWithoutTx(query: Query): Seq[Entity] = _asSeq(Some(null), query)
-
-  def asSeq(kind: String): Seq[Entity] = _asSeq(None, Query(kind))
 
   def asSeq(query: Query): Seq[Entity] = _asSeq(None, query)
 
@@ -315,73 +309,52 @@ sealed private[datastore] trait DatastoreQueryMethods {
     }.toSeq
   }
 
-  //
-  //  def asSingleWithTx(tx: Transaction): Entity = _asSingle(Some(tx), Query)
-  //
-  //  def asSingleWithTx(tx: Transaction, query: Query): Entity = _asSingle(Some(tx), query)
-  //
-  //  def asSingleWithoutTx: Entity = _asSingle(Some(null), Query)
-  //
-  //  def asSingleWithoutTx(query: Query): Entity = _asSingle(Some(null), query)
-  //
-  //  def asSingle: Entity = _asSingle(None, Query)
-  //
-  //  def asSingle(query: Query): Entity = _asSingle(None, query)
-  //
-  //  private def _asSingle(tx: Option[Transaction], query: Query): Entity = {
-  //    val q = query
-  //    prepare(tx, q, keysOnly = false).asSingleEntity() match {
-  //      case singleEntity: LLEntity => q.meta.toEntity(singleEntity)
-  //      case null => throw new IllegalArgumentException(s"Entity not found for $q.")
-  //    }
-  //  }
-  //
-  //  def asSingleOptionWithTx(tx: Transaction): Option = _asSingleOption(Some(tx), Query)
-  //
-  //  def asSingleOptionWithTx(tx: Transaction, query: Query): Option = _asSingleOption(Some(tx), query)
-  //
-  //  def asSingleOptionWithoutTx: Option = _asSingleOption(Some(null), Query)
-  //
-  //  def asSingleOptionWithoutTx(query: Query): Option = _asSingleOption(Some(null), query)
-  //
-  //  def asSingleOption: Option = _asSingleOption(None, Query)
-  //
-  //  def asSingleOption(query: Query): Option = _asSingleOption(None, query)
-  //
-  //  private def _asSingleOption(tx: Option[Transaction], query: Query): Option = {
-  //    val q = query
-  //    prepare(tx, q, keysOnly = false).asSingleEntity() match {
-  //      case s: LLEntity => Some(q.meta.toEntity(s))
-  //      case e => None
-  //    }
-  //  }
-  //
-  //  def asKeySeqWithTx(tx: Transaction): Seq[Key] = _asKeySeq(Some(tx), Query)
-  //
-  //  def asKeySeqWithTx(tx: Transaction, query: Query): Seq[Key] = _asKeySeq(Some(tx), query)
-  //
-  //  def asKeySeqWithoutTx: Seq[Key] = _asKeySeq(Some(null), Query)
-  //
-  //  def asKeySeqWithoutTx(query: Query): Seq[Key] = _asKeySeq(Some(null), query)
-  //
-  //  def asKeySeq: Seq[Key] = _asKeySeq(None, Query)
-  //
-  //  def asKeySeq(query: Query): Seq[Key] = _asKeySeq(None, query)
-  //
-  //  private def _asKeySeq(tx: Option[Transaction], query: Query): Seq[Key] = {
-  //    val q = query
-  //    val options = (q.offset, q.limit) match {
-  //      case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
-  //      case (Some(o), _) => FetchOptions.Builder.withOffset(o)
-  //      case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
-  //      case _ => FetchOptions.Builder.withDefaults()
-  //    }
-  //    prepare(tx, q, keysOnly = true).asIterable(options).map {
-  //      e => q.meta.createKey(e.getKey)
-  //    }.toSeq
-  //  }
-  //
-  //
+  def asSingleWithTx(tx: Transaction, query: Query): Entity = asSingleOptionWithTx(tx, query).getOrElse {
+    throw new IllegalArgumentException(s"Entity not found for $query.")
+  }
+
+  def asSingleWithoutTx(query: Query): Entity = asSingleOptionWithoutTx(query).getOrElse {
+    throw new IllegalArgumentException(s"Entity not found for $query.")
+  }
+
+  def asSingle(query: Query): Entity = asSingleOption(query).getOrElse {
+    throw new IllegalArgumentException(s"Entity not found for $query.")
+  }
+
+  def asSingleOptionWithTx(tx: Transaction, query: Query): Option[Entity] = _asSingleOption(Some(tx), query)
+
+  def asSingleOptionWithoutTx(query: Query): Option[Entity] = _asSingleOption(Some(null), query)
+
+  def asSingleOption(query: Query): Option[Entity] = _asSingleOption(None, query)
+
+  private def _asSingleOption(tx: Option[Transaction], query: Query): Option[Entity] = {
+    val q = query
+    prepare(tx, q, keysOnly = false).asSingleEntity() match {
+      case s: LLEntity => Some(Entity(s))
+      case e => None
+    }
+  }
+
+  def asKeySeqWithTx(tx: Transaction, query: Query): Seq[Key] = _asKeySeq(Some(tx), query)
+
+  def asKeySeqWithoutTx(query: Query): Seq[Key] = _asKeySeq(Some(null), query)
+
+  def asKeySeq(query: Query): Seq[Key] = _asKeySeq(None, query)
+
+  private def _asKeySeq(tx: Option[Transaction], query: Query): Seq[Key] = {
+    val q = query
+    val options = (q.offset, q.limit) match {
+      case (Some(o), Some(l)) => FetchOptions.Builder.withOffset(o).limit(l)
+      case (Some(o), _) => FetchOptions.Builder.withOffset(o)
+      case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
+      case _ => FetchOptions.Builder.withDefaults()
+    }
+    prepare(tx, q, keysOnly = true).asIterable(options).map {
+      e => Key(e.getKey)
+    }.toSeq
+  }
+
+
   private[datastore] def _toLLQuery(query: Query, keysOnly: Boolean): LLQuery = {
     import com.google.appengine.api.datastore.Query.SortDirection._
 
