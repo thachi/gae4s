@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
 
 class EntityTest extends FunSuite with AppEngineTestSuite {
 
-  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+  override def _localServiceTestConfigs = new LocalDatastoreServiceTestConfig :: super._localServiceTestConfigs
 
   test("Entityが正しく構築できること") {
     val key: Key = Datastore.createKey("user", "key_name")

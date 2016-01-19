@@ -9,7 +9,7 @@ class QueryTest extends FunSuite with AppEngineTestSuite with Matchers {
 
   import Query.Implicits._
 
-  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+  override def _localServiceTestConfigs = new LocalDatastoreServiceTestConfig :: super._localServiceTestConfigs
 
   test("User#heightで==のフィルタができること") {
     val q = Query("user").filter("height" === 1)

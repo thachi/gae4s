@@ -3,15 +3,14 @@ package com.xhachi.gae4s.datastore
 import java.util.Date
 
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.datastore.UnindexedProperty
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{LocalServiceTestConfig, AppEngineTestSuite}
 import org.scalatest.FunSuite
 
 
-class DatastoreTest extends FunSuite with AppEngineTestSuite {
-
-  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
-
+class DatastoreTest
+  extends FunSuite
+    with AppEngineTestSuite
+    with LocalServiceTestConfig.Datastore {
 
   test("allocateしたKeyが取得できること") {
     val key = Datastore.allocateKey("user")

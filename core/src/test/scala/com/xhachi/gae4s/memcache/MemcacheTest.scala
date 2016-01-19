@@ -1,21 +1,22 @@
 package com.xhachi.gae4s.memcache
 
-import com.google.appengine.tools.development.testing.LocalMemcacheServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
 import scala.concurrent.duration._
 
-class MemcacheTest extends FunSuite with AppEngineTestSuite {
+class MemcacheTest
+  extends FunSuite
+    with AppEngineTestSuite
+    with LocalServiceTestConfig.Memcache {
 
-  override def getConfig = new LocalMemcacheServiceTestConfig :: super.getConfig
 
   test("Memcacheから存在しないキーを取得してNoneであること") {
     val actual = Memcache.get[String]("key")
 
     assert(actual.isEmpty)
   }
-  
+
   test("Memcacheにputしてgetすることができること（文字列）") {
     Memcache.put("key", "value")
     val actual = Memcache.get[String]("key")

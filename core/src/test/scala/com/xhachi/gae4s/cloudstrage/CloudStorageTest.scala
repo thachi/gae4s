@@ -2,13 +2,13 @@ package com.xhachi.gae4s.cloudstrage
 
 import com.google.appengine.tools.cloudstorage.{GcsServiceFactory, RetryParams}
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{LocalServiceTestConfig, AppEngineTestSuite}
 import org.json4s.JsonAST.{JString, JValue}
 import org.scalatest.FunSuite
 
-class CloudStorageTest extends FunSuite with AppEngineTestSuite {
-
-  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+class CloudStorageTest extends FunSuite
+  with AppEngineTestSuite
+  with LocalServiceTestConfig.Datastore {
 
   val target: CloudStorage = new CloudStorage(GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance), "test")
 

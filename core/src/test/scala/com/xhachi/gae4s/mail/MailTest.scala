@@ -1,14 +1,14 @@
 package com.xhachi.gae4s.mail
 
 import com.google.appengine.api.mail.MailService
-import com.google.appengine.tools.development.testing.LocalMailServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
 
-class MailTest extends FunSuite with AppEngineTestSuite {
-
-  override def getConfig = new LocalMailServiceTestConfig :: super.getConfig
+class MailTest
+  extends FunSuite
+    with AppEngineTestSuite
+    with LocalServiceTestConfig.Mail {
 
   test("送信してみる") {
     Mail.send(Message(
@@ -35,6 +35,7 @@ class MailTest extends FunSuite with AppEngineTestSuite {
         assert(m.getCc == null)
         assert(m.getBcc == null)
       }
+
       override def sendToAdmins(p1: MailService.Message): Unit = ???
     })
 

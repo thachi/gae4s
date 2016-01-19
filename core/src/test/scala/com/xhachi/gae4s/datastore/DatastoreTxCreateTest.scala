@@ -9,7 +9,7 @@ import org.scalatest.FunSuite
 
 class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
-  override def getConfig = new LocalDatastoreServiceTestConfig :: super.getConfig
+  override def _localServiceTestConfigs = new LocalDatastoreServiceTestConfig :: super._localServiceTestConfigs
 
 
   test("tx1開始→tx2開始→tx1でcreate→tx2でcreate→tx1コミット→tx2コミットでtx2コミット時にエラーになること") {

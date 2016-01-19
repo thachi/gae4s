@@ -1,12 +1,9 @@
 package com.xhachi.gae4s.urlfetch
 
-import com.google.appengine.tools.development.testing.LocalURLFetchServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
-class UrlFetchTest extends FunSuite with AppEngineTestSuite {
-
-  override def getConfig = new LocalURLFetchServiceTestConfig :: super.getConfig
+class UrlFetchTest extends FunSuite with AppEngineTestSuite with LocalServiceTestConfig.URLFetch {
 
   test("GETリクエストができること") {
     val result = UrlFetch.get("http://www.google.com")

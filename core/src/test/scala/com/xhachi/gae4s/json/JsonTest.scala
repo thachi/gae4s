@@ -8,9 +8,7 @@ import org.scalatest.FunSuite
 
 import scala.util.Random
 
-class JsonTest extends FunSuite with AppEngineTestSuite {
-
-  override def getConfig = new LocalURLFetchServiceTestConfig :: super.getConfig
+class JsonTest extends FunSuite {
 
   test("JSONで並列にDateを大量に処理してみる") {
 

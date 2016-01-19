@@ -1,14 +1,15 @@
 package com.xhachi.gae4s.taskqueue
 
 import com.google.appengine.api.taskqueue.{TaskHandle, TaskOptions, TransactionalTaskException}
-import com.google.appengine.tools.development.testing.{LocalDatastoreServiceTestConfig, LocalTaskQueueTestConfig}
 import com.xhachi.gae4s.datastore.Datastore
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
-class TaskQueueTest extends FunSuite with AppEngineTestSuite {
-
-  override def getConfig = new LocalDatastoreServiceTestConfig :: new LocalTaskQueueTestConfig :: super.getConfig
+class TaskQueueTest
+  extends FunSuite
+    with AppEngineTestSuite
+    with LocalServiceTestConfig.Datastore
+    with LocalServiceTestConfig.TaskQueue {
 
   test("TaskQueueのデフォルトの名称が取得できること") {
     val name = TaskQueue.queueName
