@@ -10,11 +10,11 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 
 /**
- * Class to access Memcache service.
- *
- * @author Takashi Hachinohe
- * @param service the MemcacheService instance
- */
+  * Class to access Memcache service.
+  *
+  * @author Takashi Hachinohe
+  * @param service the MemcacheService instance
+  */
 class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = SET_ALWAYS) extends Serializable {
 
   def namespace = service.getNamespace
@@ -119,10 +119,10 @@ class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
 }
 
 /**
- * Object to access default Memcache service.
- *
- * @author Takashi Hachinohe
- */
+  * Object to access default Memcache service.
+  *
+  * @author Takashi Hachinohe
+  */
 object Memcache extends Memcache(MemcacheServiceFactory.getMemcacheService, SET_ALWAYS) {
 
   def apply(name: String, policy: SetPolicy = SET_ALWAYS) = new Memcache(MemcacheServiceFactory.getMemcacheService(name), policy)

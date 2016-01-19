@@ -2,8 +2,7 @@ package com.xhachi.gae4s.datastore
 
 import java.util.Date
 
-import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.tests.{LocalServiceTestConfig, AppEngineTestSuite}
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
 

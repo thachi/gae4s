@@ -4,32 +4,32 @@ import com.google.appengine.api.mail.MailService.{Attachment, Header, Message =>
 import com.google.appengine.api.mail.{MailService, MailServiceFactory}
 
 /**
- * Object to access default Mail service.
- *
- * @author Takashi Hachinohe
- */
+  * Object to access default Mail service.
+  *
+  * @author Takashi Hachinohe
+  */
 object Mail extends Mail(MailServiceFactory.getMailService)
 
 /**
- * Class to access Mail service.
- *
- * @author Takashi Hachinohe
- * @param service the MailService instance
- */
+  * Class to access Mail service.
+  *
+  * @author Takashi Hachinohe
+  * @param service the MailService instance
+  */
 class Mail private[mail](service: MailService) {
 
   /**
-   * Send message.
-   *
-   * @param message Instance of Message
-   */
+    * Send message.
+    *
+    * @param message Instance of Message
+    */
   def send(message: Message) = service.send(message.toLLMessage)
 
   /**
-   * Send message to Administrators
-   *
-   * @param message Instance of Message
-   */
+    * Send message to Administrators
+    *
+    * @param message Instance of Message
+    */
   def sendToAdmins(message: Message) = service.sendToAdmins(message.toLLMessage)
 
 }

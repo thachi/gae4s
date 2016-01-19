@@ -8,12 +8,12 @@ import com.google.appengine.api.urlfetch._
 import scala.collection.JavaConversions._
 
 /**
- * Class to access URL Fetch service.
- *
- * @author Takashi Hachinohe
- * @param service the URLFetchService instance
- * @param defaultHeaders the HTTP request Headers
- */
+  * Class to access URL Fetch service.
+  *
+  * @author Takashi Hachinohe
+  * @param service        the URLFetchService instance
+  * @param defaultHeaders the HTTP request Headers
+  */
 class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[String, String], charset: String = "UTF-8") {
 
   class Response private[UrlFetch](response: HTTPResponse) {
@@ -105,10 +105,10 @@ class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[S
 }
 
 /**
- * Object to access default URL Fetch service.
- *
- * @author Takashi Hachinohe
- */
+  * Object to access default URL Fetch service.
+  *
+  * @author Takashi Hachinohe
+  */
 object UrlFetch extends UrlFetch(URLFetchServiceFactory.getURLFetchService, Map(), "UTF-8") {
   def apply(headers: Map[String, String], charset: String = "UTF-8") = {
     new UrlFetch(URLFetchServiceFactory.getURLFetchService, headers, charset)

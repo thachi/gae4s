@@ -17,7 +17,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     val tx1 = Datastore.beginTx
     val tx2 = Datastore.beginTx
 
-    val key = Datastore.createKey("sample",1)
+    val key = Datastore.createKey("sample", 1)
 
     val tx1entity = Entity(key)
     val tx2entity = Entity(key)
@@ -36,7 +36,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     val tx1 = Datastore.beginTx
     val tx2 = Datastore.beginTx
 
-    val key = Datastore.createKey("sample",1)
+    val key = Datastore.createKey("sample", 1)
 
     val tx1entity = Entity(key)
     val tx2entity = Entity(key)
@@ -55,7 +55,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
     val tx1 = Datastore.beginTx
 
-    val key = Datastore.createKey("sample",1)
+    val key = Datastore.createKey("sample", 1)
 
     val tx1entity = Entity(key)
     val tx2entity = Entity(key)
@@ -75,7 +75,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
 
     val tx1 = Datastore.beginTx
 
-    val key = Datastore.createKey("sample",1)
+    val key = Datastore.createKey("sample", 1)
 
     val tx1entity = Entity(key)
     val tx2entity = Entity(key)
@@ -90,7 +90,7 @@ class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
     }
     tx2.commit()
   }
-  
+
 }
 
 

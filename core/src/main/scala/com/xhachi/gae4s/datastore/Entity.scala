@@ -3,6 +3,7 @@ package com.xhachi.gae4s.datastore
 import java.util.Date
 
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery}
+
 import scala.collection.JavaConverters._
 
 

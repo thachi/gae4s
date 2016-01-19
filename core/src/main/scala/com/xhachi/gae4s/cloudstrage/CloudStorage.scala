@@ -54,11 +54,11 @@ case class Item(name: String, size: Long, lastModified: Date, directory: Boolean
 
 class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
   extends ReadOps
-  with WriteOps
-  with ListOps
-  with JsonOps
-  with XMLOpt
-  with Logger {
+    with WriteOps
+    with ListOps
+    with JsonOps
+    with XMLOpt
+    with Logger {
 
   def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
 

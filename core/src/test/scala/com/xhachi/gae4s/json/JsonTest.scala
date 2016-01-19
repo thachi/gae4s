@@ -2,8 +2,6 @@ package com.xhachi.gae4s.json
 
 import java.util.Date
 
-import com.google.appengine.tools.development.testing.LocalURLFetchServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
 
 import scala.util.Random
@@ -19,7 +17,7 @@ class JsonTest extends FunSuite {
 
     val strings = samples.map(Json.stringify[Sample])
     val parses = strings.map(Json.parseAs[Sample])
-    val asserts = parses.map { s => s.name.toLong == s.date.getTime}
+    val asserts = parses.map { s => s.name.toLong == s.date.getTime }
     parses.filter(s => s.name.toLong != s.date.getTime).foreach(s => println(s"${s.name.toLong} == ${s.date.getTime}"))
     val contains = asserts.count(_ == false)
     assert(contains == 0)

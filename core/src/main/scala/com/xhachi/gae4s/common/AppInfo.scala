@@ -3,8 +3,8 @@ package com.xhachi.gae4s.common
 import com.google.appengine.api.utils.SystemProperty
 
 /**
- * AppEngineのアプリケーション情報を取得するためのユーティリティです。
- */
+  * AppEngineのアプリケーション情報を取得するためのユーティリティです。
+  */
 object AppInfo {
 
   val Runtime = "com.google.appengine.runtime"
