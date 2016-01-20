@@ -4,6 +4,7 @@ import java.net.{URL, URLEncoder}
 
 import com.google.appengine.api.urlfetch.HTTPMethod._
 import com.google.appengine.api.urlfetch._
+import com.xhachi.gae4s.concurrent.Future
 
 import scala.collection.JavaConversions._
 
@@ -36,10 +37,22 @@ class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[S
     fetch(createRequest(url, GET, query = query, headers = headers))
   }
 
+  def getAsync(url: String,
+               query: Map[String, Seq[String]] = Map(),
+               headers: Map[String, String] = Map()) = {
+    fetchAsync(createRequest(url, GET, query = query, headers = headers))
+  }
+
   def head(url: String,
            query: Map[String, Seq[String]] = Map(),
            headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, HEAD, query = query, headers = headers))
+  }
+
+  def headAsync(url: String,
+                query: Map[String, Seq[String]] = Map(),
+                headers: Map[String, String] = Map()) = {
+    fetchAsync(createRequest(url, HEAD, query = query, headers = headers))
   }
 
   def post(url: String,
@@ -47,6 +60,13 @@ class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[S
            data: Map[String, Seq[String]] = Map(),
            headers: Map[String, String] = Map()) = {
     fetch(createRequest(url, POST, query = query, data = data, headers = headers))
+  }
+
+  def postAsync(url: String,
+                query: Map[String, Seq[String]] = Map(),
+                data: Map[String, Seq[String]] = Map(),
+                headers: Map[String, String] = Map()) = {
+    fetchAsync(createRequest(url, POST, query = query, data = data, headers = headers))
   }
 
   def put(url: String,
@@ -62,8 +82,18 @@ class UrlFetch private[UrlFetch](service: URLFetchService, defaultHeaders: Map[S
     fetch(createRequest(url, DELETE, query = query, headers = headers))
   }
 
-  protected def fetch(request: HTTPRequest) = {
+  def deleteAsync(url: String,
+                  query: Map[String, Seq[String]] = Map(),
+                  headers: Map[String, String] = Map()) = {
+    fetchAsync(createRequest(url, DELETE, query = query, headers = headers))
+  }
+
+  protected def fetch(request: HTTPRequest): Response = {
     new Response(service.fetch(request))
+  }
+
+  protected def fetchAsync(request: HTTPRequest): Future[Response] = {
+    Future(service.fetchAsync(request)).map(new Response(_))
   }
 
   protected def createRequest(url: String,
