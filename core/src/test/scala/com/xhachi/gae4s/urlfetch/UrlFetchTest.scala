@@ -4,12 +4,25 @@ import com.xhachi.gae4s.common.Logger
 import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
+import scala.util.Try
+
 class UrlFetchTest extends FunSuite with AppEngineTestSuite with LocalServiceTestConfig.URLFetch {
 
   test("GETリクエストができること") {
     val result = UrlFetch.get("http://www.google.com")
     assert(result.status == 200)
     assert(result.content.isDefined)
+  }
+
+  test("GETリクエストが失敗すること1") {
+    val result = UrlFetch.get("http://www.google.com/ajhdskfasjdkfjalskdfj")
+    assert(result.status == 404)
+    assert(result.content.isDefined)
+  }
+
+  test("GETリクエストが失敗すること2") {
+    val result = Try(UrlFetch.get("http://www.1.com"))
+    assert(result.isFailure)
   }
 
   test("GETリクエストが非同期実行できること") {
