@@ -27,7 +27,7 @@ object Gae4sBuild extends Build {
 
   lazy val core = Project(
     id = "gae4s-core",
-    base = file("core"),
+    base = file("gae4s-core"),
     settings = defaultSetting ++ buildInfoSettings ++ graphSettings ++ Seq(
       name := "gae4s-core",
       sourceGenerators in Compile <+= buildInfo,
@@ -41,7 +41,7 @@ object Gae4sBuild extends Build {
 
   lazy val scalatest = Project(
     id = "gae4s-scalatest",
-    base = file("scalatest"),
+    base = file("gae4s-scalatest"),
     settings = defaultSetting ++ Seq(
       name := "gae4s-scalatest",
       libraryDependencies ++= defaultDependency ++ Seq(
@@ -55,7 +55,7 @@ object Gae4sBuild extends Build {
 
   lazy val sample = Project(
     id = "gae4s-sample",
-    base = file("sample"),
+    base = file("gae4s-sample"),
     settings = defaultSetting ++ doNotPublish ++ appengineSettings ++ Seq(
       name := "gae4s-sample",
       libraryDependencies ++= defaultDependency ++ Seq(
