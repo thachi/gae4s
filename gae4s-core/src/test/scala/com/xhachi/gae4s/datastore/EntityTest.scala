@@ -17,7 +17,7 @@ class EntityTest extends FunSuite with AppEngineTestSuite {
       IndexedProperty("name", "Taro"),
       IndexedProperty("height", 123),
       IndexedProperty("deleted", true),
-      CreationDateProperty(new Date)
+      IndexedProperty("createdAt", new Date)
     ))
 
     assert(target.properties.size == 4)

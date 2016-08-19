@@ -1,7 +1,5 @@
 package com.xhachi.gae4s.datastore
 
-import java.util.Date
-
 sealed trait Property[T] {
   def name: String
 
@@ -27,20 +25,4 @@ object VersionProperty {
 
 case class VersionProperty(value: Long) extends NamedProperty[Long](VersionProperty.name) {
   override def withValue(value: Long) = VersionProperty(value).asInstanceOf[this.type]
-}
-
-object CreationDateProperty {
-  val name = "createdAt"
-}
-
-case class CreationDateProperty(value: Date) extends NamedProperty[Date](CreationDateProperty.name) {
-  override def withValue(value: Date) = CreationDateProperty(value).asInstanceOf[this.type]
-}
-
-object ModificationDateProperty {
-  val name = "modifiedAt"
-}
-
-case class ModificationDateProperty(value: Date) extends NamedProperty[Date](ModificationDateProperty.name) {
-  override def withValue(value: Date) = ModificationDateProperty(value).asInstanceOf[this.type]
 }

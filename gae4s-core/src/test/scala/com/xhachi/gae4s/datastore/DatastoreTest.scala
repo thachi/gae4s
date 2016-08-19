@@ -50,6 +50,11 @@ class DatastoreTest
     Datastore.put(s)
   }
 
+  test("putできること2") {
+    val s = Entity(Datastore.createKey("user", "key_name"), Seq(UnindexedProperty("name", Seq("Hoge"))))
+    Datastore.put(s)
+  }
+
   test("countできること") {
     val count = Datastore.count(Query("user"))
     assert(count == 0)
@@ -81,7 +86,7 @@ class DatastoreTest
       IndexedProperty("name", "Taro"),
       IndexedProperty("height", 123L),
       IndexedProperty("deleted", true),
-      CreationDateProperty(new Date)
+      IndexedProperty("createdAt", new Date)
     ))
     Datastore.put(expected)
 
@@ -102,7 +107,7 @@ class DatastoreTest
       UnindexedProperty("height", 123L),
       UnindexedProperty("deleted", false),
       UnindexedProperty("spouse", key2),
-      CreationDateProperty(new Date())
+      IndexedProperty("createdAt", new Date)
     ))
     Datastore.put(expected1)
 
@@ -110,7 +115,7 @@ class DatastoreTest
       UnindexedProperty("name", "Hoge2"),
       UnindexedProperty("height", 112L),
       UnindexedProperty("deleted", true),
-      CreationDateProperty(new Date())
+      IndexedProperty("createdAt", new Date)
     ))
     Datastore.put(expected2)
 

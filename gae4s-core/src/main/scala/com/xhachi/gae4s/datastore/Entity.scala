@@ -1,5 +1,6 @@
 package com.xhachi.gae4s.datastore
 
+import java.util
 import java.util.Date
 
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery}
@@ -12,8 +13,6 @@ object Entity {
     Key(e.getKey),
     e.getProperties.asScala.toSeq.map {
       case (VersionProperty.name, v) => VersionProperty(v.asInstanceOf[Long])
-      case (CreationDateProperty.name, v) => CreationDateProperty(v.asInstanceOf[Date])
-      case (ModificationDateProperty.name, v) => ModificationDateProperty(v.asInstanceOf[Date])
       case (k, v: LLKey) if !e.isUnindexedProperty(k) => IndexedProperty(k, Key(v))
       case (k, v) if !e.isUnindexedProperty(k) => IndexedProperty(k, v)
       case (k, v: LLKey) => UnindexedProperty(k, Key(v))
@@ -47,7 +46,11 @@ case class Entity(key: Key, properties: Seq[Property[_]] = Seq.empty) {
     val e = new LLEntity(key.key)
     properties.foreach {
       case UnindexedProperty(name, value: Key) => e.setProperty(name, value.key)
+      case UnindexedProperty(name, value: Seq[_]) => e.setProperty(name, value.asJava)
       case UnindexedProperty(name, value) => e.setProperty(name, value)
+      case IndexedProperty(name, value: Key) => e.setIndexedProperty(name, value.key)
+      case IndexedProperty(name, value: Seq[_]) => e.setIndexedProperty(name, value.asJava)
+      case IndexedProperty(name, value) => e.setIndexedProperty(name, value)
       case p => e.setIndexedProperty(p.name, p.value)
     }
     e
