@@ -2,7 +2,7 @@ package com.xhachi.gae4s.datastore
 
 import java.util.ConcurrentModificationException
 
-import com.google.appengine.api.datastore.Query.{CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate}
+import com.google.appengine.api.datastore.Query.{FilterOperator, CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate}
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery, _}
 
 import scala.collection.JavaConversions._
@@ -19,6 +19,8 @@ class Datastore private[datastore](private[datastore] val service: DatastoreServ
     with DatastoreGetMethods
     with DatastoreGetKeyMethods
     with DatastoreGetOptionMethods
+    with DatastoreGetProjectionListMethods
+    with DatastoreGetProjectionMethods
     with DatastoreGetListMethods
     with DatastorePutMethods
     with DatastorePutListMethods
@@ -68,6 +70,38 @@ sealed private[datastore] trait DatastoreGetMethods {
   def get(key: Key): Entity = Entity(service.get(key.key))
 }
 
+sealed private[datastore] trait DatastoreGetProjectionMethods {
+  self: DatastoreBase =>
+
+  def getProjectionWithoutTx(key: Key, properties: Map[String, Class[_]]): Entity = getProjectionWithTx(null, key, properties)
+
+  def getProjectionWithTx(tx: Transaction, key: Key, properties: Map[String, Class[_]]): Entity = {
+    val q = new LLQuery(key.kind)
+      .setFilter(new LLFilterPredicate("__key__", FilterOperator.EQUAL, key.key))
+    properties.foreach { case (name, clazz) => q.addProjection(new PropertyProjection(name, clazz)) }
+
+    import scala.collection.JavaConverters._
+    val entities = service.prepare(tx, q).asList(FetchOptions.Builder.withLimit(1)).asScala.toList
+    entities match {
+      case e :: Nil => Entity(e)
+      case Nil => throw new IllegalArgumentException(s"$key is not found.")
+    }
+  }
+
+  def getProjection(key: Key, properties: Map[String, Class[_]]): Entity = {
+    val q = new LLQuery(key.kind)
+      .setFilter(new LLFilterPredicate("__key__", FilterOperator.EQUAL, key.key))
+    properties.foreach { case (name, clazz) => q.addProjection(new PropertyProjection(name, clazz)) }
+
+    import scala.collection.JavaConverters._
+    val entities = service.prepare(q).asList(FetchOptions.Builder.withLimit(1)).asScala.toList
+    entities match {
+      case e :: Nil => Entity(e)
+      case Nil => throw new IllegalArgumentException(s"$key is not found.")
+    }
+  }
+}
+
 sealed private[datastore] trait DatastoreGetOptionMethods {
   self: DatastoreBase with DatastoreGetMethods =>
 
@@ -106,6 +140,39 @@ sealed private[datastore] trait DatastoreGetListMethods {
       case (k, v) => Key(k) -> Entity(v)
     }
     entities.toMap
+  }
+}
+
+
+sealed private[datastore] trait DatastoreGetProjectionListMethods {
+  self: DatastoreBase =>
+
+  import scala.collection.JavaConverters._
+
+  def getProjectionWithoutTx(keys: Seq[Key], properties: Map[String, Class[_]]): Map[Key, Entity] = getProjectionWithTx(null, keys, properties)
+
+  def getProjectionWithTx(tx: Transaction, keys: Seq[Key], properties: Map[String, Class[_]]): Map[Key, Entity] = keys match {
+    case Nil => Map.empty
+    case _ =>
+      val q = new LLQuery(keys.head.kind)
+        .setFilter(new LLFilterPredicate("__key__", FilterOperator.IN, keys.map(_.key).asJava))
+      properties.foreach { case (name, clazz) => q.addProjection(new PropertyProjection(name, clazz)) }
+
+      val entities = service.prepare(tx, q).asList(FetchOptions.Builder.withLimit(keys.size)).asScala.toList
+      assert(entities.size == keys.size)
+      entities.map(e => Key(e.getKey) -> Entity(e)).toMap
+  }
+
+  def getProjection(keys: Seq[Key], properties: Map[String, Class[_]]): Map[Key, Entity] = keys match {
+    case Nil => Map.empty
+    case _ =>
+      val q = new LLQuery(keys.head.kind)
+        .setFilter(new LLFilterPredicate("__key__", FilterOperator.IN, keys.map(_.key).asJava))
+      properties.foreach { case (name, clazz) => q.addProjection(new PropertyProjection(name, clazz)) }
+
+      val entities = service.prepare(q).asList(FetchOptions.Builder.withLimit(keys.size)).asScala.toList
+      assert(entities.size == keys.size)
+      entities.map(e => Key(e.getKey) -> Entity(e)).toMap
   }
 }
 
@@ -196,39 +263,37 @@ sealed private[datastore] trait DatastoreCreateListMethods {
 }
 
 sealed private[datastore] trait DatastoreUpdateMethods {
-  self: DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods =>
+  self: DatastoreBase with DatastorePutMethods with DatastoreGetProjectionMethods =>
 
   def updateWithoutTx(entity: Entity): Key = updateWithTx(null, entity)
 
-  def updateWithTx(tx: Transaction, entity: Entity): Key = (entity.versionProperty, getOptionWithTx(tx, entity.key).flatMap(_.versionProperty)) match {
-    case (Some(v1), Some(v2)) if v1.value == v2.value => putWithTx(tx, entity)
-    case (Some(v1), Some(v2)) => throw new ConcurrentModificationException("invalid version property. %s store:%d, stored:%d".format(entity.key, v1.value, v2.value))
-    case (Some(v1), None) => throw new IllegalStateException("entity is not exists in datastore.")
-    case (None, _) => putWithTx(tx, entity)
+  def updateWithTx(tx: Transaction, entity: Entity): Key = entity.versionProperty match {
+    case Some(v) if entity.isSameVersion(getProjection(entity.key, Map(v.name -> classOf[java.lang.Long]))) => putWithTx(tx, entity)
+    case Some(v) => throw new ConcurrentModificationException("invalid version property. %s ver. %d".format(entity.key, v.value))
+    case None => putWithTx(tx, entity)
   }
 
-  def update(entity: Entity): Key = (entity.versionProperty, getOption(entity.key).flatMap(_.versionProperty)) match {
-    case (Some(v1), Some(v2)) if v1.value == v2.value => put(entity)
-    case (Some(v1), Some(v2)) => throw new ConcurrentModificationException("invalid version property. %s store:%d, stored:%d".format(entity.key, v1.value, v2.value))
-    case (Some(v1), None) => throw new IllegalStateException("entity is not exists in datastore.")
-    case (None, _) => put(entity)
+  def update(entity: Entity): Key = entity.versionProperty match {
+    case Some(v) if entity.isSameVersion(getProjection(entity.key, Map(v.name -> classOf[java.lang.Long]))) => put(entity)
+    case Some(v) => throw new ConcurrentModificationException("invalid version property. %s ver. %d".format(entity.key, v.value))
+    case None => put(entity)
   }
 }
 
 sealed private[datastore] trait DatastoreUpdateListMethods {
-  self: DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods =>
+  self: DatastoreBase with DatastorePutListMethods with DatastoreGetProjectionListMethods =>
 
   def updateWithoutTx(entities: Seq[Entity]): Seq[Key] = updateWithTx(null, entities)
 
   def updateWithTx(tx: Transaction, entities: Seq[Entity]): Seq[Key] = {
-    val got = get(entities.map(_.key)).values.toSeq
+    val got = getProjectionWithTx(tx, entities.map(_.key), Map(entities.head.versionProperty.get.name -> classOf[java.lang.Long])).values.toSeq
     val invalids = getInvalidVersion(entities, got)
     if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property.\n" + invalids.mkString("\n"))
     putWithTx(tx, entities)
   }
 
   def update(entities: Seq[Entity]): Seq[Key] = {
-    val got = get(entities.map(_.key)).values.toSeq
+    val got = getProjection(entities.map(_.key), Map(entities.head.versionProperty.get.name -> classOf[java.lang.Long])).values.toSeq
     val invalids = getInvalidVersion(entities.sortBy(_.key), got.sortBy(_.key))
     if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property. " + invalids)
     put(entities)
@@ -238,7 +303,7 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
     assert(entity1.size == entity2.size)
     entity1.zip(entity2)
       .filterNot { case (e1, e2) => e1.isSameVersion(e2) }
-      .map { case (e1, e2) => "%s store:%d, stored:%d".format(e1.key, e1.version.get, e2.version.get) }
+      .map { case (e1, e2) => "key:%s version:%d".format(e1.key, e1.version.get) }
   }
 }
 

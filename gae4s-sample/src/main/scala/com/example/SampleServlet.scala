@@ -11,8 +11,8 @@ class SampleServlet extends HttpServlet {
 
     val tx = Datastore.beginTx
     val key = Datastore.createKey("counter", 1)
-    val entity = Datastore.getOption(key).getOrElse(new Entity(key, Seq(UnindexedProperty("count", 0), CreationDateProperty(new Date))))
-    val counted = entity.set("count", entity[Long]("count") + 1L)
+    val entity = Datastore.getOption(key).getOrElse(new Entity(key, Seq(UnindexedProperty[Long]("count", 0), IndexedProperty("createdAt", new Date))))
+    val counted = entity.set("count", entity[Long]("count") + 1)
     Datastore.put(counted)
     tx.commit()
 
