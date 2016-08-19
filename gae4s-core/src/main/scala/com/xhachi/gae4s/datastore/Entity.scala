@@ -45,9 +45,9 @@ case class Entity(key: Key, properties: Seq[Property[_]] = Seq.empty) {
   protected[datastore] def entity: LLEntity = {
     val e = new LLEntity(key.key)
     properties.foreach {
-      case UnindexedProperty(name, value: Key) => e.setProperty(name, value.key)
-      case UnindexedProperty(name, value: Seq[_]) => e.setProperty(name, value.asJava)
-      case UnindexedProperty(name, value) => e.setProperty(name, value)
+      case UnindexedProperty(name, value: Key) => e.setUnindexedProperty(name, value.key)
+      case UnindexedProperty(name, value: Seq[_]) => e.setUnindexedProperty(name, value.asJava)
+      case UnindexedProperty(name, value) => e.setUnindexedProperty(name, value)
       case IndexedProperty(name, value: Key) => e.setIndexedProperty(name, value.key)
       case IndexedProperty(name, value: Seq[_]) => e.setIndexedProperty(name, value.asJava)
       case IndexedProperty(name, value) => e.setIndexedProperty(name, value)
