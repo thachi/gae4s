@@ -2,6 +2,7 @@ package com.xhachi.gae4s.datastore
 
 import java.util.Date
 
+import com.google.appengine.api.datastore.Blob
 import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
 import com.xhachi.gae4s.tests.AppEngineTestSuite
 import org.scalatest.FunSuite
@@ -17,10 +18,11 @@ class EntityTest extends FunSuite with AppEngineTestSuite {
       IndexedProperty("name", "Taro"),
       IndexedProperty("height", 123),
       IndexedProperty("deleted", true),
+      IndexedProperty("blob", new Blob("test".getBytes)),
       IndexedProperty("createdAt", new Date)
     ))
 
-    assert(target.properties.size == 4)
+    assert(target.properties.size == 5)
     assert(target.properties.map(_.name).contains("name"))
 
     val nameProperty: Option[Property[_]] = target.properties.find(_.name == "name")
