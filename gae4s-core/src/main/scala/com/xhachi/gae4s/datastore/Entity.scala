@@ -1,5 +1,7 @@
 package com.xhachi.gae4s.datastore
 
+import java.util
+
 import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery}
 
 import scala.collection.JavaConverters._
@@ -10,8 +12,10 @@ object Entity {
     Key(e.getKey),
     e.getProperties.asScala.toSeq.map {
       case (k, v: LLKey) if !e.isUnindexedProperty(k) => IndexedProperty(k, Key(v))
+      case (k, v: util.ArrayList[_]) if !e.isUnindexedProperty(k) => IndexedProperty(k, v.asScala)
       case (k, v) if !e.isUnindexedProperty(k) => IndexedProperty(k, v)
       case (k, v: LLKey) => UnindexedProperty(k, Key(v))
+      case (k, v: util.ArrayList[_]) => UnindexedProperty(k, v.asScala)
       case (k, v) => UnindexedProperty(k, v)
     }
   )
