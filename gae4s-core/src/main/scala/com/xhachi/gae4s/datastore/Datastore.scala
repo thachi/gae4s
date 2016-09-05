@@ -285,18 +285,24 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
 
   def updateWithoutTx(entities: Seq[Entity]): Seq[Key] = updateWithTx(null, entities)
 
-  def updateWithTx(tx: Transaction, entities: Seq[Entity]): Seq[Key] = {
-    val got = getProjectionWithTx(tx, entities.map(_.key), Map(entities.head.versionProperty.get.name -> classOf[java.lang.Long])).values.toSeq
-    val invalids = getInvalidVersion(entities, got)
-    if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property.\n" + invalids.mkString("\n"))
-    putWithTx(tx, entities)
+  def updateWithTx(tx: Transaction, entities: Seq[Entity]): Seq[Key] = entities.head.versionProperty match {
+    case Some(v) =>
+      val got = getProjectionWithTx(tx, entities.map(_.key), Map(v.name -> classOf[java.lang.Long])).values.toSeq
+      val invalids = getInvalidVersion(entities, got)
+      if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property.\n" + invalids.mkString("\n"))
+      putWithTx(tx, entities)
+    case None =>
+      putWithTx(tx, entities)
   }
 
-  def update(entities: Seq[Entity]): Seq[Key] = {
-    val got = getProjection(entities.map(_.key), Map(entities.head.versionProperty.get.name -> classOf[java.lang.Long])).values.toSeq
-    val invalids = getInvalidVersion(entities.sortBy(_.key), got.sortBy(_.key))
-    if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property. " + invalids)
-    put(entities)
+  def update(entities: Seq[Entity]): Seq[Key] = entities.head.versionProperty match {
+    case Some(v) =>
+      val got = getProjection(entities.map(_.key), Map(v.name -> classOf[java.lang.Long])).values.toSeq
+      val invalids = getInvalidVersion(entities.sortBy(_.key), got.sortBy(_.key))
+      if (invalids.nonEmpty) throw new ConcurrentModificationException("invalid version property. " + invalids)
+      put(entities)
+    case None =>
+      put(entities)
   }
 
   private def getInvalidVersion(entity1: Seq[Entity], entity2: Seq[Entity]): Seq[String] = {
