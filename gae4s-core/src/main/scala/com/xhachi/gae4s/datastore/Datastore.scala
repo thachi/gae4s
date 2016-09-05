@@ -257,7 +257,7 @@ sealed private[datastore] trait DatastoreCreateListMethods {
 
   def create(entities: Seq[Entity]): Seq[Key] = {
     val keys = entities.map(_.key)
-    if (get(keys).exists(_._2 == null)) throw new ConcurrentModificationException("entity which is stored already is included")
+    if (get(keys).nonEmpty) throw new ConcurrentModificationException("entity which is stored already is included")
     put(entities)
   }
 }

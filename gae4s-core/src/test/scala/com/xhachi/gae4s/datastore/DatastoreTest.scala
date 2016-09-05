@@ -155,6 +155,49 @@ class DatastoreTest
     assert(actual(key2)[Date]("createdAt") != null)
   }
 
+
+  test("createしてcountが増えること") {
+    val count1 = Datastore.count(Query("user"))
+    assert(count1 == 0)
+
+    val s = Entity(Datastore.createKey("user", 1))
+    Datastore.create(s)
+
+    val count2 = Datastore.count(Query("user"))
+    assert(count2 == 1)
+  }
+
+  test("同じEntityをcreateしてエラーとなること") {
+
+    val s = Entity(Datastore.createKey("user", 1))
+    Datastore.create(s)
+
+    intercept[ConcurrentModificationException] {
+      Datastore.create(s)
+    }
+  }
+
+  test("create allしてcountが増えること") {
+    val count1 = Datastore.count(Query("user"))
+    assert(count1 == 0)
+
+    val s = Entity(Datastore.createKey("user", 1))
+    Datastore.create(s :: Nil)
+
+    val count2 = Datastore.count(Query("user"))
+    assert(count2 == 1)
+  }
+
+  test("同じEntityをcreate allしてエラーとなること") {
+
+    val s = Entity(Datastore.createKey("user", 1))
+    Datastore.create(s :: Nil)
+
+    intercept[ConcurrentModificationException] {
+      Datastore.create(s :: Nil)
+    }
+  }
+
   test("Versionプロパティが正しく処理されること") {
     val key: Key = Datastore.createKey("user", "key_name")
     val expected = Entity(key, Seq(
