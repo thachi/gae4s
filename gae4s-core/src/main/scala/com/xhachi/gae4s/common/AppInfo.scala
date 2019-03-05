@@ -7,34 +7,27 @@ import com.google.appengine.api.utils.SystemProperty
   */
 object AppInfo {
 
-  val Runtime = "com.google.appengine.runtime"
+  private val RuntimePrefix: String = "com.google.appengine.runtime"
 
-  val EnvironmentKey = Runtime + ".environment"
+  private val EnvironmentKey: String = RuntimePrefix + ".environment"
 
   def version: String = versionOption.getOrElse(throw new IllegalStateException("version is not defined."))
 
-  def versionOption: Option[String] = SystemProperty.applicationVersion.get() match {
-    case v: String => Some(v)
-    case _ => None
-  }
+  def versionOption: Option[String] = Option(SystemProperty.applicationVersion.get)
 
   def id: String = idOption.getOrElse(throw new IllegalStateException("id is not defined."))
 
-  def idOption: Option[String] = SystemProperty.applicationId.get() match {
-    case i: String => Some(i)
-    case _ => None
-  }
+  def idOption: Option[String] = Option(SystemProperty.applicationId.get)
 
-  def environment = System.getProperty(EnvironmentKey) match {
-    case null => None
-    case e => Some(e)
-  }
+  def environmentOption: Option[String] = Option(System.getProperty(EnvironmentKey))
 
-  def isServer: Boolean = environment.isDefined
+  def environment: String = environmentOption.getOrElse(throw new IllegalStateException("environment is not defined."))
 
-  def isDevelopment: Boolean = environment.contains("Development")
+  def isServer: Boolean = environmentOption.isDefined
 
-  def isProduction: Boolean = environment.contains("Production")
+  def isDevelopment: Boolean = environmentOption.contains("Development")
+
+  def isProduction: Boolean = environmentOption.contains("Production")
 
 
 }

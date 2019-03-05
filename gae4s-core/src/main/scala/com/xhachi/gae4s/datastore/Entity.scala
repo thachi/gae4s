@@ -65,7 +65,7 @@ case class Entity(key: Key, properties: Seq[Property[_]] = Seq.empty) {
   def isSameKind(other: Entity): Boolean = key == other.key
 
   def isSameVersion(other: Entity): Boolean = isSameKind(other) && {
-    (version, versionProperty.flatMap(v => other.get[Long](v.name))) match {
+    (version, other.version) match {
       case (Some(v1), Some(v2)) => v1 == v2
       case _ => true
     }

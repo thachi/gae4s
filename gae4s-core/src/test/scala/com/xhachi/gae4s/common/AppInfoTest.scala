@@ -8,7 +8,7 @@ class AppInfoTest extends FunSuite {
     assert(AppInfo.idOption == None)
     assert(AppInfo.versionOption == None)
     assert(!AppInfo.isServer)
-    assert(AppInfo.environment == None)
+    assert(AppInfo.environmentOption == None)
     assert(!AppInfo.isProduction)
     assert(!AppInfo.isDevelopment)
   }
