@@ -8,6 +8,7 @@ val scalatestVersion = "3.0.5"
 
 ThisBuild / organization := "com.xhachi"
 ThisBuild / scalaVersion := "2.11.12"
+ThisBuild / crossScalaVersions := "2.11.12" :: "2.12.8" :: Nil
 ThisBuild / parallelExecution in Test := false
 
 ThisBuild / releaseProcess := Seq[ReleaseStep](
@@ -63,8 +64,6 @@ lazy val sample = (project in file("gae4s-sample"))
   .dependsOn(core, scalatest % "test")
 
 val defaultDependency = Seq(
-  "org.json4s" %% "json4s-native" % json4sVersion,
-  "org.json4s" %% "json4s-ext" % json4sVersion,
   "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
   "com.google.appengine.tools" % "appengine-gcs-client" % gcsVersion,
   "com.google.appengine" % "appengine-tools-sdk" % appengineVersion % "test",

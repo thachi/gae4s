@@ -1,6 +1,6 @@
 package com.xhachi.gae4s.cloudstrage
 
-import java.io.{OutputStream, OutputStreamWriter, StringReader}
+import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.util.Date
@@ -9,8 +9,6 @@ import com.google.appengine.tools.cloudstorage.GcsFileOptions.Builder
 import com.google.appengine.tools.cloudstorage._
 import com.xhachi.gae4s.cloudstrage.CloudStorage.MimeType
 import com.xhachi.gae4s.common.Logger
-
-import scala.xml.{Elem, XML}
 
 object CloudStorage extends Logger {
 
@@ -56,8 +54,6 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
   extends ReadOps
     with WriteOps
     with ListOps
-    with JsonOps
-    with XMLOpt
     with Logger {
 
   def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
@@ -179,53 +175,5 @@ sealed trait ListOps {
     b.setPrefix(prefix)
     b.build()
   }
-}
-
-sealed trait XMLOpt {
-
-  def readXML(path: String): Option[Elem] = {
-    readByteBuffer(path).map(b => XML.loadString(new String(b.array(), "UTF-8")))
-  }
-
-  def writeXML(path: String, xml: Elem, public: Boolean = false): Unit = {
-    val writer = new OutputStreamWriter(getOutputStream(path, Some(MimeType.Xml), public))
-    try {
-      XML.write(writer, xml, "UTF-8", xmlDecl = true, doctype = null)
-    }
-    finally {
-      writer.flush()
-      writer.close()
-    }
-  }
-
-  def readByteBuffer(path: String): Option[ByteBuffer]
-
-  def getOutputStream(path: String, mimeType: Option[String] = None, public: Boolean = false): OutputStream
-
-}
-
-sealed trait JsonOps {
-
-  import org.json4s._
-  import org.json4s.native.JsonMethods._
-  import org.json4s.native.Serialization
-
-  implicit var formats = DefaultFormats
-
-  def readJson(path: String): Option[JValue] = {
-
-    readBytes(path) map (b => parse(new StringReader(new String(b, "UTF-8"))))
-  }
-
-  def writeJson(path: String, value: JValue, public: Boolean = false): Unit = {
-
-    val b = Serialization.write(value).getBytes("UTF-8")
-    writeBytes(path, b, public = public)
-  }
-
-  def readBytes(path: String): Option[Array[Byte]]
-
-  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false): Unit
-
 }
 

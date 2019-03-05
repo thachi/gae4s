@@ -1,15 +1,13 @@
 package com.xhachi.gae4s.cloudstrage
 
-import com.google.appengine.tools.cloudstorage.{GcsServiceFactory, RetryParams}
 import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
-import org.json4s.JsonAST.{JString, JValue}
 import org.scalatest.FunSuite
 
 class CloudStorageTest extends FunSuite
   with AppEngineTestSuite
   with LocalServiceTestConfig.Datastore {
 
-  val target: CloudStorage = new CloudStorage(GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance), "test")
+  val target: CloudStorage = CloudStorage("test")
 
   test("とりあえず動かしてみる") {
     val s = "test"
@@ -136,48 +134,5 @@ class CloudStorageTest extends FunSuite
     assert(actual.nonEmpty)
     assert(actual.map(_.name) == Stream("dir/a.txt"))
   }
-
-  test("writeJson") {
-    import org.json4s.JsonDSL._
-
-    val json: JValue = ("name" -> "ロト") ~ ("age" -> 16)
-
-    target.writeJson("path/json", json)
-    val actual = target.readJson("path/json")
-
-    assert(actual.isDefined)
-
-    val JString(name) = actual.get \ "name"
-    assert(name == "ロト")
-  }
-
-  test("writeXML") {
-
-    val xml = <char name="ロト" age="16"/>
-
-    target.writeXML("path/xml", xml)
-    val actual = target.readXML("path/xml")
-
-    assert(actual.isDefined)
-
-    val name = actual.get \ "@name"
-    assert(name.nonEmpty)
-    assert(name.head.text == "ロト")
-  }
-
-  test("writeJson(拡張子あり)") {
-    import org.json4s.JsonDSL._
-
-    val json: JValue = ("name" -> "ロト") ~ ("age" -> 16)
-
-    target.writeJson("path/json.json", json)
-    val actual = target.readJson("path/json.json")
-
-    assert(actual.isDefined)
-
-    val JString(name) = actual.get \ "name"
-    assert(name == "ロト")
-  }
-
 
 }
