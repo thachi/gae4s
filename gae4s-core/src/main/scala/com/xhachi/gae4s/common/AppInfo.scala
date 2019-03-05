@@ -19,7 +19,7 @@ object AppInfo {
 
   def idOption: Option[String] = Option(SystemProperty.applicationId.get)
 
-  def environmentOption: Option[String] = Option(System.getProperty(EnvironmentKey))
+  def environmentOption: Option[String] = SystemInfo.propertyOption(EnvironmentKey)
 
   def environment: String = environmentOption.getOrElse(throw new IllegalStateException("environment is not defined."))
 

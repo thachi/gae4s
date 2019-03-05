@@ -2,12 +2,7 @@ package com.xhachi.gae4s.common
 
 object SystemInfo {
 
-  def getPropertyOption(key: String): Option[String] = getProperty(key) match {
-    case s: String => Some(s)
-    case _ => None
-  }
+  def propertyOption(key: String): Option[String] = Option(property(key))
 
-  def getProperty(key: String): String = {
-    System.getProperty(key)
-  }
+  def property(key: String): String = System.getProperty(key)
 }
