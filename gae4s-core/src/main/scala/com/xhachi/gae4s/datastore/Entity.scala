@@ -2,7 +2,7 @@ package com.xhachi.gae4s.datastore
 
 import java.util
 
-import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery}
+import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey}
 
 import scala.collection.JavaConverters._
 
@@ -36,10 +36,12 @@ case class Entity(key: Key, properties: Seq[Property[_]] = Seq.empty) {
 
   def set[T](name: String, value: T): Entity = Entity(
     key,
-    properties.map {
-      case p: Property[T] if p.name == name => p.withValue(value)
-      case p => p
-    }
+    if(properties.exists(_.name == name)) {
+      properties.map {
+        case p: Property[_] if p.name == name => p.asInstanceOf[Property[T]].withValue(value)
+        case p => p
+      }
+    } else throw new IllegalArgumentException(s"""Property "$name" is not found.""")
   )
 
   protected[datastore] def entity: LLEntity = {
@@ -58,11 +60,11 @@ case class Entity(key: Key, properties: Seq[Property[_]] = Seq.empty) {
 
   def version: Option[Long] = versionProperty.map(_.value)
 
-  def versionProperty = properties.find(_.isInstanceOf[VersionProperty]).map(_.asInstanceOf[VersionProperty])
+  def versionProperty: Option[VersionProperty] = properties.find(_.isInstanceOf[VersionProperty]).map(_.asInstanceOf[VersionProperty])
 
-  def isSameKind(other: Entity) = key == other.key
+  def isSameKind(other: Entity): Boolean = key == other.key
 
-  def isSameVersion(other: Entity) = isSameKind(other) && {
+  def isSameVersion(other: Entity): Boolean = isSameKind(other) && {
     (version, versionProperty.flatMap(v => other.get[Long](v.name))) match {
       case (Some(v1), Some(v2)) => v1 == v2
       case _ => true
