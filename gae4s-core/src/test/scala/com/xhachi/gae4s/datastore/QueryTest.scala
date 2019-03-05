@@ -1,16 +1,13 @@
 package com.xhachi.gae4s.datastore
 
 import com.google.appengine.api.datastore.Query.{FilterPredicate => LLFilterPredicate}
-import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.{FunSuite, Matchers}
 
-class QueryTest extends FunSuite with AppEngineTestSuite with Matchers {
+class QueryTest extends FunSuite with Matchers with AppEngineTestSuite  with LocalServiceTestConfig.Datastore {
 
   import Query.Implicits._
-
-  override def _localServiceTestConfigs = new LocalDatastoreServiceTestConfig :: super._localServiceTestConfigs
-
+  
   test("User#heightで==のフィルタができること") {
     val q = Query("user").filter("height" === 1)
     assert(q != null)

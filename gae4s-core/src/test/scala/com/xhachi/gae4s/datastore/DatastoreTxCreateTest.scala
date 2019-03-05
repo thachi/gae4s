@@ -2,15 +2,13 @@ package com.xhachi.gae4s.datastore
 
 import java.util.ConcurrentModificationException
 
-import com.google.appengine.tools.development.testing.LocalDatastoreServiceTestConfig
-import com.xhachi.gae4s.tests.AppEngineTestSuite
+import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.FunSuite
 
 
-class DatastoreTxCreateTest extends FunSuite with AppEngineTestSuite {
-
-  override def _localServiceTestConfigs = new LocalDatastoreServiceTestConfig :: super._localServiceTestConfigs
-
+class DatastoreTxCreateTest extends FunSuite
+  with AppEngineTestSuite
+  with LocalServiceTestConfig.Datastore {
 
   test("tx1開始→tx2開始→tx1でcreate→tx2でcreate→tx1コミット→tx2コミットでtx2コミット時にエラーになること") {
 

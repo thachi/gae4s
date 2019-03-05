@@ -93,10 +93,10 @@ class DatastoreTest
     Datastore.put(expected)
 
     val actual = Datastore.get(key)
-    assert(actual.properties.find(_.name == "name").get.isInstanceOf[IndexedProperty[String]])
-    assert(actual.properties.find(_.name == "height").get.isInstanceOf[IndexedProperty[Long]])
-    assert(actual.properties.find(_.name == "deleted").get.isInstanceOf[UnindexedProperty[Boolean]])
-    assert(actual.properties.find(_.name == "createdAt").get.isInstanceOf[IndexedProperty[Date]])
+    assert(actual.properties.find(_.name == "name").get.isInstanceOf[IndexedProperty[_]])
+    assert(actual.properties.find(_.name == "height").get.isInstanceOf[IndexedProperty[_]])
+    assert(actual.properties.find(_.name == "deleted").get.isInstanceOf[UnindexedProperty[_]])
+    assert(actual.properties.find(_.name == "createdAt").get.isInstanceOf[IndexedProperty[_]])
 
     assert(actual[String]("name") == expected[String]("name"))
     assert(actual[Long]("height") == expected[Long]("height"))
