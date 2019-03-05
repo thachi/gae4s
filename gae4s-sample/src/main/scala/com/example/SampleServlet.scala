@@ -1,8 +1,9 @@
 package com.example
 
 import java.util.Date
-import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
+import com.xhachi.gae4s.buildinfo.BuildInfo
+import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import com.xhachi.gae4s.datastore._
 
 class SampleServlet extends HttpServlet {
@@ -18,7 +19,10 @@ class SampleServlet extends HttpServlet {
 
     val w = response.getWriter
     w.println(s"count: " + entity.get("count"))
+    w.println("<br />")
     w.println(s"update: " + entity.get("createdAt"))
+    w.println("<hr />")
+    w.println(s"gae4s: " + BuildInfo.toString)
     w.flush()
   }
 
