@@ -29,15 +29,14 @@ class SampleServlet extends HttpServlet {
     tx.commit()
 
 
-    response.addHeader("Content-Type", "text/html")
+    response.addHeader("Content-Type", "text/plain")
 
     val w = response.getWriter
     w.println(s"count: " + entity.get("count"))
-    w.println("<br />")
+    w.println(s"count: " + entity.version)
     w.println(s"createdAt: " + entity.get("createdAt"))
-    w.println("<br />")
     w.println(s"updatedAt: " + entity.get("updatedAt"))
-    w.println("<hr />")
+    w.println("----------")
     w.println(s"gae4s: " + BuildInfo.toString)
     w.flush()
   }
