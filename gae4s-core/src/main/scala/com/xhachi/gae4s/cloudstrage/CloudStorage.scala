@@ -63,21 +63,23 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
 
   def copy(source: String, dist: String): Unit = service.copy(pathToFilename(source), pathToFilename(dist))
 
-  def list(options: ListOptions): Stream[Item] = {
-    def toStream(result: ListResult): Stream[ListItem] = {
-      if (result.hasNext) {
-        result.next #:: toStream(result)
-      } else {
-        Stream.Empty
-      }
-    }
+  def list(options: ListOptions): Iterator[Item] = {
+    val list = service.list(bucketName, options)
 
-    toStream(service.list(bucketName, options)).map { i =>
-      Item(i.getName, i.getLength, i.getLastModified, i.isDirectory, i.getEtag match {
+    new Iterator[ListItem] {
+
+      override def hasNext: Boolean = list.hasNext
+
+      override def next(): ListItem = list.next()
+
+    }.map { i =>
+      val tag = i.getEtag match {
         case t: String => Some(t)
         case _ => None
-      })
+      }
+      Item(i.getName, i.getLength, i.getLastModified, i.isDirectory, tag)
     }
+
   }
 
   def delete(path: String): Boolean = {
@@ -161,11 +163,11 @@ sealed trait ReadOps {
 
 sealed trait ListOps {
 
-  def list(options: ListOptions): Stream[Item]
+  def list(options: ListOptions): Iterator[Item]
 
-  def listAll: Stream[Item] = list(ListOptions.DEFAULT)
+  def listAll: Iterator[Item] = list(ListOptions.DEFAULT)
 
-  def listWithPrefix(prefix: String): Stream[Item] = list {
+  def listWithPrefix(prefix: String): Iterator[Item] = list {
     val b = new ListOptions.Builder
     b.setPrefix(prefix)
     b.build()

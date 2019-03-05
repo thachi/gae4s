@@ -67,7 +67,7 @@ class CloudStorageTest extends FunSuite
     Thread.sleep(1)
     target.writeText("sample.txt", "hoge")
 
-    val actual = target.listAll
+    val actual = target.listAll.toSeq
     assert(actual.nonEmpty)
     assert(actual.head.name == "sample.txt")
     assert(actual.head.size == 4)
@@ -83,7 +83,7 @@ class CloudStorageTest extends FunSuite
 
     val actual = target.listAll
     assert(actual.nonEmpty)
-    assert(actual.map(_.name) == Stream("a.txt", "b.txt"))
+    assert(actual.map(_.name).toSeq == Seq("a.txt", "b.txt"))
   }
 
   test("ファイルを複数保存してlistAllで名前順で情報が取得できること") {
@@ -92,7 +92,7 @@ class CloudStorageTest extends FunSuite
 
     val actual = target.listAll
     assert(actual.nonEmpty)
-    assert(actual.map(_.name) == Stream("a.txt", "b.txt"))
+    assert(actual.map(_.name).toSeq == Seq("a.txt", "b.txt"))
   }
 
   test("ディレクトリ内にファイルを保存してlistAllで情報が取得できること") {
@@ -102,7 +102,7 @@ class CloudStorageTest extends FunSuite
 
     val actual = target.listAll
     assert(actual.nonEmpty)
-    assert(actual.map(_.name) == Stream("dir1/a.txt", "dir1/b.txt", "dir2/c.txt"))
+    assert(actual.map(_.name).toSeq == Seq("dir1/a.txt", "dir1/b.txt", "dir2/c.txt"))
   }
 
   test("ディレクトリ内にファイルを保存してlistAllで名前順で情報が取得できること") {
@@ -112,7 +112,7 @@ class CloudStorageTest extends FunSuite
 
     val actual = target.listAll
     assert(actual.nonEmpty)
-    assert(actual.map(_.name) == Stream("dir1/a.txt", "dir1/c.txt", "dir2/b.txt"))
+    assert(actual.map(_.name).toSeq == Seq("dir1/a.txt", "dir1/c.txt", "dir2/b.txt"))
   }
 
   test("listWithPrefixで情報が取得できること1") {
@@ -122,7 +122,7 @@ class CloudStorageTest extends FunSuite
 
     val actual = target.listWithPrefix("dir")
     assert(actual.nonEmpty)
-    assert(actual.map(_.name) == Stream("dir/a.txt", "dir1/b.txt", "dir2/dir/c.txt"))
+    assert(actual.map(_.name).toSeq == Seq("dir/a.txt", "dir1/b.txt", "dir2/dir/c.txt"))
   }
 
   test("listWithPrefixで情報が取得できること2") {
@@ -132,7 +132,7 @@ class CloudStorageTest extends FunSuite
 
     val actual = target.listWithPrefix("dir/")
     assert(actual.nonEmpty)
-    assert(actual.map(_.name) == Stream("dir/a.txt"))
+    assert(actual.map(_.name).toSeq == Seq("dir/a.txt"))
   }
 
 }
