@@ -82,10 +82,7 @@ sealed private[datastore] trait DatastoreGetProjectionMethods {
 
     import scala.collection.JavaConverters._
     val entities = service.prepare(tx, q).asList(FetchOptions.Builder.withLimit(1)).asScala.toList
-    entities match {
-      case e :: Nil => Entity(e)
-      case Nil => throw new IllegalArgumentException(s"$key is not found.")
-    }
+    entities.headOption.map(Entity(_)).getOrElse(throw new IllegalArgumentException(s"$key is not found."))
   }
 
   def getProjection(key: Key, properties: Map[String, Class[_]]): Entity = {
@@ -95,10 +92,7 @@ sealed private[datastore] trait DatastoreGetProjectionMethods {
 
     import scala.collection.JavaConverters._
     val entities = service.prepare(q).asList(FetchOptions.Builder.withLimit(1)).asScala.toList
-    entities match {
-      case e :: Nil => Entity(e)
-      case Nil => throw new IllegalArgumentException(s"$key is not found.")
-    }
+    entities.headOption.map(Entity(_)).getOrElse(throw new IllegalArgumentException(s"$key is not found."))
   }
 }
 
