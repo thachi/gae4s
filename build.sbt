@@ -7,7 +7,7 @@ val json4sVersion = "3.3.0"
 val scalatestVersion = "3.0.5"
 
 ThisBuild / organization := "com.xhachi"
-ThisBuild / scalaVersion := "2.11.12"
+ThisBuild / scalaVersion := "2.12.8"
 ThisBuild / crossScalaVersions := "2.11.12" :: "2.12.8" :: Nil
 ThisBuild / parallelExecution in Test := false
 
