@@ -57,14 +57,9 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     with ListOps
     with Logger {
 
-  def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
+  private[cloudstrage] def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
 
-  def metadata(path: String): Option[GcsFileMetadata] = {
-    service.getMetadata(pathToFilename(path)) match {
-      case m: GcsFileMetadata => Some(m)
-      case _ => None
-    }
-  }
+  def metadata(path: String): Option[GcsFileMetadata] = Option(service.getMetadata(pathToFilename(path)))
 
   def copy(source: String, dist: String): Unit = service.copy(pathToFilename(source), pathToFilename(dist))
 
@@ -92,14 +87,13 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
   }
 
   def readByteBuffer(path: String): Option[ByteBuffer] = {
-    metadata(path).map {
-      case m =>
-        info("CloudStorage[" + bucketName + "] read : " + path)
-        val fileSize = m.getLength.toInt
-        val result = ByteBuffer.allocate(fileSize)
-        val c = service.openReadChannel(pathToFilename(path), 0)
-        c.read(result)
-        result
+    metadata(path).map { m =>
+      info("CloudStorage[" + bucketName + "] read : " + path)
+      val fileSize = m.getLength.toInt
+      val result = ByteBuffer.allocate(fileSize)
+      val c = service.openReadChannel(pathToFilename(path), 0)
+      c.read(result)
+      result
     }
   }
 
@@ -127,7 +121,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     Channels.newOutputStream(outputChannel)
   }
 
-  def toGcsFileOption(path: String, mimeType: Option[String], public: Boolean): GcsFileOptions = {
+  private[cloudstrage] def toGcsFileOption(path: String, mimeType: Option[String], public: Boolean): GcsFileOptions = {
     val builder = new Builder()
 
     if (public) {
@@ -155,7 +149,7 @@ sealed trait WriteOps {
 
   def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false): Unit
 
-  def writeText(path: String, text: String) = writeBytes(path, text.getBytes("UTF-8"), Some(MimeType.Text))
+  def writeText(path: String, text: String): Unit = writeBytes(path, text.getBytes("UTF-8"), Some(MimeType.Text))
 }
 
 sealed trait ReadOps {
