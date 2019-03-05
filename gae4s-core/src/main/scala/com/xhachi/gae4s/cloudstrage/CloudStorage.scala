@@ -134,7 +134,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
         builder.mimeType(m).build()
       case None =>
         CloudStorage.Ext2MimeType.find {
-          case (e, m) => path.endsWith(e)
+          case (e, _) => path.endsWith(e)
         }.map(_._2).map { m =>
           builder.mimeType(m).build()
         }.getOrElse {
