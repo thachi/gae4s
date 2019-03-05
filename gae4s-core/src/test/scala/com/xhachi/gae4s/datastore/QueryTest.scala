@@ -4,10 +4,10 @@ import com.google.appengine.api.datastore.Query.{FilterPredicate => LLFilterPred
 import com.xhachi.gae4s.tests.{AppEngineTestSuite, LocalServiceTestConfig}
 import org.scalatest.{FunSuite, Matchers}
 
-class QueryTest extends FunSuite with Matchers with AppEngineTestSuite  with LocalServiceTestConfig.Datastore {
+class QueryTest extends FunSuite with Matchers with AppEngineTestSuite with LocalServiceTestConfig.Datastore {
 
   import Query.Implicits._
-  
+
   test("User#heightで==のフィルタができること") {
     val q = Query("user").filter("height" === 1)
     assert(q != null)
@@ -161,7 +161,7 @@ class QueryTest extends FunSuite with Matchers with AppEngineTestSuite  with Loc
   }
 
   test("User#heightでソートできること") {
-    val q: Query = Query("user").sort(s("height").asc)
+    val q: Query = Query("user").sort("height".asc)
     val s1 = q.sorts
     assert(s1.nonEmpty)
     assert(s1.head.name == "height")
@@ -169,14 +169,14 @@ class QueryTest extends FunSuite with Matchers with AppEngineTestSuite  with Loc
   }
 
   test("User#heightで逆順ソートできること") {
-    val q: Query = Query("user").sort(s("height").desc)
+    val q: Query = Query("user").sort("height".desc)
     val s1 = q.sorts
     assert(s1.nonEmpty)
     assert(s1.head.name == "height")
     assert(s1.head.direction == Sort.Direction.Descending)
   }
   test("User#twitterでソートできること") {
-    val q: Query = Query("user").sort(s("twitter"))
+    val q: Query = Query("user").sort("twitter")
     val s1 = q.sorts
     assert(s1.nonEmpty)
     assert(s1.head.name == "twitter")
@@ -184,7 +184,7 @@ class QueryTest extends FunSuite with Matchers with AppEngineTestSuite  with Loc
   }
 
   test("User#twitterで逆順ソートできること") {
-    val q: Query = Query("user").sort(s("twitter").desc)
+    val q: Query = Query("user").sort("twitter".desc)
     val s1 = q.sorts
     assert(s1.nonEmpty)
     assert(s1.head.name == "twitter")

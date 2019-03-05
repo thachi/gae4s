@@ -27,7 +27,7 @@ object CloudStorage extends Logger {
     val Png = "image/png"
   }
 
-  val Ext2MimeType = Map(
+  private val Ext2MimeType: Map[String, String] = Map(
     ".html" -> MimeType.Html,
     ".txt" -> MimeType.Text,
     ".xml" -> MimeType.Xml,
@@ -41,11 +41,12 @@ object CloudStorage extends Logger {
     ".png" -> MimeType.Png
   )
 
-  def apply(bucketName: String): CloudStorage = CloudStorage(defaultService, bucketName)
+  private val DefaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
+
+  def apply(bucketName: String): CloudStorage = CloudStorage(DefaultService, bucketName)
 
   def apply(service: GcsService, bucketName: String): CloudStorage = new CloudStorage(service, bucketName)
 
-  def defaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
 }
 
 case class Item(name: String, size: Long, lastModified: Date, directory: Boolean, etag: Option[String])
@@ -65,7 +66,7 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     }
   }
 
-  def copy(source: String, dist: String) = service.copy(pathToFilename(source), pathToFilename(dist))
+  def copy(source: String, dist: String): Unit = service.copy(pathToFilename(source), pathToFilename(dist))
 
   def list(options: ListOptions): Stream[Item] = {
     def toStream(result: ListResult): Stream[ListItem] = {
