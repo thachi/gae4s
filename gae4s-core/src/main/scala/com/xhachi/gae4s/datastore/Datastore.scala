@@ -3,10 +3,9 @@ package com.xhachi.gae4s.datastore
 import java.util.ConcurrentModificationException
 
 import com.google.appengine.api.datastore.Query.{FilterOperator, CompositeFilter => LLCompositeFilter, Filter => LLFilter, FilterPredicate => LLFilterPredicate}
-import com.google.appengine.api.datastore.{Entity => LLEntity, Key => LLKey, Query => LLQuery, _}
+import com.google.appengine.api.datastore.{Query => LLQuery, _}
 
-import scala.collection.JavaConversions._
-import scala.language.implicitConversions
+import scala.collection.JavaConverters._
 
 /**
   * Class to access Datastore service.
@@ -16,23 +15,23 @@ import scala.language.implicitConversions
   */
 class Datastore private[datastore](private[datastore] val service: DatastoreService)
   extends DatastoreBase
-    with DatastoreGetMethods
-    with DatastoreGetKeyMethods
-    with DatastoreGetOptionMethods
-    with DatastoreGetProjectionListMethods
-    with DatastoreGetProjectionMethods
-    with DatastoreGetListMethods
-    with DatastorePutMethods
-    with DatastorePutListMethods
-    with DatastoreCreateMethods
-    with DatastoreCreateListMethods
-    with DatastoreUpdateMethods
-    with DatastoreUpdateListMethods
-    with DatastoreDeleteMethods
-    with DatastoreDeleteListMethods
-    with DatastoreQueryMethods
-    with DatastoreCreateKeyMethods
-    with DatastoreTxMethods {
+    with DatastoreGetOps
+    with DatastoreGetKeyOps
+    with DatastoreGetOptionOps
+    with DatastoreGetProjectionListOps
+    with DatastoreGetProjectionOps
+    with DatastoreGetListOps
+    with DatastorePutOps
+    with DatastorePutListOps
+    with DatastoreCreateOps
+    with DatastoreCreateListOps
+    with DatastoreUpdateOps
+    with DatastoreUpdateListOps
+    with DatastoreDeleteOps
+    with DatastoreDeleteListOps
+    with DatastoreQueryOps
+    with DatastoreCreateKeyOps
+    with DatastoreTxOps {
 }
 
 /**
@@ -50,17 +49,17 @@ sealed private[datastore] trait DatastoreBase {
 
 }
 
-sealed private[datastore] trait DatastoreGetKeyMethods {
+sealed private[datastore] trait DatastoreGetKeyOps {
   self: DatastoreBase =>
 
   def getKeysWithoutTx: Seq[Key] = getKeysWithTx(null)
 
-  def getKeysWithTx(tx: Transaction): Seq[Key] = service.prepare(tx, new LLQuery().setKeysOnly()).asIterable().map(e => Key(e.getKey)).toSeq
+  def getKeysWithTx(tx: Transaction): Seq[Key] = service.prepare(tx, new LLQuery().setKeysOnly()).asIterable().asScala.map(e => Key(e.getKey)).toSeq
 
-  def getKeys: Seq[Key] = service.prepare(new LLQuery().setKeysOnly()).asIterable().map(e => Key(e.getKey)).toSeq
+  def getKeys: Seq[Key] = service.prepare(new LLQuery().setKeysOnly()).asIterable().asScala.map(e => Key(e.getKey)).toSeq
 }
 
-sealed private[datastore] trait DatastoreGetMethods {
+sealed private[datastore] trait DatastoreGetOps {
   self: DatastoreBase =>
 
   def getWithoutTx(key: Key): Entity = getWithTx(null, key)
@@ -70,7 +69,7 @@ sealed private[datastore] trait DatastoreGetMethods {
   def get(key: Key): Entity = Entity(service.get(key.key))
 }
 
-sealed private[datastore] trait DatastoreGetProjectionMethods {
+sealed private[datastore] trait DatastoreGetProjectionOps {
   self: DatastoreBase =>
 
   def getProjectionWithoutTx(key: Key, properties: Map[String, Class[_]]): Entity = getProjectionWithTx(null, key, properties)
@@ -96,41 +95,42 @@ sealed private[datastore] trait DatastoreGetProjectionMethods {
   }
 }
 
-sealed private[datastore] trait DatastoreGetOptionMethods {
-  self: DatastoreBase with DatastoreGetMethods =>
+sealed private[datastore] trait DatastoreGetOptionOps {
+  self: DatastoreBase with DatastoreGetOps =>
 
   def getOptionWithoutTx(key: Key): Option[Entity] = {
     getOptionWithTx(null, key)
   }
 
+  //TODO: 存在しない場合はNoneが返り、データアクセスに失敗した場合は例外が発生する。これで良いか検討する。
   def getOptionWithTx(tx: Transaction, key: Key): Option[Entity] = try {
     Some(getWithTx(tx, key))
   } catch {
-    case e: EntityNotFoundException => None
+    case _: EntityNotFoundException => None
   }
 
   def getOption(key: Key): Option[Entity] = try {
     Some(get(key))
   } catch {
-    case e: EntityNotFoundException => None
+    case _: EntityNotFoundException => None
   }
 }
 
-sealed private[datastore] trait DatastoreGetListMethods {
+sealed private[datastore] trait DatastoreGetListOps {
   self: DatastoreBase =>
 
   def getWithoutTx(keys: Seq[Key]): Map[Key, Entity] = getWithTx(null, keys)
 
   def getWithTx(tx: Transaction, keys: Seq[Key]): Map[Key, Entity] = {
-    val entities = service.get(tx, keys.map(_.key)).map {
+    val entities = service.get(tx, keys.map(_.key).asJava).asScala.map {
       case (k, v) => Key(k) -> Entity(v)
     }
     entities.toMap
   }
 
   def get(keys: Seq[Key]): Map[Key, Entity] = {
-    val got = service.get(keys.map(_.key))
-    val entities = got.map {
+    val got = service.get(keys.map(_.key).asJava)
+    val entities = got.asScala.map {
       case (k, v) => Key(k) -> Entity(v)
     }
     entities.toMap
@@ -138,7 +138,7 @@ sealed private[datastore] trait DatastoreGetListMethods {
 }
 
 
-sealed private[datastore] trait DatastoreGetProjectionListMethods {
+sealed private[datastore] trait DatastoreGetProjectionListOps {
   self: DatastoreBase =>
 
   import scala.collection.JavaConverters._
@@ -170,7 +170,7 @@ sealed private[datastore] trait DatastoreGetProjectionListMethods {
   }
 }
 
-sealed private[datastore] trait DatastoreDeleteMethods {
+sealed private[datastore] trait DatastoreDeleteOps {
   self: DatastoreBase =>
 
   def deleteWithoutTx(key: Key): Unit = deleteWithTx(null, key)
@@ -180,17 +180,17 @@ sealed private[datastore] trait DatastoreDeleteMethods {
   def delete(key: Key): Unit = service.delete(key.key)
 }
 
-sealed private[datastore] trait DatastoreDeleteListMethods {
+sealed private[datastore] trait DatastoreDeleteListOps {
   self: DatastoreBase =>
 
   def deleteWithoutTx(keys: Seq[Key]): Unit = deleteWithTx(null, keys)
 
-  def deleteWithTx(tx: Transaction, keys: Seq[Key]): Unit = service.delete(tx, keys.map(_.key))
+  def deleteWithTx(tx: Transaction, keys: Seq[Key]): Unit = service.delete(tx, keys.map(_.key).asJava)
 
-  def delete(keys: Seq[Key]): Unit = service.delete(keys.map(_.key))
+  def delete(keys: Seq[Key]): Unit = service.delete(keys.map(_.key).asJava)
 }
 
-sealed private[datastore] trait DatastorePutMethods extends DatastoreBase {
+sealed private[datastore] trait DatastorePutOps extends DatastoreBase {
 
   def putWithoutTx(entity: Entity): Key = putWithTx(null, entity)
 
@@ -205,41 +205,41 @@ sealed private[datastore] trait DatastorePutMethods extends DatastoreBase {
   }
 }
 
-sealed private[datastore] trait DatastorePutListMethods {
+sealed private[datastore] trait DatastorePutListOps {
   self: DatastoreBase =>
 
   def putWithoutTx(entities: Seq[Entity]): Seq[Key] = putWithTx(null, entities)
 
   def putWithTx(tx: Transaction, entities: Seq[Entity]): Seq[Key] = {
     val e = entities.map(_.entity)
-    service.put(tx, e).map(k => Key(k)).toSeq
+    service.put(tx, e.asJava).asScala.map(k => Key(k))
   }
 
   def put(entities: Seq[Entity]): Seq[Key] = {
     val e = entities.map(_.entity)
-    service.put(e).map(k => Key(k)).toSeq
+    service.put(e.asJava).asScala.map(k => Key(k))
   }
 }
 
-sealed private[datastore] trait DatastoreCreateMethods {
-  self: DatastoreBase with DatastorePutMethods with DatastoreGetOptionMethods =>
+sealed private[datastore] trait DatastoreCreateOps {
+  self: DatastoreBase with DatastorePutOps with DatastoreGetOptionOps =>
 
 
   def createWithoutTx(entity: Entity): Key = createWithTx(null, entity)
 
   def createWithTx(tx: Transaction, entity: Entity): Key = getOptionWithTx(tx, entity.key) match {
-    case Some(e) => throw new ConcurrentModificationException("entity was already stored")
+    case Some(_) => throw new ConcurrentModificationException("entity was already stored")
     case None => putWithTx(tx, entity)
   }
 
   def create(entity: Entity): Key = getOption(entity.key) match {
-    case Some(e) => throw new ConcurrentModificationException("entity was already stored")
+    case Some(_) => throw new ConcurrentModificationException("entity was already stored")
     case None => put(entity)
   }
 }
 
-sealed private[datastore] trait DatastoreCreateListMethods {
-  self: DatastoreBase with DatastorePutListMethods with DatastoreGetListMethods =>
+sealed private[datastore] trait DatastoreCreateListOps {
+  self: DatastoreBase with DatastorePutListOps with DatastoreGetListOps =>
 
   def createWithoutTx(entities: Seq[Entity]): Seq[Key] = createWithTx(null, entities)
 
@@ -256,8 +256,8 @@ sealed private[datastore] trait DatastoreCreateListMethods {
   }
 }
 
-sealed private[datastore] trait DatastoreUpdateMethods {
-  self: DatastoreBase with DatastorePutMethods with DatastoreGetProjectionMethods =>
+sealed private[datastore] trait DatastoreUpdateOps {
+  self: DatastoreBase with DatastorePutOps with DatastoreGetProjectionOps =>
 
   def updateWithoutTx(entity: Entity): Key = updateWithTx(null, entity)
 
@@ -274,8 +274,8 @@ sealed private[datastore] trait DatastoreUpdateMethods {
   }
 }
 
-sealed private[datastore] trait DatastoreUpdateListMethods {
-  self: DatastoreBase with DatastorePutListMethods with DatastoreGetProjectionListMethods =>
+sealed private[datastore] trait DatastoreUpdateListOps {
+  self: DatastoreBase with DatastorePutListOps with DatastoreGetProjectionListOps =>
 
   def updateWithoutTx(entities: Seq[Entity]): Seq[Key] = updateWithTx(null, entities)
 
@@ -303,11 +303,11 @@ sealed private[datastore] trait DatastoreUpdateListMethods {
     assert(entity1.size == entity2.size)
     entity1.zip(entity2)
       .filterNot { case (e1, e2) => e1.isSameVersion(e2) }
-      .map { case (e1, e2) => "key:%s version:%d".format(e1.key, e1.version.get) }
+      .map { case (e1, _) => "key:%s version:%d".format(e1.key, e1.version.get) }
   }
 }
 
-sealed private[datastore] trait DatastoreCreateKeyMethods {
+sealed private[datastore] trait DatastoreCreateKeyOps {
   self: DatastoreBase =>
 
   def createKey(kind: String, name: String): Key = Key(KeyFactory.createKey(kind, name))
@@ -321,14 +321,14 @@ sealed private[datastore] trait DatastoreCreateKeyMethods {
   def allocateKey(kind: String): Key = Key(service.allocateIds(kind, 1).getStart)
 
 
-  def allocateKeys(kind: String, count: Long): Seq[Key] = service.allocateIds(kind, count).map(Key(_)).toSeq
+  def allocateKeys(kind: String, count: Long): Seq[Key] = service.allocateIds(kind, count).asScala.map(Key(_)).toSeq
 
   def allocateKey(kind: String, parent: Key): Key = allocateKeys(kind, 1L).head
 
-  def allocateKeys(kind: String, parent: Key, count: Long): Seq[Key] = service.allocateIds(parent.key, kind, count).map(Key(_)).toSeq
+  def allocateKeys(kind: String, parent: Key, count: Long): Seq[Key] = service.allocateIds(parent.key, kind, count).asScala.map(Key(_)).toSeq
 }
 
-sealed private[datastore] trait DatastoreQueryMethods {
+sealed private[datastore] trait DatastoreQueryOps {
   self: DatastoreBase =>
 
   def countWithTx(tx: Transaction, query: Query): Int = _count(Some(tx), query)
@@ -369,7 +369,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
       case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
       case _ => FetchOptions.Builder.withDefaults()
     }
-    prepare(tx, q, keysOnly = false).asIterable(options).map {
+    prepare(tx, q, keysOnly = false).asIterable(options).asScala.map {
       e => Entity(e)
     }.toSeq
   }
@@ -394,10 +394,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
 
   private def _asSingleOption(tx: Option[Transaction], query: Query): Option[Entity] = {
     val q = query
-    prepare(tx, q, keysOnly = false).asSingleEntity() match {
-      case s: LLEntity => Some(Entity(s))
-      case e => None
-    }
+    Option(prepare(tx, q, keysOnly = false).asSingleEntity()).map(Entity(_))
   }
 
   def asKeySeqWithTx(tx: Transaction, query: Query): Seq[Key] = _asKeySeq(Some(tx), query)
@@ -414,7 +411,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
       case (_, Some(o)) => FetchOptions.Builder.withLimit(o)
       case _ => FetchOptions.Builder.withDefaults()
     }
-    prepare(tx, q, keysOnly = true).asIterable(options).map {
+    prepare(tx, q, keysOnly = true).asIterable(options).asScala.map {
       e => Key(e.getKey)
     }.toSeq
   }
@@ -450,7 +447,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
         new LLCompositeFilter(operator match {
           case And => AND
           case Or => OR
-        }, filters.map(f => _toLLFilter(f)))
+        }, filters.map(f => _toLLFilter(f)).asJava)
       case FilterPredicate(name, In, values) =>
         new LLFilterPredicate(name, IN, values)
       case FilterPredicate(name, operator, value :: Nil) =>
@@ -470,7 +467,7 @@ sealed private[datastore] trait DatastoreQueryMethods {
 
 }
 
-sealed private[datastore] trait DatastoreTxMethods {
+sealed private[datastore] trait DatastoreTxOps {
   self: DatastoreBase =>
 
   def beginTx: Transaction = service.beginTransaction()
@@ -483,12 +480,12 @@ sealed private[datastore] trait DatastoreTxMethods {
 
   def currentTx(tx: Transaction): Transaction = service.getCurrentTransaction(tx)
 
-  def activeTx: Seq[Transaction] = service.getActiveTransactions.toSeq
+  def activeTx: Seq[Transaction] = service.getActiveTransactions.asScala.toSeq
 
-  def tx[T](block: => T): T = {
+  def tx[T](block: Transaction => T): T = {
     val tx = beginTx
     try {
-      val ret = block
+      val ret = block(tx)
       tx.commit()
       ret
     } finally {
@@ -496,10 +493,10 @@ sealed private[datastore] trait DatastoreTxMethods {
     }
   }
 
-  def xgTx[T](block: => T): T = {
+  def xgTx[T](block: Transaction => T): T = {
     val tx = beginXgTx
     try {
-      val ret = block
+      val ret = block(tx)
       tx.commit()
       ret
     } finally {

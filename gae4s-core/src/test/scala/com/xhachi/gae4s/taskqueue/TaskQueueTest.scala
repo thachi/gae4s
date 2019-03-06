@@ -32,7 +32,7 @@ class TaskQueueTest
   }
 
   test("TaskQueueにトランザクション内でaddしてdeleteできないこと") {
-    Datastore.tx {
+    Datastore.tx { _ =>
       val handle = TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
       val actual = TaskQueue.delete(handle)
       assert(!actual)
@@ -40,7 +40,7 @@ class TaskQueueTest
   }
 
   test("TaskQueueにトランザクション内でaddしてトランザクション外でdeleteできること") {
-    val handle: TaskHandle = Datastore.tx {
+    val handle: TaskHandle = Datastore.tx { _ =>
       TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
     }
     val actual = TaskQueue.delete(handle)
@@ -54,7 +54,7 @@ class TaskQueueTest
   }
 
   test("TaskQueueにトランザクション内で5回addできること") {
-    Datastore.tx {
+    Datastore.tx { _ =>
       1 to 5 foreach {
         _ => TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
       }
@@ -62,7 +62,7 @@ class TaskQueueTest
   }
 
   test("TaskQueueにトランザクション内で6回addしたらエラーになること") {
-    Datastore.tx {
+    Datastore.tx { _ =>
       1 to 5 foreach {
         _ => TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
       }
@@ -73,7 +73,7 @@ class TaskQueueTest
   }
 
   test("TaskQueue#addWithoutTxがトランザクションから除外されていること") {
-    Datastore.tx {
+    Datastore.tx { _ =>
       TaskQueue.addWithoutTx(TaskOptions.Builder.withUrl("/task/null"))
       1 to 5 foreach {
         _ => TaskQueue.add(TaskOptions.Builder.withUrl("/task/null"))
