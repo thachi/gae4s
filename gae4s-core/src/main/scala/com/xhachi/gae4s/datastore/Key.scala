@@ -5,37 +5,31 @@ import com.google.appengine.api.datastore.{Key => LLKey, KeyFactory}
 
 case class Key(key: LLKey) extends Ordered[Key] {
 
-  val kind: String = key.getKind
+  def kind: String = key.getKind
 
-  val name = key.getName
+  def nameOption: Option[String] = Option(key.getName)
 
-  val nameOption = name match {
-    case n: String => Some(n)
-    case _ => None
-  }
+  def name: String = nameOption.getOrElse(throw new IllegalStateException("name is not defined."))
 
-  val id: Long = key.getId
+  def id: Long = idOption.getOrElse(throw new IllegalStateException("id is not defined."))
 
-  val idOption = id match {
+  def idOption: Option[Long] = Option(key.getId).flatMap {
     case 0 => None
     case i => Some(i)
   }
 
-  def parent: Option[Key] = key.getParent match {
-    case p: LLKey => Some(Key(p))
-    case _ => None
-  }
+  def parent: Option[Key] = Option(key.getParent).map(Key(_))
 
   override def equals(other: Any) = other match {
     case o: Key => key.equals(o.key)
     case _ => false
   }
 
-  override def hashCode = key.hashCode
+  override def hashCode: Int = key.hashCode
 
-  override def toString = key.toString
+  override def toString: String = key.toString
 
-  def toWebSafeString = KeyFactory.keyToString(key)
+  def toWebSafeString: String = KeyFactory.keyToString(key)
 
   override def compare(that: Key): Int = this.key.compareTo(that.key)
 

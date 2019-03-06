@@ -48,7 +48,7 @@ class MetaFactory {
 
 case class FilterMeta(name: String) {
 
-  def unary_! = FilterPredicate[Boolean](name, Filter.Equal, false :: Nil)
+  def unary_! : Filter = FilterPredicate[Boolean](name, Filter.Equal, false :: Nil)
 
   def ===[T](value: T): Filter = FilterPredicate[T](name, Filter.Equal, value :: Nil)
 
