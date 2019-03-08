@@ -23,14 +23,14 @@ class Mail private[mail](service: MailService) {
     *
     * @param message Instance of Message
     */
-  def send(message: Message) = service.send(message.toLLMessage)
+  def send(message: Message): Unit = service.send(message.toLLMessage)
 
   /**
     * Send message to Administrators
     *
     * @param message Instance of Message
     */
-  def sendToAdmins(message: Message) = service.sendToAdmins(message.toLLMessage)
+  def sendToAdmins(message: Message): Unit = service.sendToAdmins(message.toLLMessage)
 
 }
 
