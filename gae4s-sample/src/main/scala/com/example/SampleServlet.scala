@@ -11,25 +11,27 @@ class SampleServlet extends HttpServlet {
 
   override def doGet(request: HttpServletRequest, response: HttpServletResponse) = {
 
-    val tx = Datastore.beginTx
-    val key = Datastore.createKey("counter", 1)
-    val entity = Datastore.getOption(key).getOrElse(
-      Entity(
-        key,
-        Seq(
-          UnindexedProperty[Long]("count", 0),
-          IndexedProperty("createdAt", new Date),
-          IndexedProperty("updatedAt", new Date),
-          VersionProperty("version", 0L)
-        ))
-    )
-    val counted = entity
-      .set("count", entity[Long]("count") + 1)
-      .set("updatedAt", new Date)
-      .versioned("version")
+    val key = Datastore.tx { _=>
+      val key = Datastore.createKey("counter", 1)
+      val entity = Datastore.getOption(key).getOrElse(
+        Entity(
+          key,
+          Seq(
+            UnindexedProperty[Long]("count", 0),
+            IndexedProperty("createdAt", new Date),
+            IndexedProperty("updatedAt", new Date),
+            VersionProperty("version", 0L)
+          ))
+      )
+      val counted = entity
+        .set("count", entity[Long]("count") + 1)
+        .set("updatedAt", new Date)
+        .versioned("version")
 
-    Datastore.put(counted)
-    tx.commit()
+      Datastore.put(counted)
+
+      key
+    }
 
     val stored = Datastore.get(key)
 
