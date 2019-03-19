@@ -120,8 +120,8 @@ class MemcacheTest
 
   test("Memcacheにinclementして値が正しいこと1") {
 
-    (1 to 1000).foreach {
-      i => Memcache.inclement("inclement")
+    (1 to 1000).foreach { _ =>
+      Memcache.inclement("inclement")
     }
 
     val actual = Memcache.get[Long]("inclement")
@@ -131,13 +131,26 @@ class MemcacheTest
 
   test("Memcacheにinclementして値が正しいこと2") {
 
-    (1 to 1000).foreach {
-      i => Memcache.inclement("inclement", 1, Some(0))
+    (1 to 1000).foreach { _ =>
+      Memcache.inclement("inclement", 1, Some(0))
     }
 
     val actual = Memcache.get[Long]("inclement")
     assert(actual.isDefined)
     assert(actual.get == 1000)
+  }
+
+  test("MemcacheにinclementAllして値が正しいこと1") {
+
+    (1 to 1000).foreach { _ =>
+      Memcache.inclementAll("inclement1" :: "inclement2" :: Nil)
+    }
+
+    val actual = Memcache.getAll[String, Long]("inclement1" :: "inclement2" :: Nil)
+    assert(actual("inclement1").isDefined)
+    assert(actual("inclement1").get == 1000)
+    assert(actual("inclement2").isDefined)
+    assert(actual("inclement2").get == 1000)
   }
 
   test("MemcacheのIdentifiableValueが正しく動くこと") {
@@ -195,8 +208,6 @@ class MemcacheTest
     assert(res11)
 
     val ids = Memcache.getAllIdentifiable[String, Int](Seq(key1, key2))
-
-    ids.keys
 
     assert(ids(key1).isDefined)
     assert(ids(key2).isDefined)

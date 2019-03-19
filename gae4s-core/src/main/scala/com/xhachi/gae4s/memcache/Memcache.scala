@@ -4,9 +4,9 @@ import java.util.Date
 
 import com.google.appengine.api.memcache.MemcacheService.SetPolicy._
 import com.google.appengine.api.memcache.MemcacheService._
-import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory}
+import com.google.appengine.api.memcache.{Expiration, MemcacheService, MemcacheServiceFactory, Stats}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
 /**
@@ -15,9 +15,9 @@ import scala.concurrent.duration.Duration
   * @author Takashi Hachinohe
   * @param service the MemcacheService instance
   */
-class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = SET_ALWAYS) extends Serializable {
+class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = SET_ALWAYS) {
 
-  def namespace = service.getNamespace
+  def namespace: String = service.getNamespace
 
   def put[K](key: K, value: Any): Boolean = service.put(key, value, null, policy)
 
@@ -25,11 +25,11 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
 
   def put[K](key: K, value: Any, duration: Duration): Boolean = service.put(key, value, Expiration.byDeltaMillis(duration.toMillis.toInt), policy)
 
-  def putAll[K](values: Map[K, Any]): Set[K] = service.putAll(values, null, policy).toSet
+  def putAll[K](values: Map[K, Any]): Set[K] = service.putAll(values.asJava, null, policy).asScala.toSet
 
-  def putAll[K](values: Map[K, Any], expirationDate: Date): Set[K] = service.putAll(values, Expiration.onDate(expirationDate), policy).toSet
+  def putAll[K](values: Map[K, Any], expirationDate: Date): Set[K] = service.putAll(values.asJava, Expiration.onDate(expirationDate), policy).asScala.toSet
 
-  def putAll[K](values: Map[K, Any], duration: Duration): Set[K] = service.putAll(values, Expiration.byDeltaMillis(duration.toMillis.toInt), policy).toSet
+  def putAll[K](values: Map[K, Any], duration: Duration): Set[K] = service.putAll(values.asJava, Expiration.byDeltaMillis(duration.toMillis.toInt), policy).asScala.toSet
 
   def putIfUntouched[K, V](key: K, oldValue: IdValue[V], newValue: V): Boolean = service.putIfUntouched(key, oldValue.identifiableValue, newValue, null)
 
@@ -40,80 +40,70 @@ class Memcache private[Memcache](service: MemcacheService, policy: SetPolicy = S
 
   def delete(key: AnyRef, millisNoReAdd: Long = 0L): Boolean = service.delete(key, millisNoReAdd)
 
-  def deleteAll[K](keys: Seq[K], millisNoReAdd: Long = 0L): Set[K] = service.deleteAll(keys, millisNoReAdd).toSet
+  def deleteAll[K](keys: Seq[K], millisNoReAdd: Long = 0L): Set[K] = service.deleteAll(keys.asJava, millisNoReAdd).asScala.toSet
 
   def contains(key: AnyRef): Boolean = service.contains(key)
 
-  def get[V](key: AnyRef): Option[V] = service.get(key) match {
-    case value: Any => Some(value.asInstanceOf[V])
-    case null => None
+  def get[V](key: AnyRef): Option[V] = Option(service.get(key)).map(_.asInstanceOf[V])
+
+  def getOrElse[V](key: AnyRef, default: => V): V = Option(service.get(key)).map(_.asInstanceOf[V]).getOrElse(default)
+
+  def getOrElseUpdate[V](key: AnyRef)(default: => V): V = Option(service.get(key)) match {
+    case Some(value) => value.asInstanceOf[V]
+    case None =>
+      val d: V = default
+      put(key, d)
+      d
   }
 
-  def getOrElse[V](key: AnyRef, default: => V): V = service.get(key) match {
-    case value: Any => value.asInstanceOf[V]
-    case null => default
-  }
-
-  def getOrElseUpdate[V](key: AnyRef)(default: => V): V = service.get(key) match {
-    case value: Any => value.asInstanceOf[V]
-    case null =>
-      put(key, default)
-      default
-  }
-
-  def getOrElseUpdate[V](key: AnyRef, expirationDate: Date)(default: => V): V = service.get(key) match {
-    case value: Any => value.asInstanceOf[V]
-    case null =>
+  def getOrElseUpdate[V](key: AnyRef, expirationDate: Date)(default: => V): V = Option(service.get(key)) match {
+    case Some(value) => value.asInstanceOf[V]
+    case None =>
       put(key, default, expirationDate)
       default
   }
 
-  def getOrElseUpdate[V](key: AnyRef, duration: Duration)(default: => V): V = service.get(key) match {
-    case value: Any => value.asInstanceOf[V]
-    case null =>
+  def getOrElseUpdate[V](key: AnyRef, duration: Duration)(default: => V): V = Option(service.get(key)) match {
+    case Some(value) => value.asInstanceOf[V]
+    case None =>
       put(key, default, duration)
       default
   }
 
   def getAll[K, T](keys: Seq[K]): Map[K, Option[T]] = {
-    val all = service.getAll(keys)
+    val all = service.getAll(keys.asJava).asScala
     keys.map {
-      case k if all.containsKey(k) => k -> Some(all.get(k).asInstanceOf[T])
+      case k if all.contains(k) => k -> all.get(k).map(_.asInstanceOf[T])
       case k => k -> None
     }.toMap
   }
 
-  def getIdentifiable[T](key: AnyRef): Option[IdValue[T]] = service.getIdentifiable(key) match {
-    case value: IdentifiableValue => Some(new IdValue[T](value))
-    case null => None
-  }
+  def getIdentifiable[T](key: AnyRef): Option[IdValue[T]] = Option(service.getIdentifiable(key)).map(new IdValue[T](_))
 
   def getAllIdentifiable[K, V](key: Seq[K]): Map[K, Option[IdValue[V]]] =
-    service.getIdentifiables(key).map {
+    service.getIdentifiables(key.asJava).asScala.map {
       case (k, v: Any) => k -> Some(new IdValue[V](v))
       case (k, _) => k -> None
     }.toMap
 
-  def clearAll() = service.clearAll()
+  def clearAll(): Unit = service.clearAll()
 
-  def inclement(key: AnyRef, delta: Long = 1L, initialValue: Option[Long] = None): Long = initialValue match {
-    case Some(i) => service.increment(key, delta, i)
-    case None => service.increment(key, delta, 0L)
+  def inclement(key: AnyRef, delta: Long = 1L, initialValue: Option[Long] = None): Long = {
+    val i = initialValue.getOrElse(0L)
+    service.increment(key, delta, i)
   }
 
-  def inclementAll[T](keys: Seq[T], delta: Long = 1L, initialValue: Option[Long] = None): Map[T, Long] = initialValue match {
-    case Some(i) => service.incrementAll(keys, delta, i).toMap.asInstanceOf[Map[T, Long]]
-    case None => service.incrementAll(keys, delta).toMap.asInstanceOf[Map[T, Long]]
+  def inclementAll[T](keys: Seq[T], delta: Long = 1L, initialValue: Option[Long] = None): Map[T, Long] = {
+    val i = initialValue.getOrElse(0L)
+    service.incrementAll(keys.asJava, delta, i).asScala.toMap.asInstanceOf[Map[T, Long]]
   }
 
-  def statistics = service.getStatistics
+  def statistics: Stats = service.getStatistics
 }
 
 class IdValue[T](private[memcache] val identifiableValue: IdentifiableValue) {
   def value: T = {
-    val value1: AnyRef = {
-      identifiableValue.getValue
-    }
+    val value1: AnyRef = identifiableValue.getValue
     value1.asInstanceOf[T]
   }
 }
