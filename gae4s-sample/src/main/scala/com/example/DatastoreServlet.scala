@@ -6,8 +6,10 @@ import com.xhachi.gae4s.buildinfo.BuildInfo
 import com.xhachi.gae4s.common.AppInfo
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import com.xhachi.gae4s.datastore._
+import javax.servlet.annotation.WebServlet
 
-class SampleServlet extends HttpServlet {
+@WebServlet(Array("/datastore"))
+class DatastoreServlet extends HttpServlet {
 
   override def doGet(request: HttpServletRequest, response: HttpServletResponse) = {
 

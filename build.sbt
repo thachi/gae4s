@@ -57,8 +57,8 @@ lazy val sample = (project in file("gae4s-sample"))
   .settings(
     name := "gae4s-sample",
     libraryDependencies ++= defaultDependency ++ Seq(
-      "javax.servlet" % "servlet-api" % "2.5" % "provided",
-      "org.eclipse.jetty" % "jetty-webapp" % "7.0.2.v20100331" % "container"
+      "javax.servlet" % "javax.servlet-api" % "3.1.0" % "provided",
+      "org.eclipse.jetty" % "jetty-webapp" % "9.4.15.v20190215" % "container"
     )
   )
   .dependsOn(core, scalatest % "test")
