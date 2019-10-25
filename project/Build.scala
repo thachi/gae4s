@@ -11,7 +11,7 @@ import sbtrelease.ReleaseStep
 object Gae4sBuild extends Build {
 
   object Versions {
-    val scala = "2.11.7"
+    val scala = "2.11.12"
     val appengine = "1.9.76"
     val gcs = "0.8"
     val json4s = "3.5.5"
