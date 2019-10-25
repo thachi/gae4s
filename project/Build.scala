@@ -12,10 +12,10 @@ object Gae4sBuild extends Build {
 
   object Versions {
     val scala = "2.11.7"
-    val appengine = "1.9.30"
-    val gcs = "0.5"
-    val json4s = "3.3.0"
-    val scalatest = "2.2.4"
+    val appengine = "1.9.76"
+    val gcs = "0.8"
+    val json4s = "3.5.5"
+    val scalatest = "3.0.8"
   }
 
   lazy val root = Project(
