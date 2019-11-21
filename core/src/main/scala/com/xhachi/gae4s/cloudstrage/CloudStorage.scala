@@ -3,6 +3,7 @@ package com.xhachi.gae4s.cloudstrage
 import java.io.{OutputStream, OutputStreamWriter, StringReader}
 import java.nio.ByteBuffer
 import java.nio.channels.Channels
+import java.util.Date
 
 import com.google.appengine.tools.cloudstorage.GcsFileOptions.Builder
 import com.google.appengine.tools.cloudstorage._
@@ -49,8 +50,15 @@ object CloudStorage extends Logger {
   def defaultService = GcsServiceFactory.createGcsService(RetryParams.getDefaultInstance)
 }
 
-class CloudStorage private[cloudstrage](service: GcsService, bucketName: String) extends JsonOps with XMLOpt with Logger {
+case class Item(name: String, size: Long, lastModified: Date, directory: Boolean, etag: Option[String])
 
+class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
+  extends ReadOps
+  with WriteOps
+  with ListOps
+  with JsonOps
+  with XMLOpt
+  with Logger {
 
   def pathToFilename(path: String) = new GcsFilename(bucketName, path.replaceAll("^/+", ""))
 
@@ -58,6 +66,25 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     service.getMetadata(pathToFilename(path)) match {
       case m: GcsFileMetadata => Some(m)
       case _ => None
+    }
+  }
+
+  def copy(source: String, dist: String) = service.copy(pathToFilename(source), pathToFilename(dist))
+
+  def list(options: ListOptions): Stream[Item] = {
+    def toStream(result: ListResult): Stream[ListItem] = {
+      if (result.hasNext) {
+        result.next #:: toStream(result)
+      } else {
+        Stream.Empty
+      }
+    }
+
+    toStream(service.list(bucketName, options)).map { i =>
+      Item(i.getName, i.getLength, i.getLastModified, i.isDirectory, i.getEtag match {
+        case t: String => Some(t)
+        case _ => None
+      })
     }
   }
 
@@ -125,6 +152,33 @@ class CloudStorage private[cloudstrage](service: GcsService, bucketName: String)
     }
   }
 
+}
+
+sealed trait WriteOps {
+
+  def writeBytes(path: String, bytes: Array[Byte], mimeType: Option[String] = None, public: Boolean = false): Unit
+
+  def writeText(path: String, text: String) = writeBytes(path, text.getBytes("UTF-8"), Some(MimeType.Text))
+}
+
+sealed trait ReadOps {
+
+  def readBytes(path: String): Option[Array[Byte]]
+
+  def readText(path: String): Option[String] = readBytes(path).map(new String(_, "UTF-8"))
+}
+
+sealed trait ListOps {
+
+  def list(options: ListOptions): Stream[Item]
+
+  def listAll: Stream[Item] = list(ListOptions.DEFAULT)
+
+  def listWithPrefix(prefix: String): Stream[Item] = list {
+    val b = new ListOptions.Builder
+    b.setPrefix(prefix)
+    b.build()
+  }
 }
 
 sealed trait XMLOpt {

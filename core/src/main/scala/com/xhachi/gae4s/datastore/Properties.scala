@@ -402,7 +402,13 @@ class SerializableProperty[E <: Serializable : ClassTag](name: String) extends B
 
 class JsonProperty[E <: AnyRef : Manifest](name: String) extends StringStoreProperty[E](name) {
 
-  override def fromString(value: String): E = Json.parseAs[E](value)
+  override def fromString(value: String): E = try {
+    Json.parseAs[E](value)
+  } catch {
+    case NonFatal(e) =>
+      Logger.warn("cannot parse.\n\n" + value, e)
+      throw e
+  }
 
   override def toString(value: E): String = Json.stringify(value)
 }

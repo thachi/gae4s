@@ -10,8 +10,13 @@ import sbtrelease.ReleaseStep
 
 object Gae4sBuild extends Build {
 
-  val appengineVersion = "1.9.25"
-  val scalatestVersion = "2.2.4"
+  object Versions {
+    val scala = "2.11.12"
+    val appengine = "1.9.76"
+    val gcs = "0.8"
+    val json4s = "3.5.5"
+    val scalatest = "3.0.8"
+  }
 
   lazy val root = Project(
     id = "gae4s-project",
@@ -29,7 +34,7 @@ object Gae4sBuild extends Build {
       buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion),
       buildInfoPackage := "com.xhachi.gae4s.buildinfo",
       libraryDependencies ++= defaultDependency ++ Seq(
-
+        "org.scala-lang" % "scala-reflect" % Versions.scala
       )
     )
   ).dependsOn(scalatest % "test")
@@ -40,9 +45,9 @@ object Gae4sBuild extends Build {
     settings = defaultSetting ++ Seq(
       name := "gae4s-scalatest",
       libraryDependencies ++= defaultDependency ++ Seq(
-        "com.google.appengine" % "appengine-api-stubs" % appengineVersion,
-        "com.google.appengine" % "appengine-testing" % appengineVersion,
-        "org.scalatest" %% "scalatest" % scalatestVersion
+        "com.google.appengine" % "appengine-api-stubs" % Versions.appengine,
+        "com.google.appengine" % "appengine-testing" % Versions.appengine,
+        "org.scalatest" %% "scalatest" % Versions.scalatest
       )
     )
   )
@@ -75,7 +80,7 @@ object Gae4sBuild extends Build {
 
   lazy val defaultSetting = Defaults.defaultSettings ++ releaseSettings ++
     Seq(
-      scalaVersion := "2.11.6",
+      scalaVersion := Versions.scala,
       scalacOptions ++= Seq("-feature", "-deprecation"),
       organization := "com.xhachi",
       parallelExecution in Test := false,
@@ -101,14 +106,14 @@ object Gae4sBuild extends Build {
     )
 
   val defaultDependency = Seq(
-    "org.json4s" %% "json4s-native" % "3.2.11",
-    "org.json4s" %% "json4s-ext" % "3.2.11",
-    "com.google.appengine" % "appengine-api-1.0-sdk" % appengineVersion,
-    "com.google.appengine.tools" % "appengine-gcs-client" % "0.4.4",
-    "com.google.appengine" % "appengine-tools-sdk" % appengineVersion % "test",
-    "com.google.appengine" % "appengine-api-stubs" % appengineVersion % "test",
-    "com.google.appengine" % "appengine-testing" % appengineVersion % "test",
-    "org.scalatest" %% "scalatest" % scalatestVersion % "test"
+    "org.json4s" %% "json4s-native" % Versions.json4s,
+    "org.json4s" %% "json4s-ext" % Versions.json4s,
+    "com.google.appengine" % "appengine-api-1.0-sdk" % Versions.appengine,
+    "com.google.appengine.tools" % "appengine-gcs-client" % Versions.gcs,
+    "com.google.appengine" % "appengine-tools-sdk" % Versions.appengine % "test",
+    "com.google.appengine" % "appengine-api-stubs" % Versions.appengine % "test",
+    "com.google.appengine" % "appengine-testing" % Versions.appengine % "test",
+    "org.scalatest" %% "scalatest" % Versions.scalatest % "test"
   )
 }
 
